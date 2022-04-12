@@ -1,2 +1,2 @@
 # qr
-Console game that fits less than 3kb
+Console game that fits in less than 3kb
