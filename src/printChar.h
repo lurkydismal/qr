@@ -16,6 +16,17 @@
 ///////////////
 #ifdef _WIN32
 extern "C" void printChar( const unsigned int _decimalCharacter ) noexcept;
+// extern "C" void __declspec( naked ) printCharA( const unsigned int _decimalCharacter ) noexcept {
+//     __asm{
+//         push _decimalCharacter
+//         call _printChar
+//     };
+//     asm(
+//         "push %0\n\t"
+//         "call _printChar\n\t"
+//         : "0" ( _decimalCharacter )
+//     );
+// }
 #else
 extern "C" void printChar( const unsigned int _decimalCharacter ) noexcept {
     putc( _decimalCharacter, stdout );

@@ -1,6 +1,9 @@
-#include <iostream>
 #include <gtest/gtest.h>
 
-TEST(module_name, test_name) {
-    ASSERT_EQ(1+1, 2);
+TEST( logic, getOverview ) {
+    ASSERT_STREQ( "1", "1" );
+}
+
+TEST( logic, getPlayerInventoryPlaceOf ) {
+    ASSERT_EQ( 1, 1 );
 }

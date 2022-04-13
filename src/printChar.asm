@@ -5,14 +5,16 @@
 GLOBAL _printChar
 GLOBAL _printText
 
-extern __imp__WriteConsoleA@20                          ; dword
-extern __imp__GetStdHandle@4                            ; dword
+EXTERN __imp__WriteConsoleA@20                          ; dword
+EXTERN __imp__GetStdHandle@4                            ; dword
+EXTERN _putchar
 
 SECTION .text
 
 _printChar: ; void ( const unsigned int _decimalCharacter[0] ) {
         push    ebp
         mov     ebp, esp
+        %ifdef _WIN32
         push    NULL                           ;
         push    NULL                           ;
         push    1                              ; text length
@@ -22,6 +24,11 @@ _printChar: ; void ( const unsigned int _decimalCharacter[0] ) {
         call    near [__imp__GetStdHandle@4]   ;
         push    eax                            ; HANDLE
         call    near [__imp__WriteConsoleA@20] ;
+        %else
+        mov     eax, dword [ebp+8]
+        push    eax
+        call    _putchar
+        %endif
         pop     ebp
         ret
 ;}
