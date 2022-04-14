@@ -1,9 +1,11 @@
 #pragma once
 
+#include <stdint.h>
+
 #define MAP_SIZE 80 * 10
 
 // view
-#define OVERLOOK_RADIUS 29
+#define OVERLOOK_RADIUS 29 + 2
 
 // loot
 #define CHEST_ITEM_COUNT 3
@@ -50,19 +52,55 @@ enum ITEMS { // Player inventory
 };
 
 enum MOVEMENT_DIRECTIONS { // Directions 2 8 4 6
-    DOWN = 0,
-    UP,
-    LEFT,
-    RIGHT,
+    DOWN = 80,
+    UP = -80,
+    LEFT = -1,
+    RIGHT = 1,
 };
 
+// extern ITEMS items;
+// extern MOVEMENT_DIRECTIONS movement;
+
+extern uint32_t playerHealth;
+extern ITEMS playerInventory[ MAX_PLAYER_ITEM_COUNT ];
+extern uint32_t playerInventoryItemCount;
+extern uint32_t playerExperience;
+extern uint32_t playerPosition;
+
+extern const char* monsters;
+extern uint32_t monsterHealth;
+extern uint32_t g_randomMonstersPositions[ MAX_MONSTERS_ON_MAP ];
+extern uint32_t randomMonstersLeft;
+extern uint32_t g_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
+extern uint32_t followMonstersLeft;
+
+extern const char* key_monsters;
+extern uint32_t keyMonsterHealth;
+
+extern uint32_t guardianHealth;
+extern uint32_t g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
+extern uint32_t guardiansLeft;
+
+extern const char* emptyMap;
+
+extern char g_map[ MAP_SIZE ];
+
+extern char vision[ OVERLOOK_RADIUS ];
+
 void initMap( void );
-void initInventory( void );
-void checkLose( void );
-bool DoPlayerMove( int offset ) noexcept;
-bool DoOpponentMove() noexcept;
+void initInventory( ITEMS item );
+bool checkLose( void );
+void getOverview( const unsigned int );
+int getPlayerInventoryPlaceOf( const ITEMS item );
+bool inventoryAdd( const ITEMS item, const int itemIndex = INT8_MIN );
 bool usePlayerItem( const ITEMS item );
-void UpdateScreen() noexcept;
+uint32_t move( const char who, unsigned int currentPosition, const int offset );
+bool DoPlayerMove( int offset ) noexcept;
+bool DoOpponentMove( void ) noexcept;
+uint32_t fightMonster( const char who, unsigned int currentPosition, const int offset );
+uint32_t fightKeyMonster( const char who, unsigned int currentPosition, const int offset );
+uint32_t fightGuardian( const char who, unsigned int currentPosition, const int offset );
+void UpdateScreen( void ) noexcept;
 
 #ifndef _WIN32
 bool GetAsyncKeyState( unsigned int );

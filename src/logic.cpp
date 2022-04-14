@@ -1,9 +1,6 @@
 #include "main.hpp"
 #include "stdfunc.hpp"
 
-ITEMS items;
-MOVEMENT_DIRECTIONS movement;
-
 unsigned int playerHealth = MAX_PLAYER_HEALTH;
 ITEMS playerInventory[ MAX_PLAYER_ITEM_COUNT ];
 unsigned int playerInventoryItemCount = 0;
@@ -24,7 +21,7 @@ unsigned int guardianHealth = GUARDIAN_MAX_HEALTH;
 unsigned int g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
 unsigned int guardiansLeft = 0;
 
-const char emptyMap[ MAP_SIZE ] = (
+const char* emptyMap = (
 "\
 +------+     +-------+   ##                  ######                             \
 |......|  ###........|    #             +----.----+        #                    \
@@ -86,32 +83,35 @@ void initMap( void ) {
     }
 }
 
-void initInventory( void ) {
-    #ifdef EMPTY_PLAYER_INVENTORY
-        unsigned int l_inventoryCell = MAX_PLAYER_ITEM_COUNT;
+void initInventory( ITEMS _item ) {
+    playerInventoryItemCount = ( _item == EMPTY )
+        ? 0
+        : MAX_PLAYER_ITEM_COUNT;
+    unsigned int l_inventoryCell = MAX_PLAYER_ITEM_COUNT;
 
-        while ( l_inventoryCell-- )
-            playerInventory[ l_inventoryCell ] = EMPTY;
-    #endif
-
-    playerInventory[ 2 ] = HEALTH;
-    playerInventoryItemCount++;
+    while ( l_inventoryCell-- ) {
+        playerInventory[ l_inventoryCell ] = _item;
+    }
 }
 
-void checkLose( void ) {
-    if ( !playerHealth ) {
+bool checkLose( void ) {
+    if ( playerHealth ) {
+        #ifdef _WIN32
+        MessageBoxA( 0, "You Win!", "Victory!", 0 );
+        #else
+        Pass;
+        #endif
+
+        return (true);
+
+    } else {
         #ifdef _WIN32
         MessageBoxA( 0, "You Lose!", "Defeat!", 0 );
         #else
         Pass;
         #endif
 
-    } else {
-        #ifdef _WIN32
-        MessageBoxA( 0, "You Win!", "Victory!", 0 );
-        #else
-        Pass;
-        #endif
+        return (false);
     }
 }
 
@@ -120,10 +120,12 @@ void getOverview( const unsigned int currentPosition ) {
     unsigned int counter = 0;
 
     for ( unsigned int i = 1; i < 6; i++ ) {
-        if ( ( l_startPosition % 80 ) > ( ( currentPosition % 80 ) + 2 ) )
+        if ( ( l_startPosition % 80 ) > ( ( currentPosition % 80 ) + 2 ) ) {
             l_startPosition++;
-        else if ( ( l_startPosition % 80 ) < ( ( currentPosition % 80 ) - 2 ) )
+
+        } else if ( ( l_startPosition % 80 ) < ( ( currentPosition % 80 ) - 2 ) ) {
             l_startPosition--;
+        }
 
         for ( unsigned int l_mapCell = l_startPosition; l_mapCell < ( l_startPosition + 4 + 1 ); l_mapCell++ ) {
             vision[ counter ] = g_map[ l_mapCell ];
@@ -139,12 +141,46 @@ void getOverview( const unsigned int currentPosition ) {
     vision[ counter ] = '\0';
 }
 
-int getPlayerInventoryPlaceOf( const ITEMS l_item ) {
+int getPlayerInventoryPlaceOf( const ITEMS _item ) {
     for ( unsigned int l_inventoryCell = 0; l_inventoryCell < MAX_PLAYER_ITEM_COUNT; l_inventoryCell++ )
-        if ( playerInventory[ l_inventoryCell ] == l_item )
+        if ( playerInventory[ l_inventoryCell ] == _item )
             return ( (int)l_inventoryCell );
 
-    return ( (int)-1 );
+    return ( INT8_MIN );
+}
+
+bool inventoryAdd( const ITEMS _item, const int _itemIndex ) {
+    if (
+        ( playerInventoryItemCount >= MAX_PLAYER_ITEM_COUNT ) ||
+        (
+            ( _itemIndex != INT8_MIN ) &&
+            ( playerInventory[ _itemIndex ] != EMPTY )
+        )
+    ) {
+        return (false);
+    }
+
+    const int l_emptyIndex = ( _itemIndex != INT8_MIN )
+        ? _itemIndex
+        : getPlayerInventoryPlaceOf( EMPTY );
+
+    playerInventory[ l_emptyIndex ] = _item;
+    playerInventoryItemCount++;
+
+    return (true);
+}
+
+bool usePlayerItem( const ITEMS _item ) {
+    int l_itemPlace = getPlayerInventoryPlaceOf( _item );
+
+    if ( ( !playerInventoryItemCount ) || ( l_itemPlace < 0 ) ) {
+        return (false);
+    }
+
+    playerInventory[ l_itemPlace ] = EMPTY;
+    playerInventoryItemCount--;
+
+    return (true);
 }
 
 unsigned int move( const char who, unsigned int currentPosition, const int l_offset ) {
@@ -153,6 +189,198 @@ unsigned int move( const char who, unsigned int currentPosition, const int l_off
     g_map[ currentPosition ] = who;
 
     return ( currentPosition );
+}
+
+bool DoPlayerMove( const int l_offset ) noexcept {
+    const char cellToMove = g_map[ playerPosition + l_offset ];
+
+    for ( unsigned int i = 0; i < MONSTER_TYPES; i++ ) {
+        if ( cellToMove == monsters[ i ] ) {
+            playerPosition = fightMonster( '@', playerPosition, l_offset );
+
+            return ( playerPosition );
+        }
+    }
+
+    for ( unsigned int i = 0; i < KEY_MONSTER_TYPES; i++ ) {
+        if ( cellToMove == key_monsters[ i ] ) {
+            playerPosition = fightKeyMonster( '@', playerPosition, l_offset );
+
+            return ( playerPosition );
+        }
+    }
+
+    switch ( g_map[ playerPosition + l_offset ] ) {
+        case '.':
+        case '#':
+            playerPosition = move( '@', playerPosition, l_offset );
+            break;
+
+        case '}':
+        case '{':
+        case '/':
+            if ( usePlayerItem( KEY ) )
+                playerPosition = move( '@', playerPosition, l_offset );
+            break;
+
+        case '>':
+        case '<':
+            if ( !guardiansLeft )
+                return false;
+            break;
+
+        case 'G':
+            playerPosition = fightGuardian( '@', playerPosition, l_offset );
+
+            return ( playerPosition );
+            break;
+
+        case KEY:
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
+                playerInventoryItemCount++;
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+
+        case HEALTH:
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = HEALTH;
+                playerInventoryItemCount++;
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+        
+        case ATTACK:
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = ATTACK;
+                playerInventoryItemCount++;
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+        
+        case DEFENCE:
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = DEFENCE;
+                playerInventoryItemCount++;
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+
+        case 'C':
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                const ITEMS l_chestItems[ CHEST_ITEM_COUNT ] = { HEALTH, ATTACK, DEFENCE };
+                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % CHEST_ITEM_COUNT ) ];
+                playerInventoryItemCount++;
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+
+        case 'T':
+            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
+                playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
+                playerPosition = move( '@', playerPosition, l_offset );
+            }
+            break;
+    };
+
+    return (true);
+}
+
+bool DoOpponentMove( void ) noexcept {
+    auto l_watchForPlayer = [ & ]() {
+        for ( unsigned int l_visionCell = 0; l_visionCell < OVERLOOK_RADIUS; l_visionCell++ )
+            if ( vision[ l_visionCell ] == '@' )
+                return (true);
+
+        return (false);
+    };
+
+    auto l_randomMove = [ & ]( const char who, unsigned int& currentPosition ) {
+        unsigned int l_offset;
+
+        switch ( (MOVEMENT_DIRECTIONS)Rand() % 4 ) {
+                case DOWN:
+                    l_offset = 80;
+                    break;
+
+                case UP:
+                    l_offset = -80;
+                    break;
+
+                case LEFT:
+                    l_offset = -1;
+                    break;
+
+                case RIGHT:
+                    l_offset = 1;
+                    break;
+            };
+
+            if ( ( g_map[ currentPosition + l_offset ] == '.' ) || ( g_map[ currentPosition + l_offset ] == '#' ) )
+                currentPosition = move( who, currentPosition, l_offset );
+
+            else if ( g_map[ currentPosition + l_offset ] == '@' )
+                currentPosition = fightMonster( who, currentPosition, l_offset );
+    };
+
+    auto l_followMove = [ & ]( const char who, unsigned int& currentPosition ) {
+        int l_offset;
+
+        if ( ( currentPosition % 80 ) < ( playerPosition % 80 ) ) {
+            l_offset = 1;
+
+        } else if ( ( currentPosition % 80 ) > ( playerPosition % 80 ) ) {
+            l_offset = -1;
+
+        } else if ( currentPosition < playerPosition ) {
+            l_offset = 80;
+
+        } else {
+            l_offset = -80;
+        }
+
+        if ( ( g_map[ currentPosition + l_offset ] == '.' ) || ( g_map[ currentPosition + l_offset ] == '#' ) ) {
+            currentPosition = move( who, currentPosition, l_offset );
+
+        } else if ( g_map[ currentPosition + l_offset ] == '@' ) {
+            if ( who == 'G' ) {
+                currentPosition = fightGuardian( who, currentPosition, l_offset );
+
+            } else {
+                currentPosition = fightMonster( who, currentPosition, l_offset );
+            }
+        }
+    };
+
+    for ( unsigned int i = 0; i < randomMonstersLeft; i++ ) {
+        l_randomMove( 'R', g_randomMonstersPositions[ i ] );
+    }
+
+    for ( unsigned int i = 0; i < followMonstersLeft; i++ ) {
+        if ( l_watchForPlayer() ) {
+            l_followMove( 'F', g_followMonstersPositions[ i ] );
+
+        } else {
+            l_randomMove( 'F', g_followMonstersPositions[ i ] );
+        }
+    }
+
+    for ( unsigned int i = 0; i < guardiansLeft; i++ )
+        if ( l_watchForPlayer() ) {
+            l_followMove( 'G', g_guardiansPositions[ i ] );
+
+        } else {
+            l_randomMove( 'G', g_guardiansPositions[ i ] );
+        }
+
+    return (true);
 }
 
 unsigned int fightMonster( const char who, unsigned int currentPosition, const int l_offset ) {
@@ -167,7 +395,9 @@ unsigned int fightMonster( const char who, unsigned int currentPosition, const i
         }
     }
 
-    monsterHealth -= ( usePlayerItem( ATTACK ) ) ? ( ( 5 + ( unsigned int )( playerExperience / EXPERIENCE_FOR_DMG ) ) * 2 ) : ( 5 + ( unsigned int )( playerExperience / EXPERIENCE_FOR_DMG ) );
+    monsterHealth -= ( usePlayerItem( ATTACK ) )
+        ? ( ( 5 + (uint32_t)( playerExperience / EXPERIENCE_FOR_DMG ) ) * 2 )
+        : ( 5 + (uint32_t)( playerExperience / EXPERIENCE_FOR_DMG ) );
 
     if ( !monsterHealth ) {
         monsterHealth = MONSTER_MAX_HEALTH;
@@ -260,187 +490,7 @@ unsigned int fightGuardian( const char who, unsigned int currentPosition, const 
     return ( currentPosition );
 }
 
-// Function definitions
-bool DoPlayerMove( const int l_offset ) noexcept {
-    const char cellToMove = g_map[ playerPosition + l_offset ];
-
-    for ( unsigned int i = 0; i < MONSTER_TYPES; i++ ) {
-        if ( cellToMove == monsters[ i ] ) {
-            playerPosition = fightMonster( '@', playerPosition, l_offset );
-
-            return ( playerPosition );
-        }
-    }
-
-    for ( unsigned int i = 0; i < KEY_MONSTER_TYPES; i++ ) {
-        if ( cellToMove == key_monsters[ i ] ) {
-            playerPosition = fightKeyMonster( '@', playerPosition, l_offset );
-
-            return ( playerPosition );
-        }
-    }
-
-    switch ( g_map[ playerPosition + l_offset ] ) {
-        case '.':
-        case '#':
-            playerPosition = move( '@', playerPosition, l_offset );
-            break;
-
-        case '}':
-        case '{':
-        case '/':
-            if ( usePlayerItem( KEY ) )
-                playerPosition = move( '@', playerPosition, l_offset );
-            break;
-
-        case '>':
-        case '<':
-            if ( !guardiansLeft )
-                return false;
-            break;
-
-        case 'G':
-            playerPosition = fightGuardian( '@', playerPosition, l_offset );
-
-            return ( playerPosition );
-            break;
-
-        case 'K':
-            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
-                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
-                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
-                playerInventoryItemCount++;
-                playerPosition = move( '@', playerPosition, l_offset );
-            }
-            break;
-
-        case 'C':
-            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
-                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
-                const ITEMS l_chestItems[ CHEST_ITEM_COUNT ] = { HEALTH, ATTACK, DEFENCE };
-                playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % CHEST_ITEM_COUNT ) ];
-                playerInventoryItemCount++;
-                playerPosition = move( '@', playerPosition, l_offset );
-            }
-            break;
-
-        case 'T':
-            if ( playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
-                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
-                playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
-                playerPosition = move( '@', playerPosition, l_offset );
-            }
-            break;
-    };
-
-    return (true);
-}
-
-bool DoOpponentMove() noexcept {
-    // Labmdas
-    auto l_watchForPlayer = [ & ]() {
-        for ( unsigned int l_visionCell = 0; l_visionCell < OVERLOOK_RADIUS; l_visionCell++ )
-            if ( vision[ l_visionCell ] == '@' )
-                return (true);
-
-        return (false);
-    };
-
-    auto l_randomMove = [ & ]( const char who, unsigned int& currentPosition ) {
-        unsigned int l_offset;
-
-        switch ( (MOVEMENT_DIRECTIONS)Rand() % 4 ) {
-                case DOWN:
-                    l_offset = 80;
-                    break;
-
-                case UP:
-                    l_offset = -80;
-                    break;
-
-                case LEFT:
-                    l_offset = -1;
-                    break;
-
-                case RIGHT:
-                    l_offset = 1;
-                    break;
-            };
-
-            if ( ( g_map[ currentPosition + l_offset ] == '.' ) || ( g_map[ currentPosition + l_offset ] == '#' ) )
-                currentPosition = move( who, currentPosition, l_offset );
-
-            else if ( g_map[ currentPosition + l_offset ] == '@' )
-                currentPosition = fightMonster( who, currentPosition, l_offset );
-    };
-
-    auto l_followMove = [ & ]( const char who, unsigned int& currentPosition ) {
-        int l_offset;
-
-        if ( ( currentPosition % 80 ) < ( playerPosition % 80 ) ) {
-            l_offset = 1;
-
-        } else if ( ( currentPosition % 80 ) > ( playerPosition % 80 ) ) {
-            l_offset = -1;
-
-        } else if ( currentPosition < playerPosition ) {
-            l_offset = 80;
-
-        } else {
-            l_offset = -80;
-        }
-
-        if ( ( g_map[ currentPosition + l_offset ] == '.' ) || ( g_map[ currentPosition + l_offset ] == '#' ) ) {
-            currentPosition = move( who, currentPosition, l_offset );
-
-        } else if ( g_map[ currentPosition + l_offset ] == '@' ) {
-            if ( who == 'G' ) {
-                currentPosition = fightGuardian( who, currentPosition, l_offset );
-
-            } else {
-                currentPosition = fightMonster( who, currentPosition, l_offset );
-            }
-        }
-    };
-
-    for ( unsigned int i = 0; i < randomMonstersLeft; i++ ) {
-        l_randomMove( 'R', g_randomMonstersPositions[ i ] );
-    }
-
-    for ( unsigned int i = 0; i < followMonstersLeft; i++ ) {
-        if ( l_watchForPlayer() ) {
-            l_followMove( 'F', g_followMonstersPositions[ i ] );
-
-        } else {
-            l_randomMove( 'F', g_followMonstersPositions[ i ] );
-        }
-    }
-
-    for ( unsigned int i = 0; i < guardiansLeft; i++ )
-        if ( l_watchForPlayer() ) {
-            l_followMove( 'G', g_guardiansPositions[ i ] );
-
-        } else {
-            l_randomMove( 'G', g_guardiansPositions[ i ] );
-        }
-
-    return (true);
-}
-
-bool usePlayerItem( const ITEMS l_item ) {
-    int l_itemPlace = getPlayerInventoryPlaceOf( l_item );
-
-    if ( l_itemPlace + 1 ) {
-        playerInventory[ l_itemPlace ] = EMPTY;
-        playerInventoryItemCount--;
-
-        return (true);
-    }
-
-    return (false);
-}
-
-void UpdateScreen() noexcept {
+void UpdateScreen( void ) noexcept {
     // lambdas
     auto l_lengthOfInt = []( int number ) {
         unsigned int counter = 0;

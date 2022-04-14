@@ -1,12 +1,17 @@
 #include "main.hpp"
-#include "stdfunc.hpp" // Rand clear_screen
-#include "printChar.h" // printChar
+#include "stdfunc.hpp"
 
-int main() {
-    // Map parse
+int main( void ) {
     initMap();
 
-    initInventory();
+    #ifdef EMPTY_PLAYER_INVENTORY
+    initInventory( (ITEMS)EMPTY );
+    #else
+    initInventory( (ITEMS)NULL );
+    #endif
+
+    playerInventory[ 2 ] = HEALTH;
+    playerInventoryItemCount++;
 
     UpdateScreen(); // first render
 
