@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-// #include <iostream>
 
 #include "../src/main.hpp"
+#include "../src/stdfunc.hpp"
 
 TEST( logic, initMap ) {
     char     temp_emptyMap[ MAP_SIZE ];
@@ -62,13 +62,13 @@ TEST( logic, initMap ) {
 }
 
 TEST( logic, initInventory ) {
-    initInventory( (ITEMS)NULL );
+    initInventory( (item_t)NULL );
 
     playerInventory[ 2 ] = HEALTH;
     playerInventoryItemCount++;
 
     ASSERT_EQ( playerInventory[ 2 ], HEALTH );
-    ASSERT_EQ( (int)playerInventoryItemCount, MAX_PLAYER_ITEM_COUNT + 1 );
+    ASSERT_EQ( (int32_t)playerInventoryItemCount, MAX_PLAYER_ITEM_COUNT + 1 );
 
     initInventory( EMPTY );
 
@@ -101,8 +101,8 @@ TEST( logic, getOverview ) {
 
     getOverview( playerPosition );
 
-    memset( &temp_vision, 0,      sizeof( temp_vision ) );
-    memcpy( temp_vision,  vision, sizeof( temp_vision ) );
+    memset( &temp_vision, 0,      stringLength( vision ) );
+    memcpy( temp_vision,  vision, stringLength( vision ) );
 
     ASSERT_STREQ( temp_vision, vision );
 
@@ -112,8 +112,8 @@ TEST( logic, getOverview ) {
 
     ASSERT_STRNE( temp_vision, vision );
 
-    memset( &temp_vision, 0,      sizeof( temp_vision ) );
-    memcpy( temp_vision,  vision, sizeof( temp_vision ) );
+    memset( &temp_vision, 0,      stringLength( vision ) );
+    memcpy( temp_vision,  vision, stringLength( vision ) );
 
     ASSERT_STREQ( temp_vision, vision );
 }
@@ -131,7 +131,7 @@ TEST( logic, getPlayerInventoryPlaceOf ) {
     ASSERT_EQ( getPlayerInventoryPlaceOf( HEALTH ),  2 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ),  1 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENCE ), 0 );
-    ASSERT_EQ( getPlayerInventoryPlaceOf( (ITEMS)NULL ), INT8_MIN );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( (item_t)NULL ), INT8_MIN );
 }
 
 TEST( logic, inventoryAdd ) {
@@ -141,16 +141,16 @@ TEST( logic, inventoryAdd ) {
     ASSERT_EQ( playerInventory[ 0 ], ATTACK );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ), 0 );
 
-    ASSERT_TRUE( inventoryAdd( (ITEMS)NULL ) );
+    ASSERT_TRUE( inventoryAdd( (item_t)NULL ) );
     ASSERT_EQ( playerInventory[ 1 ], NULL );
-    ASSERT_EQ( getPlayerInventoryPlaceOf( (ITEMS)NULL ), 1 );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( (item_t)NULL ), 1 );
 
     ASSERT_FALSE( inventoryAdd( ATTACK, 0 ) );
 
-    initInventory( (ITEMS)NULL );
+    initInventory( (item_t)NULL );
 
     ASSERT_FALSE( inventoryAdd( ATTACK ) );
-    ASSERT_FALSE( inventoryAdd( (ITEMS)NULL ) );
+    ASSERT_FALSE( inventoryAdd( (item_t)NULL ) );
 }
 
 TEST( logic, usePlayerItem ) {
@@ -170,7 +170,7 @@ TEST( logic, usePlayerItem ) {
     ASSERT_EQ( getPlayerInventoryPlaceOf( EMPTY ), 0 );
 
     ASSERT_FALSE( usePlayerItem( ATTACK ) );
-    ASSERT_FALSE( usePlayerItem( (ITEMS)NULL ) );
+    ASSERT_FALSE( usePlayerItem( (item_t)NULL ) );
 }
 
 TEST( logic, move ) {
@@ -185,7 +185,7 @@ TEST( logic, DoPlayerMove ) {
 
     uint32_t temp_playerPosition = playerPosition;
 
-    ASSERT_TRUE( DoPlayerMove( 80 ) ); // DOWN
+    ASSERT_TRUE( DoPlayerMove( DOWN ) );
     ASSERT_NE( temp_playerPosition, playerPosition );
 
     temp_playerPosition = playerPosition;
@@ -193,9 +193,9 @@ TEST( logic, DoPlayerMove ) {
     ASSERT_TRUE( DoPlayerMove( 5 ) ); // + 5 from current position, '.' or '#' expected
     ASSERT_EQ( temp_playerPosition, playerPosition );
 
-    initMap();  // reset player position
+    initMap(); // Reset player position
 
-    guardiansLeft = 0; // we can pass through door if all guardians annihilated
+    guardiansLeft = 0; // We can pass through door if all guardians annihilated
 
     ASSERT_FALSE( DoPlayerMove( 396 ) ); // + 396 from current position, door expected ( '>' or '<' )
     ASSERT_EQ( temp_playerPosition, playerPosition );

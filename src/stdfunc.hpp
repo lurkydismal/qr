@@ -12,7 +12,9 @@
 #include <stdio.h>
 #endif
 #include <stdint.h>
-#include <stddef.h>
+#ifndef INT8_MIN
+#define INT8_MIN -128
+#endif
 
 ///////////////
 /// @brief Pass from Python, same as NULL.
@@ -24,7 +26,7 @@
 /// @param[in] _boolean Boolean value to convert to string.
 /// @return Constant char pointer to text. <b>( OK || Failed )</b>
 ///////////////
-inline const char* const boolToString( bool _boolean ) noexcept {
+inline const char* const boolToString( bool _boolean ) {
     //! <b>[return]</b>
     /// End of function.
     /// @code{.cpp}
@@ -37,9 +39,9 @@ inline const char* const boolToString( bool _boolean ) noexcept {
 /// @brief Inline function that find length of an integer number.
 /// @details Can get length of negative and positive number.
 /// @param[in] _number Number to get length from.
-/// @return Length of number.
+/// @return Number length.
 ///////////////
-inline uint_fast32_t lengthOfInt( long _number ) noexcept {
+inline uint_fast32_t lengthOfInt( long _number ) {
     //! <b>[declare]</b>
     /// Length of _number.
     /// @code{.cpp}
@@ -66,12 +68,57 @@ inline uint_fast32_t lengthOfInt( long _number ) noexcept {
 }
 
 ///////////////
+/// @brief Inline function that find length of an string.
+/// @param[in] _string String pointer to get length from.
+/// @return String length.
+///////////////
+inline uint_fast32_t stringLength( char* _string ) {
+    //! <b>[declare]</b>
+    /// Last symbol from _string.
+    /// @code{.cpp}
+    char* l_temp_string = _string;
+    /// @endcode
+    //! <b>[declare]</b>
+
+    //! <b>[count_length]</b>
+    /// Go through _string upon null-terminator.
+    /// @code{.cpp}
+    while ( *l_temp_string != '\0' ) {
+        l_temp_string++;
+    }
+    /// @endcode
+    //! <b>[count_length]</b>
+
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.cpp}
+    return ( l_temp_string - _string + 1 );
+    /// @endcode
+    //! <b>[return]</b>
+}
+
+///////////////
+/// @brief Inline function that find length of an string.
+/// @param[in] _string String to get length from.
+/// @return String length.
+///////////////
+template< const uint32_t _lengthOfText >
+inline uint_fast32_t stringLength( const char (&_string)[ _lengthOfText ] ) {
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.cpp}
+    return ( _lengthOfText );
+    /// @endcode
+    //! <b>[return]</b>
+}
+
+///////////////
 /// @brief Template function that print text to console.
 /// @details Uses \c WriteConsoleA from \c Windows.h
 /// @param[in] _text \c Text.
 ///////////////
-template< const unsigned int _lengthOfText >
-void print( const char (&_text)[ _lengthOfText ] ) noexcept {
+template< const uint32_t _lengthOfText >
+void print( const char (&_text)[ _lengthOfText ] ) {
     //! <b>[print]</b>
     /// Write text to console
     /// @code{.cpp}
@@ -84,7 +131,7 @@ void print( const char (&_text)[ _lengthOfText ] ) noexcept {
         NULL                               // Reserved. Must be NULL
     );
     #else
-    for ( unsigned int _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
+    for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
         putc( _text[ _symbolIndex ], stdout );
     }
     #endif
@@ -98,12 +145,12 @@ void print( const char (&_text)[ _lengthOfText ] ) noexcept {
 /// @param[in] _array Elements array to pop from.
 /// @param[in] _elementToPop Element to pop.
 ///////////////
-template < class _typeOfArray, const unsigned int _lengthOfArray >
+template < class _typeOfArray, const uint32_t _lengthOfArray >
 void pop( _typeOfArray (&_array)[ _lengthOfArray ], const _typeOfArray _elementToPop ) {
     //! <b>[for_each]</b>
     /// For each element of _array as index.
     /// @code{.cpp}
-    for ( unsigned int _elementOfArray = 0; _elementOfArray < _lengthOfArray; _elementOfArray++ ) {
+    for ( uint32_t _elementOfArray = 0; _elementOfArray < _lengthOfArray; _elementOfArray++ ) {
     /// @endcode
         //! <b>[compare]</b>
         /// Comparison each element of _array to needed value.
@@ -138,28 +185,72 @@ void pop( _typeOfArray (&_array)[ _lengthOfArray ], const _typeOfArray _elementT
     //! <b>[for_each]</b>
 }
 
-void print( const char* _text, const unsigned int _lengthOfText ) noexcept;
+void print( const char* _text, const uint32_t _lengthOfText );
 
-int Pow( int _number, unsigned int _exp );
+int Pow( int32_t _number, uint32_t _exp );
 
-unsigned int Rand( void );
+uint32_t Rand( void );
 
-void SRand( unsigned long _seed ) noexcept;
+void SRand( unsigned long _seed );
 
-void clearConsole( void ) noexcept;
+void clearConsole( void );
 
 #ifdef _WIN32
-bool LMC( HWND _windowHandle, const unsigned int _coordX, const unsigned int _coordY ) noexcept;
+bool LMC( HWND _windowHandle, const uint32_t _coordX, const uint32_t _coordY );
 #endif
 
-void* Malloc( unsigned int _numberOfBytes );
+void* Malloc( uint32_t _numberOfBytes );
 
 void Free( void* _firstbyte );
 
-void Memcpy( void* _destination, void* _source, size_t _numberOfBytes ) noexcept;
+void Memcpy( void* _destination, void* _source, size_t _numberOfBytes );
 
 char* Ltoa( long _number, char* _cString );
 
-char* Ltoa( long _number, char* _cString, int _base );
+char* Ltoa( long _number, char* _cString, int32_t _base );
 
-// int findDuplicate( std::vector< int > _numbers_v );
+///////////////
+/// @brief Function that find duplicate number in integer array.
+/// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
+/// @param[in] _numbers Array of integer values.
+/// @return Duplicate number or first number in array, if there is no duplicate.
+///////////////
+template< const uint32_t _lengthOfArray >
+int32_t findDuplicate( int32_t (&_numbers)[ _lengthOfArray ] ) {
+    //! <b>[declare]</b>
+    /// Two variables that contains first element of array
+    /// @code{.cpp}
+    int32_t l_tortoise = _numbers[ 0 ];
+    int32_t l_hare     = _numbers[ 0 ];
+    /// @endcode
+    //! <b>[declare]</b>
+
+    //! <b>[intersection]</b>
+    /// Find the intersection point of the two runners.
+    /// @code{.cpp}
+    do {
+        l_tortoise = _numbers[ l_tortoise ];
+        l_hare     = _numbers[ _numbers[ l_hare ] ];
+    } while ( l_tortoise != l_hare );
+    /// @endcode
+    //! <b>[intersection]</b>
+
+    //! <b>[entrance]</b>
+    /// Find the "entrance" to the cycle.
+    /// @code{.cpp}
+    l_tortoise = _numbers[ 0 ];
+
+    while ( l_tortoise != l_hare ) {
+        l_tortoise = _numbers[ l_tortoise ];
+        l_hare     = _numbers[ l_hare ];
+    }
+    /// @endcode
+    //! <b>[entrance]</b>
+
+    //! <b>[return]</b>
+    /// Parentheses with whitespaces means what we could change the return value in the asked place without pitfalls.
+    /// @code{.cpp}
+    return ( l_hare );
+    /// @endcode
+    //! <b>[return]</b>
+}

@@ -5,7 +5,7 @@ HEADER	=
 OUT	= qr
 CC	= g++
 WIN_CC	= i686-w64-mingw32-g++-win32
-FLAGS	= -g -c -Wall -masm=intel
+FLAGS	= -g -c -Wall -masm=intel -std=c++98
 TEST_FLAGS	= -g -c -Wall -I ./include/
 LFLAGS	= lib/* -static-libstdc++ -static-libgcc
 TEST_LFLAGS	= -L ./lib/ -lgtest -lpthread -lgtest_main

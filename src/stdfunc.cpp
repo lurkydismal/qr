@@ -21,7 +21,7 @@ static unsigned long g_seed = 1;
 /// @param[in] _text Pointer to text.
 /// @param[in] _lengthOfText Length of text.
 ///////////////
-void print( const char* _text, const unsigned int _lengthOfText ) noexcept {
+void print( const char* _text, const uint32_t _lengthOfText ) {
     //! <b>[print]</b>
     /// Write text to console
     /// @code{.cpp}
@@ -34,7 +34,7 @@ void print( const char* _text, const unsigned int _lengthOfText ) noexcept {
         NULL                               // Reserved. Must be NULL
     );
     #else
-    for ( unsigned int _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
+    for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
         putc( _text[ _symbolIndex ], stdout );
     }
     #endif
@@ -49,7 +49,7 @@ void print( const char* _text, const unsigned int _lengthOfText ) noexcept {
 /// @param[in] _exp Exponentiation value.
 /// @return Exponentiation of number.
 ///////////////
-int Pow( int _number, unsigned int _exp ) {
+int32_t Pow( int32_t _number, uint32_t _exp ) {
     if ( _exp == 1 ) {
         //! <b>[return]</b>
         /// End of function.
@@ -73,11 +73,11 @@ int Pow( int _number, unsigned int _exp ) {
 /// @details Use \c SRand() to set the seed.
 /// @return Generated random number.
 ///////////////
-unsigned int Rand( void ) {
+uint32_t Rand( void ) {
     //! <b>[random]</b>
     /// Generating random number from the \c seed.
     /// @code{.cpp}
-    g_seed = g_seed * (int)16807 % (unsigned int)0x7fffffff;
+    g_seed = g_seed * (int32_t)16807 % (uint32_t)0x7fffffff;
     /// @endcode
     //! <b>[random]</b>
 
@@ -92,7 +92,7 @@ unsigned int Rand( void ) {
 /// @details Use \c Rand() to generate random number from the \c seed.
 /// @param[in] l_seed Seed to set.
 ///////////////
-void SRand( unsigned long l_seed ) noexcept {
+void SRand( unsigned long l_seed ) {
     //! <b>[change]</b>
     /// Setting the \c seed.
     /// @code{.cpp}
@@ -105,7 +105,7 @@ void SRand( unsigned long l_seed ) noexcept {
 /// @brief Function that clear the console out screen.
 /// @details Filling console length with empty text.
 ///////////////
-void clearConsole( void ) noexcept {
+void clearConsole( void ) {
     #ifdef _WIN32
     //! <b>[declare]</b>
     /// Getting and declaring coordinates and console handle where to write.
@@ -143,7 +143,7 @@ void clearConsole( void ) noexcept {
     //! <b>[reset]</b>
     #else
     const char l_magicText[ 11 ] = "\e[1;1H\e[2J";
-    for ( unsigned int _symbolIndex = 0; _symbolIndex < 11; _symbolIndex++ ) {
+    for ( uint32_t _symbolIndex = 0; _symbolIndex < stringLength( l_magicText ); _symbolIndex++ ) {
         putc( l_magicText[ _symbolIndex ], stdout );
     }
     #endif
@@ -155,9 +155,10 @@ void clearConsole( void ) noexcept {
 /// param[in] _windowHandle Window handle.
 ///////////////
 #ifdef _WIN32
-bool LMC( HWND _windowHandle, const unsigned int _coordX, const unsigned int _coordY ) noexcept {
-    POINT l_point;
-    l_point.x = _coordX; l_point.y = _coordY;
+bool LMC( HWND _windowHandle, const long _coordX, const long _coordY ) {
+    POINT l_point = { _coordX, _coordY};
+    // l_point.x = _coordX;
+    // l_point.y = _coordY;
 
     //! <b>[]</b>
     /// The ClientToScreen function converts the client-area coordinates of a specified l_point to screen coordinates.
@@ -184,7 +185,7 @@ bool LMC( HWND _windowHandle, const unsigned int _coordX, const unsigned int _co
         /// @code{.cpp}
         INPUT l_mouseInput = { 0 }; // Empty
 
-        l_mouseInput.type = INPUT_MOUSE;
+        l_mouseInput.type       = INPUT_MOUSE;
         l_mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
         /// @endcode
         //! <b>[input]</b>
@@ -210,7 +211,7 @@ bool LMC( HWND _windowHandle, const unsigned int _coordX, const unsigned int _co
         //! <b>[input]</b>
         /// Editing the \c INPUT structure with parameters to up left mouse button.
         /// @code{.cpp}
-        l_mouseInput.type = INPUT_MOUSE;
+        l_mouseInput.type       = INPUT_MOUSE;
         l_mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP;
         /// @endcode
         //! <b>[input]</b>
