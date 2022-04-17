@@ -4,6 +4,7 @@
 ///////////////
 
 #include <stddef.h>                          // size_t NULL
+#include <stdint.h>
 
 #define HEAP_MEMORY_SIZE 150                 ///< How much memory we can use in total.
 #define MEMORY_AVAILABLE 1                   ///< Flag value if memory chunk is available.
@@ -14,11 +15,11 @@
 /// @details If the function reuses the same unit of storage released by a deallocation function (such as \c free), the functions are synchronized in such a way that the deallocation happens entirely before the next allocation.
 ///////////////
 typedef struct CHUNK_HEADER {
-    int startAddress;                        ///< Start address of this chunk.
+    int32_t startAddress;                    ///< Start address of this chunk.
     CHUNK_HEADER* next;                      ///< Next pointer on free list.
     size_t size;                             ///< The size of this chunk.
     bool isAvailable;                        ///< Indicates if this chunk is \c MEMORY_AVAILABLE or \c MEMORY_USED.
-    int endAddress;                          ///< End address of this chunk.
+    int32_t endAddress;                      ///< End address of this chunk.
 } chunk_header_t;
 
 //! <b>[global]</b>
@@ -26,7 +27,7 @@ typedef struct CHUNK_HEADER {
 /// @code{.cpp}
 chunk_header_t* g_chunkHeaderBegin;
 static char g_buffer[ HEAP_MEMORY_SIZE ];
-unsigned int g_heapSize;
+uint32_t g_heapSize;
 /// @endcode
 //! <b>[global]</b>
 
@@ -85,7 +86,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
     //! <b>[declare]</b>
     /// Declare allocation size and begin of current chunk.
     /// @code{.cpp}
-    int l_allocSize = _numberOfBytes + sizeof( chunk_header_t );
+    int32_t l_allocSize = _numberOfBytes + sizeof( chunk_header_t );
     chunk_header_t* l_currentChunk = g_chunkHeaderBegin;
     /// @endcode
     //! <b>[declare]</b>

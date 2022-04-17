@@ -9,13 +9,13 @@ TEST( logic, initMap ) {
     uint32_t temp_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
     uint32_t temp_randomMonstersPositions[ MAX_MONSTERS_ON_MAP ];
     uint32_t temp_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
-    uint32_t temp_playerPosition     = playerPosition;
-    uint32_t temp_guardiansLeft      = guardiansLeft;
-    uint32_t temp_randomMonstersLeft = randomMonstersLeft;
-    uint32_t temp_followMonstersLeft = followMonstersLeft;
+    uint32_t temp_playerPosition     = g_playerPosition;
+    uint32_t temp_guardiansLeft      = g_guardiansLeft;
+    uint32_t temp_randomMonstersLeft = g_randomMonstersLeft;
+    uint32_t temp_followMonstersLeft = g_followMonstersLeft;
 
-    memset( &temp_emptyMap, 0,        sizeof( temp_emptyMap ) );
-    memcpy( temp_emptyMap,  emptyMap, sizeof( temp_emptyMap ) );
+    memset( &temp_emptyMap, 0,          sizeof( temp_emptyMap ) );
+    memcpy( temp_emptyMap,  g_emptyMap, sizeof( temp_emptyMap ) );
 
     memset( &temp_map, 0,     sizeof( temp_map ) );
     memcpy( temp_map,  g_map, sizeof( temp_map ) );
@@ -31,8 +31,8 @@ TEST( logic, initMap ) {
 
     initMap();
 
-    ASSERT_STREQ( temp_emptyMap, emptyMap );
-    ASSERT_STRNE( temp_map, g_map );
+    ASSERT_STREQ( temp_emptyMap, g_emptyMap );
+    ASSERT_STRNE( temp_map,      g_map );
 
     for ( uint32_t _guardianPositionIndex : temp_guardiansPositions ) {
         ASSERT_NE(
@@ -55,41 +55,31 @@ TEST( logic, initMap ) {
         );
     }
 
-    ASSERT_NE( temp_playerPosition, playerPosition );
-    ASSERT_NE( temp_guardiansLeft,  guardiansLeft );
-    ASSERT_NE( temp_randomMonstersLeft, randomMonstersLeft );
-    ASSERT_NE( temp_followMonstersLeft, followMonstersLeft );
+    ASSERT_NE( temp_playerPosition,     g_playerPosition );
+    ASSERT_NE( temp_guardiansLeft,      g_guardiansLeft );
+    ASSERT_NE( temp_randomMonstersLeft, g_randomMonstersLeft );
+    ASSERT_NE( temp_followMonstersLeft, g_followMonstersLeft );
 }
 
 TEST( logic, initInventory ) {
     initInventory( (item_t)NULL );
 
-    playerInventory[ 2 ] = HEALTH;
-    playerInventoryItemCount++;
+    g_playerInventory[ 2 ] = HEALTH;
+    g_playerInventoryItemCount++;
 
-    ASSERT_EQ( playerInventory[ 2 ], HEALTH );
-    ASSERT_EQ( (int32_t)playerInventoryItemCount, MAX_PLAYER_ITEM_COUNT + 1 );
+    ASSERT_EQ( g_playerInventory[ 2 ], HEALTH );
+    ASSERT_EQ( (int32_t)g_playerInventoryItemCount, MAX_PLAYER_ITEM_COUNT + 1 );
 
     initInventory( EMPTY );
 
     inventoryAdd( HEALTH, 2 );
 
-    ASSERT_EQ( playerInventory[ 0 ], EMPTY );
-    ASSERT_EQ( playerInventory[ 1 ], EMPTY );
-    ASSERT_EQ( playerInventory[ 2 ], HEALTH );
-    ASSERT_EQ( playerInventory[ 3 ], EMPTY );
-    ASSERT_EQ( playerInventory[ 4 ], EMPTY );
-    ASSERT_EQ( playerInventoryItemCount, (uint32_t)1 );
-}
-
-TEST( logic, checkLose ) {
-    playerHealth = 1;
-    
-    ASSERT_TRUE( checkLose() );
-
-    playerHealth = 0;
-
-    ASSERT_FALSE( checkLose() );
+    ASSERT_EQ( g_playerInventory[ 0 ], EMPTY );
+    ASSERT_EQ( g_playerInventory[ 1 ], EMPTY );
+    ASSERT_EQ( g_playerInventory[ 2 ], HEALTH );
+    ASSERT_EQ( g_playerInventory[ 3 ], EMPTY );
+    ASSERT_EQ( g_playerInventory[ 4 ], EMPTY );
+    ASSERT_EQ( g_playerInventoryItemCount, (uint32_t)1 );
 }
 
 TEST( logic, getOverview ) {
@@ -99,23 +89,23 @@ TEST( logic, getOverview ) {
 
     initMap();
 
-    getOverview( playerPosition );
+    getOverview( g_playerPosition );
 
-    memset( &temp_vision, 0,      stringLength( vision ) );
-    memcpy( temp_vision,  vision, stringLength( vision ) );
+    memset( &temp_vision, 0,        stringLength( g_vision ) );
+    memcpy( temp_vision,  g_vision, stringLength( g_vision ) );
 
-    ASSERT_STREQ( temp_vision, vision );
+    ASSERT_STREQ( temp_vision, g_vision );
 
-    DoPlayerMove( RIGHT );
+    doPlayerMove( RIGHT );
 
-    getOverview( playerPosition );
+    getOverview( g_playerPosition );
 
-    ASSERT_STRNE( temp_vision, vision );
+    ASSERT_STRNE( temp_vision, g_vision );
 
-    memset( &temp_vision, 0,      stringLength( vision ) );
-    memcpy( temp_vision,  vision, stringLength( vision ) );
+    memset( &temp_vision, 0,        stringLength( g_vision ) );
+    memcpy( temp_vision,  g_vision, stringLength( g_vision ) );
 
-    ASSERT_STREQ( temp_vision, vision );
+    ASSERT_STREQ( temp_vision, g_vision );
 }
 
 TEST( logic, getPlayerInventoryPlaceOf ) {
@@ -138,11 +128,11 @@ TEST( logic, inventoryAdd ) {
     initInventory( EMPTY );
 
     ASSERT_TRUE( inventoryAdd( ATTACK ) );
-    ASSERT_EQ( playerInventory[ 0 ], ATTACK );
+    ASSERT_EQ( g_playerInventory[ 0 ], ATTACK );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ), 0 );
 
     ASSERT_TRUE( inventoryAdd( (item_t)NULL ) );
-    ASSERT_EQ( playerInventory[ 1 ], NULL );
+    ASSERT_EQ( g_playerInventory[ 1 ], NULL );
     ASSERT_EQ( getPlayerInventoryPlaceOf( (item_t)NULL ), 1 );
 
     ASSERT_FALSE( inventoryAdd( ATTACK, 0 ) );
@@ -157,16 +147,16 @@ TEST( logic, usePlayerItem ) {
     initInventory( DEFENCE );
 
     ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENCE ), 0 );
-    ASSERT_EQ( playerInventory[ 0 ], DEFENCE );
-    ASSERT_EQ( playerInventory[ 1 ], DEFENCE );
-    ASSERT_EQ( playerInventory[ 2 ], DEFENCE );
-    ASSERT_EQ( playerInventory[ 3 ], DEFENCE );
-    ASSERT_EQ( playerInventory[ 4 ], DEFENCE );
-    ASSERT_EQ( playerInventoryItemCount, (uint32_t)MAX_PLAYER_ITEM_COUNT );
+    ASSERT_EQ( g_playerInventory[ 0 ], DEFENCE );
+    ASSERT_EQ( g_playerInventory[ 1 ], DEFENCE );
+    ASSERT_EQ( g_playerInventory[ 2 ], DEFENCE );
+    ASSERT_EQ( g_playerInventory[ 3 ], DEFENCE );
+    ASSERT_EQ( g_playerInventory[ 4 ], DEFENCE );
+    ASSERT_EQ( g_playerInventoryItemCount, (uint32_t)MAX_PLAYER_ITEM_COUNT );
 
     ASSERT_TRUE( usePlayerItem( DEFENCE ) );
 
-    ASSERT_EQ( playerInventory[ 0 ], EMPTY );
+    ASSERT_EQ( g_playerInventory[ 0 ], EMPTY );
     ASSERT_EQ( getPlayerInventoryPlaceOf( EMPTY ), 0 );
 
     ASSERT_FALSE( usePlayerItem( ATTACK ) );
@@ -176,27 +166,27 @@ TEST( logic, usePlayerItem ) {
 TEST( logic, move ) {
     initMap();
 
-    EXPECT_EQ( g_map[ playerPosition + 1 ], '.' );
-    ASSERT_EQ( move( '@', playerPosition, 1 ), playerPosition + 1 );
+    EXPECT_EQ( g_map[ g_playerPosition + 1 ], '.' );
+    ASSERT_EQ( move( PLAYER, g_playerPosition, 1 ), g_playerPosition + 1 );
 }
 
 TEST( logic, DoPlayerMove ) {
     initMap();
 
-    uint32_t temp_playerPosition = playerPosition;
+    uint32_t temp_playerPosition = g_playerPosition;
 
-    ASSERT_TRUE( DoPlayerMove( DOWN ) );
-    ASSERT_NE( temp_playerPosition, playerPosition );
+    ASSERT_TRUE( doPlayerMove( DOWN ) );
+    ASSERT_NE( temp_playerPosition, g_playerPosition );
 
-    temp_playerPosition = playerPosition;
+    temp_playerPosition = g_playerPosition;
 
-    ASSERT_TRUE( DoPlayerMove( 5 ) ); // + 5 from current position, '.' or '#' expected
-    ASSERT_EQ( temp_playerPosition, playerPosition );
+    ASSERT_TRUE( doPlayerMove( 5 ) ); // + 5 from current position, '.' or '#' expected
+    ASSERT_EQ( temp_playerPosition, g_playerPosition );
 
     initMap(); // Reset player position
 
-    guardiansLeft = 0; // We can pass through door if all guardians annihilated
+    g_guardiansLeft = 0; // We can pass through door if all guardians annihilated
 
-    ASSERT_FALSE( DoPlayerMove( 396 ) ); // + 396 from current position, door expected ( '>' or '<' )
-    ASSERT_EQ( temp_playerPosition, playerPosition );
+    ASSERT_FALSE( doPlayerMove( 396 ) ); // + 396 from current position, door expected ( '>' or '<' )
+    ASSERT_EQ( temp_playerPosition, g_playerPosition );
 }

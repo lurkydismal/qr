@@ -3,6 +3,7 @@
 /// @brief Definitions of \c Memcpy and \c Ltoa functions.
 ///////////////
 #include <stddef.h>                 // size_t
+#include <stdint.h>
 
 ///////////////
 /// @brief Size of string buffer.
@@ -27,7 +28,7 @@ void Memcpy( void* _destination, void* _source, size_t _numberOfBytes )  {
     //! <b>[copy]</b>
     /// Copy contents of _source array to _destination array.
     /// @code{.cpp}
-    for ( unsigned int _byteIndex = 0; _byteIndex < _numberOfBytes; _byteIndex++ ) {
+    for ( uint32_t _byteIndex = 0; _byteIndex < _numberOfBytes; _byteIndex++ ) {
         l_cDestination[ _byteIndex ] = l_cSource[ _byteIndex ];
     }
     /// @endcode
@@ -45,13 +46,13 @@ char* Ltoa( long _number, char* _cString ) {
     //! <b>[declare]</b>
     /// Declare l_characterIndex to register, pointer to cString and buffer with converted string.
     /// @code{.cpp}
-    register unsigned int l_characterIndex;
+    register uint32_t l_characterIndex;
     char *l_tail, *l_head = _cString, l_buf[ BUFSIZE ];
     /// @endcode
 
     /// Set the last character of string to NULL terminator.
     /// @code{.cpp}
-    l_tail    = &l_buf[ BUFSIZE - 1 ];           /* last character position      */
+    l_tail    = &l_buf[ BUFSIZE - 1 ];       // last character position
     *l_tail-- = '\0';
     /// @endcode
     //! <b>[declare]</b>
@@ -102,11 +103,11 @@ char* Ltoa( long _number, char* _cString ) {
 /// @param[in] _base Number base to use for conversion.
 /// @return A character pointer to the converted string if successful, a NULL pointer if the number base specified is out of range.
 ///////////////
-char* Ltoa( long _number, char* _cString, int _base ) {
+char* Ltoa( long _number, char* _cString, int32_t _base ) {
     //! <b>[declare]</b>
     /// Declare l_characterIndex to register, pointer to cString and buffer with converted string.
     /// @code{.cpp}
-    register int l_characterIndex = 2;
+    register uint32_t l_characterIndex = 2;
     char *l_tail, *l_head = _cString, l_buf[ BUFSIZE ];
     /// @endcode
 

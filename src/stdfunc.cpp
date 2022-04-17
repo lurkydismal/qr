@@ -8,6 +8,68 @@
 #endif
 #include "stdfunc.hpp"                     // windows.h
 
+///////////////
+/// @brief Function that find length of an integer number.
+/// @details Can get length of negative and positive number.
+/// @param[in] _number Number to get length from.
+/// @return Number length.
+///////////////
+uint_fast32_t lengthOfInt( long _number ) {
+    //! <b>[declare]</b>
+    /// Length of _number.
+    /// @code{.cpp}
+    uint_fast32_t l_length = 0;
+    /// @endcode
+    //! <b>[declare]</b>
+
+    //! <b>[count_length]</b>
+    /// Divide by 10 while value not equal to 0.
+    /// @code{.cpp}
+    do {
+        l_length++;
+        _number /= 10;
+    } while ( _number != 0 );
+    /// @endcode
+    //! <b>[count_length]</b>
+
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.cpp}
+    return ( l_length );
+    /// @endcode
+    //! <b>[return]</b>
+}
+
+///////////////
+/// @brief Function that find length of an string.
+/// @param[in] _string String pointer to get length from.
+/// @return String length.
+///////////////
+uint_fast32_t stringLength( char* _string ) {
+    //! <b>[declare]</b>
+    /// Last symbol from _string.
+    /// @code{.cpp}
+    char* l_temp_string = _string;
+    /// @endcode
+    //! <b>[declare]</b>
+
+    //! <b>[count_length]</b>
+    /// Go through _string upon null-terminator.
+    /// @code{.cpp}
+    while ( *l_temp_string != '\0' ) {
+        l_temp_string++;
+    }
+    /// @endcode
+    //! <b>[count_length]</b>
+
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.cpp}
+    return ( l_temp_string - _string + 1 );
+    /// @endcode
+    //! <b>[return]</b>
+}
+
 //! <b>[declare]</b>
 /// \c seed that is in use by \c Rand and \c SRand functions.
 /// @code{.cpp}
@@ -143,7 +205,7 @@ void clearConsole( void ) {
     //! <b>[reset]</b>
     #else
     const char l_magicText[ 11 ] = "\e[1;1H\e[2J";
-    for ( uint32_t _symbolIndex = 0; _symbolIndex < stringLength( l_magicText ); _symbolIndex++ ) {
+    for ( uint32_t _symbolIndex = 0; _symbolIndex < sizeof( l_magicText ); _symbolIndex++ ) {
         putc( l_magicText[ _symbolIndex ], stdout );
     }
     #endif

@@ -2,85 +2,106 @@
 #include "stdfunc.hpp"
 
 int main( void ) {
+    const bool l_gameRunning = true;
+
     initMap();
 
     #ifdef EMPTY_PLAYER_INVENTORY
     initInventory( (item_t)EMPTY );
     #else
-    initInventory( (ITEMS)NULL );
+    initInventory( (item_t)NULL );
     #endif
 
-    playerInventory[ 2 ] = HEALTH;
-    playerInventoryItemCount++;
+    g_playerInventory[ 2 ] = HEALTH;
+    g_playerInventoryItemCount++;
+
+    const uint8_t l_keyScancodes[ 9 ] = {
+        VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_NUMPAD4, VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, VK_NUMPAD8, VK_NUMPAD9
+    };
 
     // First render
-    UpdateScreen();
+    updateScreen();
 
     // Game loop
-    for ( ;; ) {
+    while ( l_gameRunning ) {
         // Input handling
-        if ( GetAsyncKeyState( VK_NUMPAD5 ) ) {
-            if ( !DoOpponentMove() ) {
-                break;
+        for ( uint8_t _keyScancodeIndex = 0; _keyScancodeIndex < sizeof( l_keyScancodes ); _keyScancodeIndex++ ) {
+            if ( GetAsyncKeyState( l_keyScancodes[ _keyScancodeIndex ] ) ) {
+                direction_t l_offset;
+
+                switch ( l_keyScancodes[ _keyScancodeIndex ] ) {
+                    case VK_NUMPAD8:
+                    {
+                        l_offset = UP;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD9:
+                    {
+                        l_offset = UP_RIGHT;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD6:
+                    {
+                        l_offset = RIGHT;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD3:
+                    {
+                        l_offset = DOWN_RIGHT;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD2:
+                    {
+                        l_offset = DOWN;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD1:
+                    {
+                        l_offset = DOWN_LEFT;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD4:
+                    {
+                        l_offset = LEFT;
+
+                        break;
+                    }
+
+                    case VK_NUMPAD7:
+                    {
+                        l_offset = UP_LEFT;
+
+                        break;
+                    }
+
+                    default:
+                    {
+                        l_offset = STAY;
+
+                        break;
+                    }
+                }
+
+                if ( !doPlayerMove( l_offset ) || !doOpponentMove() ) {
+                    const_cast< bool& >( l_gameRunning ) = false;
+
+                    break;
+                }
+
+                updateScreen();
             }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD1 ) ) {
-            if ( !DoPlayerMove( 79 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD2 ) ) {
-            if ( !DoPlayerMove( 80 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD3 ) ) {
-            if ( !DoPlayerMove( 81 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD4 ) ) {
-            if ( !DoPlayerMove( -1 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD6 ) ) {
-            if ( !DoPlayerMove( 1 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD7 ) ) {
-            if ( !DoPlayerMove( -81 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD8 ) ) {
-            if ( !DoPlayerMove( -80 ) || !DoOpponentMove() ) {
-                break;
-            }
-
-            UpdateScreen();
-
-        } else if ( GetAsyncKeyState( VK_NUMPAD9 ) ) {
-            if ( !DoPlayerMove( -79 ) || !DoOpponentMove() ) {
-                break;
-            }
-            
-            UpdateScreen();
         }
 
         #ifdef _WIN32
@@ -89,7 +110,16 @@ int main( void ) {
     }
 
     // Level passed
-    checkLose();
+    if ( g_playerHealth ) {
+        #ifdef _WIN32
+        MessageBoxA( 0, "You Win!", "Victory!", 0 );
+        #endif
+
+    } else {
+        #ifdef _WIN32
+        MessageBoxA( 0, "You Lose!", "Defeat!", 0 );
+        #endif
+    }
 
     return (0);
 }

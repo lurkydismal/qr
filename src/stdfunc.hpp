@@ -12,6 +12,7 @@
 #include <stdio.h>
 #endif
 #include <stdint.h>
+
 #ifndef INT8_MIN
 #define INT8_MIN -128
 #endif
@@ -31,83 +32,6 @@ inline const char* const boolToString( bool _boolean ) {
     /// End of function.
     /// @code{.cpp}
     return ( _boolean ? "OK" : "Failed" );
-    /// @endcode
-    //! <b>[return]</b>
-}
-
-///////////////
-/// @brief Inline function that find length of an integer number.
-/// @details Can get length of negative and positive number.
-/// @param[in] _number Number to get length from.
-/// @return Number length.
-///////////////
-inline uint_fast32_t lengthOfInt( long _number ) {
-    //! <b>[declare]</b>
-    /// Length of _number.
-    /// @code{.cpp}
-    uint_fast32_t l_length = 0;
-    /// @endcode
-    //! <b>[declare]</b>
-
-    //! <b>[count_length]</b>
-    /// Divide by 10 while value not equal to 0.
-    /// @code{.cpp}
-    do {
-        l_length++;
-        _number /= 10;
-    } while ( _number != 0 );
-    /// @endcode
-    //! <b>[count_length]</b>
-
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.cpp}
-    return ( l_length );
-    /// @endcode
-    //! <b>[return]</b>
-}
-
-///////////////
-/// @brief Inline function that find length of an string.
-/// @param[in] _string String pointer to get length from.
-/// @return String length.
-///////////////
-inline uint_fast32_t stringLength( char* _string ) {
-    //! <b>[declare]</b>
-    /// Last symbol from _string.
-    /// @code{.cpp}
-    char* l_temp_string = _string;
-    /// @endcode
-    //! <b>[declare]</b>
-
-    //! <b>[count_length]</b>
-    /// Go through _string upon null-terminator.
-    /// @code{.cpp}
-    while ( *l_temp_string != '\0' ) {
-        l_temp_string++;
-    }
-    /// @endcode
-    //! <b>[count_length]</b>
-
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.cpp}
-    return ( l_temp_string - _string + 1 );
-    /// @endcode
-    //! <b>[return]</b>
-}
-
-///////////////
-/// @brief Inline function that find length of an string.
-/// @param[in] _string String to get length from.
-/// @return String length.
-///////////////
-template< const uint32_t _lengthOfText >
-inline uint_fast32_t stringLength( const char (&_string)[ _lengthOfText ] ) {
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.cpp}
-    return ( _lengthOfText );
     /// @endcode
     //! <b>[return]</b>
 }
@@ -184,6 +108,10 @@ void pop( _typeOfArray (&_array)[ _lengthOfArray ], const _typeOfArray _elementT
     }
     //! <b>[for_each]</b>
 }
+
+uint_fast32_t lengthOfInt( long _number );
+
+uint_fast32_t stringLength( char* _string );
 
 void print( const char* _text, const uint32_t _lengthOfText );
 
