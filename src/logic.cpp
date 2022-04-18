@@ -1,9 +1,9 @@
 #include "main.hpp"
 #include "stdfunc.hpp"
 
-item_t   g_playerInventory[ MAX_PLAYER_ITEM_COUNT ];
+item_t   g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
 uint32_t g_playerInventoryItemCount = 0;
-uint32_t g_playerHealth             = 2;
+int32_t  g_playerHealth              = 2;
 uint32_t g_playerExperience         = 0;
 uint32_t g_playerPosition;
 
@@ -33,7 +33,7 @@ const char* g_emptyMap = (
 +------------+                    +---------------+                           \n\
 ");
 
-char g_map[ MAP_SIZE ] = (
+char g_map[] = (
 "\
 +------+     +-------+   M#                  K####T                             \
 |....K.|  ###}.......|    #             +----/----+        C                    \
@@ -47,14 +47,14 @@ char g_map[ MAP_SIZE ] = (
 +------------+                    +---------------+                           \n\
 ");
 
-char g_vision[ OVERLOOK_RADIUS ];
+char g_vision[] = "00000 00000 00000 00000 00000 0";
 
 void initMap( void ) {
-    for ( uint32_t l_mapCell = 0; l_mapCell < MAP_SIZE; l_mapCell++ ) {
-        switch ( g_map[ l_mapCell ] ) {
+    for ( uint32_t _mapCellIndex = 0; _mapCellIndex < sizeof( g_map ); _mapCellIndex++ ) {
+        switch ( g_map[ _mapCellIndex ] ) {
             case PLAYER:
             {
-                g_playerPosition = l_mapCell;
+                g_playerPosition = _mapCellIndex;
 
                 break;
             }
@@ -62,7 +62,7 @@ void initMap( void ) {
             // Spawn opponents
             case GUARDIAN:
             {
-                g_guardiansPositions[ g_guardiansLeft ] = l_mapCell;
+                g_guardiansPositions[ g_guardiansLeft ] = _mapCellIndex;
                 g_guardiansLeft++;
 
                 break;
@@ -70,14 +70,14 @@ void initMap( void ) {
 
             case MONSTER:
             {
-                g_map[ l_mapCell ] = g_monsters[ Rand() % 2 ];
+                g_map[ _mapCellIndex ] = g_monsters[ Rand() % 2 ];
 
-                if ( g_map[ l_mapCell ] == 'R' ) {
-                    g_randomMonstersPositions[ g_randomMonstersLeft ] = l_mapCell;
+                if ( g_map[ _mapCellIndex ] == RANDOM_MONSTER ) {
+                    g_randomMonstersPositions[ g_randomMonstersLeft ] = _mapCellIndex;
                     g_randomMonstersLeft++;
 
                 } else {
-                    g_followMonstersPositions[ g_followMonstersLeft ] = l_mapCell;
+                    g_followMonstersPositions[ g_followMonstersLeft ] = _mapCellIndex;
                     g_followMonstersLeft++;
                 }
 
@@ -86,7 +86,7 @@ void initMap( void ) {
 
             case MONSTER_WITH_A_KEY:
             {
-                g_map[ l_mapCell ] = g_keyMonsters[ Rand() % 1 ];
+                g_map[ _mapCellIndex ] = g_keyMonsters[ Rand() % 1 ];
 
                 break;
             }
@@ -97,11 +97,11 @@ void initMap( void ) {
 void initInventory( item_t _item ) {
     g_playerInventoryItemCount = ( _item == EMPTY )
         ? 0
-        : MAX_PLAYER_ITEM_COUNT;
-    uint32_t l_inventoryCell = MAX_PLAYER_ITEM_COUNT;
+        : PLAYER_MAX_ITEM_COUNT;
+    uint32_t l_inventoryCellIndex = PLAYER_MAX_ITEM_COUNT;
 
-    while ( l_inventoryCell-- ) {
-        g_playerInventory[ l_inventoryCell ] = _item;
+    while ( l_inventoryCellIndex-- ) {
+        g_playerInventory[ l_inventoryCellIndex ] = _item;
     }
 }
 
@@ -109,7 +109,7 @@ void getOverview( const uint32_t _currentPosition ) {
     uint32_t l_startPosition = ( _currentPosition - ( 80 * 2 ) - 2 );
     uint32_t l_counter         = 0;
 
-    for ( uint32_t i = 1; i < 6; i++ ) {
+    for ( uint32_t _overwiewAreaIndex = 1; _overwiewAreaIndex < 6; _overwiewAreaIndex++ ) {
         if ( ( l_startPosition % 80 ) > ( ( _currentPosition % 80 ) + 2 ) ) {
             l_startPosition++;
 
@@ -117,24 +117,24 @@ void getOverview( const uint32_t _currentPosition ) {
             l_startPosition--;
         }
 
-        for ( uint32_t _mapCell = l_startPosition; _mapCell < ( l_startPosition + 4 + 1 ); _mapCell++ ) {
-            g_vision[ l_counter ] = g_map[ _mapCell ];
+        for ( uint32_t _mapCellIndex = l_startPosition; _mapCellIndex < ( l_startPosition + 4 + 1 ); _mapCellIndex++ ) {
+            g_vision[ l_counter ] = g_map[ _mapCellIndex ];
             l_counter++;
         }
 
         g_vision[ l_counter ] = '\n';
         l_counter++;
 
-        l_startPosition = ( _currentPosition - ( 80 * ( 2 - i ) ) - 2 );
+        l_startPosition = ( _currentPosition - ( 80 * ( 2 - _overwiewAreaIndex ) ) - 2 );
     }
 
     g_vision[ l_counter ] = '\0';
 }
 
 int32_t getPlayerInventoryPlaceOf( const item_t _item ) {
-    for ( uint32_t _inventoryCell = 0; _inventoryCell < MAX_PLAYER_ITEM_COUNT; _inventoryCell++ ) {
-        if ( g_playerInventory[ _inventoryCell ] == _item ) {
-            return ( (int32_t)_inventoryCell );
+    for ( uint32_t _inventoryCellIndex = 0; _inventoryCellIndex < PLAYER_MAX_ITEM_COUNT; _inventoryCellIndex++ ) {
+        if ( g_playerInventory[ _inventoryCellIndex ] == _item ) {
+            return ( (int32_t)_inventoryCellIndex );
         }
     }
 
@@ -143,7 +143,7 @@ int32_t getPlayerInventoryPlaceOf( const item_t _item ) {
 
 bool inventoryAdd( const item_t _item, const int32_t _itemIndex ) {
     if (
-        ( g_playerInventoryItemCount >= MAX_PLAYER_ITEM_COUNT ) ||
+        ( g_playerInventoryItemCount >= PLAYER_MAX_ITEM_COUNT ) ||
         (
             ( _itemIndex != INT8_MIN ) &&
             ( g_playerInventory[ _itemIndex ] != EMPTY )
@@ -165,7 +165,7 @@ bool inventoryAdd( const item_t _item, const int32_t _itemIndex ) {
 bool usePlayerItem( const item_t _item ) {
     int l_itemPlace = getPlayerInventoryPlaceOf( _item );
 
-    if ( ( !g_playerInventoryItemCount ) || ( l_itemPlace < 0 ) ) {
+    if ( ( g_playerInventoryItemCount < 1 ) || ( l_itemPlace < 0 ) ) {
         return (false);
     }
 
@@ -186,34 +186,34 @@ uint32_t move( const char _who, uint32_t _currentPosition, const int32_t _offset
 bool doPlayerMove( const uint32_t _offset ) {
     const char l_cellToMove = g_map[ g_playerPosition + _offset ];
 
-    for ( uint32_t i = 0; i < MONSTER_TYPES; i++ ) {
-        if ( l_cellToMove == g_monsters[ i ] ) {
-            g_playerPosition = fightMonster( PLAYER, g_playerPosition, _offset );
+    for ( uint32_t _monsterIndex = 0; _monsterIndex < sizeof( g_monsters ); _monsterIndex++ ) {
+        if ( l_cellToMove == g_monsters[ _monsterIndex ] ) {
+            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
 
             return ( g_playerPosition );
         }
     }
 
-    for ( uint32_t i = 0; i < KEY_MONSTER_TYPES; i++ ) {
-        if ( l_cellToMove == g_keyMonsters[ i ] ) {
-            g_playerPosition = fightKeyMonster( PLAYER, g_playerPosition, _offset );
+    for ( uint32_t _keyMonsterIndex = 0; _keyMonsterIndex < sizeof( g_keyMonsters ); _keyMonsterIndex++ ) {
+        if ( l_cellToMove == g_keyMonsters[ _keyMonsterIndex ] ) {
+            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
 
             return ( g_playerPosition );
         }
     }
 
     switch ( g_map[ g_playerPosition + _offset ] ) {
-        case '.':
-        case '#':
+        case FLOOR:
+        case BRIDGE:
         {
             g_playerPosition = move( PLAYER, g_playerPosition, _offset );
 
             break;
         }
 
-        case '}':
-        case '{':
-        case '/':
+        case DOOR_LEFT:
+        case DOOR_RIGHT:
+        case DOOR_MIDDLE:
         {
             if ( usePlayerItem( KEY ) ){
                 g_playerPosition = move( PLAYER, g_playerPosition, _offset );
@@ -222,8 +222,8 @@ bool doPlayerMove( const uint32_t _offset ) {
             break;
         }
 
-        case '>':
-        case '<':
+        case LADDER_LEFT:
+        case LADDER_RIGHT:
         {
             if ( !g_guardiansLeft ){
                 return ( false );
@@ -234,14 +234,14 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case GUARDIAN:
         {
-            g_playerPosition = fightGuardian( PLAYER, g_playerPosition, _offset );
+            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
 
             return ( g_playerPosition );
         }
 
         case KEY:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
                 g_playerInventoryItemCount++;
 
@@ -254,7 +254,7 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case HEALTH:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = HEALTH;
                 g_playerInventoryItemCount++;
 
@@ -267,7 +267,7 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case ATTACK:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = ATTACK;
                 g_playerInventoryItemCount++;
 
@@ -280,7 +280,7 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case DEFENCE:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = DEFENCE;
                 g_playerInventoryItemCount++;
 
@@ -293,10 +293,10 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case CHEST:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 const item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
 
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % CHEST_ITEM_COUNT ) ];
+                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ];
                 g_playerInventoryItemCount++;
 
                 g_playerPosition = move( PLAYER, g_playerPosition, _offset );
@@ -308,7 +308,7 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case TREASURE:
         {
-            if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) {
+            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
 
                 g_playerPosition = move( PLAYER, g_playerPosition, _offset );
@@ -361,13 +361,13 @@ static void _randomMove( const char _who, uint32_t& _currentPosition ) {
     };
 
     if (
-        ( g_map[ _currentPosition + l_offset ] == '.' ) ||
-        ( g_map[ _currentPosition + l_offset ] == '#' )
+        ( g_map[ _currentPosition + l_offset ] == FLOOR ) ||
+        ( g_map[ _currentPosition + l_offset ] == BRIDGE )
     ) {
         _currentPosition = move( _who, _currentPosition, l_offset );
 
     } else if ( g_map[ _currentPosition + l_offset ] == PLAYER ) {
-        _currentPosition = fightMonster( _who, _currentPosition, l_offset );
+        _currentPosition = fight( _who, _currentPosition, l_offset );
     }
 }
 
@@ -388,18 +388,13 @@ static void _followMove( const char _who, uint32_t& _currentPosition ) {
     }
 
     if (
-        ( g_map[ _currentPosition + l_offset ] == '.' ) ||
-        ( g_map[ _currentPosition + l_offset ] == '#' )
+        ( g_map[ _currentPosition + l_offset ] == FLOOR ) ||
+        ( g_map[ _currentPosition + l_offset ] == BRIDGE )
     ) {
         _currentPosition = move( _who, _currentPosition, l_offset );
 
     } else if ( g_map[ _currentPosition + l_offset ] == PLAYER ) {
-        if ( _who == GUARDIAN ) {
-            _currentPosition = fightGuardian( _who, _currentPosition, l_offset );
-
-        } else {
-            _currentPosition = fightMonster( _who, _currentPosition, l_offset );
-        }
+        _currentPosition = fight( _who, _currentPosition, l_offset );
     }
 }
 
@@ -412,138 +407,128 @@ bool doOpponentMove( void ) {
         }
     }
 
-    for ( uint32_t i = 0; i < g_randomMonstersLeft; i++ ) {
-        _randomMove( RANDOM_MONSTER, g_randomMonstersPositions[ i ] );
+    for ( uint32_t _randomMonsterIndex = 0; _randomMonsterIndex < g_randomMonstersLeft; _randomMonsterIndex++ ) {
+        _randomMove( RANDOM_MONSTER, g_randomMonstersPositions[ _randomMonsterIndex ] );
     }
 
-    for ( uint32_t i = 0; i < g_followMonstersLeft; i++ ) {
+    for ( uint32_t _followMonsterIndex = 0; _followMonsterIndex < g_followMonstersLeft; _followMonsterIndex++ ) {
         if ( l_isPlayerInVision ) {
-            _followMove( FOLLOW_MONSTER, g_followMonstersPositions[ i ] );
+            _followMove( FOLLOW_MONSTER, g_followMonstersPositions[ _followMonsterIndex ] );
 
         } else {
-            _randomMove( FOLLOW_MONSTER, g_followMonstersPositions[ i ] );
+            _randomMove( FOLLOW_MONSTER, g_followMonstersPositions[ _followMonsterIndex ] );
         }
     }
 
-    for ( uint32_t i = 0; i < g_guardiansLeft; i++ )
+    for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ )
         if ( l_isPlayerInVision ) {
-            _followMove( GUARDIAN, g_guardiansPositions[ i ] );
+            _followMove( GUARDIAN, g_guardiansPositions[ _guardianIndex ] );
 
         } else {
-            _randomMove( GUARDIAN, g_guardiansPositions[ i ] );
+            _randomMove( GUARDIAN, g_guardiansPositions[ _guardianIndex ] );
         }
 
     return (true);
 }
 
-uint32_t fightMonster( const char _who, uint32_t _currentPosition, const int32_t _offset ) {
-    g_playerHealth -= 1;
+uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offset ) {
+    const bool l_isPoweredAttack = usePlayerItem( ATTACK );
 
-    if ( !g_playerHealth ) {
-        if ( usePlayerItem( HEALTH ) ) {
-            g_playerHealth += 20;
+    if ( ( _who == GUARDIAN ) || ( g_map[ _currentPosition + _offset ] == GUARDIAN ) ) {
+        g_playerHealth -= ( usePlayerItem( DEFENCE ) ) ? 1 : 2;
 
-        } else {
-            return ( (uint32_t)0 );
-        }
-    }
+        g_guardianHealth -= (
+            1 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_SUPER_DMG ) +
+            (uint8_t)l_isPoweredAttack
+        );
 
-    g_monsterHealth -= ( usePlayerItem( ATTACK ) )
-        ? ( ( 5 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_DMG ) ) * 2 )
-        : ( 5 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_DMG ) );
+        if ( !g_guardianHealth ) {
+            g_guardianHealth = GUARDIAN_MAX_HEALTH;
+            g_guardiansLeft--;
 
-    if ( !g_monsterHealth ) {
-        g_monsterHealth = MONSTER_MAX_HEALTH;
+            if ( _who == PLAYER ) {
+                pop( g_guardiansPositions, _currentPosition + _offset );
 
-        if ( _who == PLAYER ) {
-            if ( g_map[ _currentPosition + _offset ] == RANDOM_MONSTER  ) {
-                pop( g_randomMonstersPositions, _currentPosition + _offset );
-                g_randomMonstersLeft--;
+                return ( move( _who, _currentPosition, _offset ) );
 
             } else {
-                pop( g_followMonstersPositions, _currentPosition + _offset );
-                g_followMonstersLeft--;
-            }
+                pop( g_guardiansPositions, _currentPosition );
 
-            return ( move( _who, _currentPosition, _offset ) );
+                g_map[ _currentPosition ] = g_emptyMap[ _currentPosition ];
+            }
+        }
+
+    } else {
+        g_playerHealth -= 1;
+
+        const uint16_t l_attackDamage = (
+            5 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_DMG ) *
+            (
+                (uint8_t)l_isPoweredAttack +
+                (uint8_t)l_isPoweredAttack
+            )
+        );
+
+        if ( ( _who == KEY_MONSTER ) || ( g_map[ _currentPosition + _offset ] == KEY_MONSTER ) ) {
+            g_keyMonsterHealth -= l_attackDamage;
+
+            if ( !g_keyMonsterHealth ) {
+                if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) { // Monster are invulnerable, while player has no empty item slot
+                    g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
+                    g_playerInventoryItemCount++;
+                    g_keyMonsterHealth = KEY_MONSTER_MAX_HEALTH;
+
+                    return ( move( _who, _currentPosition, _offset ) );
+                }
+            }
 
         } else {
-            if ( _who == RANDOM_MONSTER ) {
-                pop( g_randomMonstersPositions, _currentPosition );
-                g_randomMonstersLeft--;
+            g_monsterHealth -= l_attackDamage;
 
-            } else {
-                pop( g_followMonstersPositions, _currentPosition );
-                g_followMonstersLeft--;
+            if ( !g_monsterHealth ) {
+                g_monsterHealth = MONSTER_MAX_HEALTH;
+
+                if ( _who == PLAYER ) {
+                    if ( g_map[ _currentPosition + _offset ] == RANDOM_MONSTER  ) {
+                        pop( g_randomMonstersPositions, _currentPosition + _offset );
+                        g_randomMonstersLeft--;
+
+                    } else {
+                        pop( g_followMonstersPositions, _currentPosition + _offset );
+                        g_followMonstersLeft--;
+                    }
+
+                    return ( move( _who, _currentPosition, _offset ) );
+
+                } else {
+                    if ( _who == RANDOM_MONSTER ) {
+                        pop( g_randomMonstersPositions, _currentPosition );
+                        g_randomMonstersLeft--;
+
+                    } else {
+                        pop( g_followMonstersPositions, _currentPosition );
+                        g_followMonstersLeft--;
+                    }
+
+                    g_map[ _currentPosition ] = g_emptyMap[ _currentPosition ];
+
+                    return ( (uint32_t)1 );
+                }
             }
-
-            g_map[ _currentPosition ] = g_emptyMap[ _currentPosition ];
-
-            return ( (uint32_t)1 );
         }
     }
-
-    return ( _currentPosition );
-}
-
-uint32_t fightKeyMonster( const char _who, uint32_t _currentPosition, const int32_t _offset ) {
-    g_playerHealth -= 1;
 
     if ( !g_playerHealth ) {
         if ( usePlayerItem( HEALTH ) ) {
             g_playerHealth += 20;
 
-        } else {
-            return ( (uint32_t)0 );
-        }
-    }
-
-    g_keyMonsterHealth -= ( usePlayerItem( ATTACK ) )
-        ? ( ( 5 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_DMG ) ) * 2 )
-        : ( 5 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_DMG ) );
-
-    if ( !g_keyMonsterHealth ) {
-        if ( g_playerInventoryItemCount < MAX_PLAYER_ITEM_COUNT ) { // monster are invulnerable, while player has no empty item slot
-            g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
-            g_playerInventoryItemCount++;
-            g_keyMonsterHealth = KEY_MONSTER_MAX_HEALTH;
-
-            return ( move( _who, _currentPosition, _offset ) );
-        }
-    }
-
-    return ( _currentPosition );
-}
-
-uint32_t fightGuardian( const char _who, uint32_t _currentPosition, const int32_t _offset ) {
-    g_playerHealth -= ( usePlayerItem( DEFENCE ) ) ? 1 : 2;
-
-    if ( !g_playerHealth ) {
-        if ( usePlayerItem( HEALTH ) ) {
-            g_playerHealth += 20;
+            if ( g_playerHealth > PLAYER_MAX_HEALTH ) {
+                g_playerHealth = PLAYER_MAX_HEALTH;
+            }
 
         } else {
             return ( (uint32_t)0 );
         }
-    }
-
-    g_guardianHealth -= ( usePlayerItem( ATTACK ) )
-        ? ( ( 1 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_SUPER_DMG ) ) + 1 )
-        : ( 1 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_SUPER_DMG ) );
-
-    if ( !g_guardianHealth ) {
-        g_guardianHealth = GUARDIAN_MAX_HEALTH;
-        g_guardiansLeft--;
-
-        if ( _who == PLAYER ) {
-            pop( g_guardiansPositions, _currentPosition + _offset );
-            return ( move( _who, _currentPosition, _offset ) );
-
-        } else {
-            pop( g_guardiansPositions, _currentPosition );
-        }
-
-        g_map[ _currentPosition ] = g_emptyMap[ _currentPosition ];
     }
 
     return ( _currentPosition );
@@ -555,11 +540,14 @@ void updateScreen( void ) {
     print( g_vision, stringLength( g_vision ) );
 
     print( "\nHP:", 5 );
+
     char* l_buffer = (char*)Malloc( lengthOfInt( g_playerHealth ) );
     Ltoa( g_playerHealth, l_buffer );
     print( l_buffer, lengthOfInt( g_playerHealth ) );
     Free( l_buffer );
+
     print( "\nEXP:", 6 );
+
     l_buffer = (char*)Malloc( lengthOfInt( g_playerExperience ) );
     Ltoa( g_playerExperience, l_buffer );
     print( l_buffer, lengthOfInt( g_playerExperience ) );
@@ -567,13 +555,14 @@ void updateScreen( void ) {
 
     print( "\nITEMS:", 8 );
 
-    l_buffer = (char*)Malloc( MAX_PLAYER_ITEM_COUNT * 2 );
+    l_buffer = (char*)Malloc( PLAYER_MAX_ITEM_COUNT * 2 );
 
-    for ( uint32_t l_item = 0; l_item < MAX_PLAYER_ITEM_COUNT; l_item++ ) {
+    for ( uint32_t l_item = 0; l_item < PLAYER_MAX_ITEM_COUNT; l_item++ ) {
         if ( g_playerInventory[ l_item ] ) {
             l_buffer[ 0 ] = g_playerInventory[ l_item ];
             l_buffer[ 1 ] = ' ';
             l_buffer[ 2 ] = '\0';
+
             print( l_buffer, 3 );
         }
     }

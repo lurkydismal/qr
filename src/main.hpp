@@ -4,21 +4,17 @@
 
 #include "stdfunc.hpp"
 
-#define MAP_SIZE         ( 80 * 10 )
-#define OVERLOOK_RADIUS  ( 29 + 2 )
-#define CHEST_ITEM_COUNT 3
+// #define CHEST_ITEM_COUNT 3
 #define MAX_EXPERIENCE_FROM_TREASURE 20
 #define EXPERIENCE_FOR_DMG           10
 #define EXPERIENCE_FOR_SUPER_DMG     20
-#define MAX_PLAYER_HEALTH      20
-#define MAX_PLAYER_ITEM_COUNT  5
-#define MAX_MONSTERS_ON_MAP    5
-#define MONSTER_TYPES          2
-#define MONSTER_MAX_HEALTH     20
-#define KEY_MONSTER_TYPES      1
-#define KEY_MONSTER_MAX_HEALTH 20
+#define PLAYER_MAX_HEALTH      20
+#define PLAYER_MAX_ITEM_COUNT  5
 #define MAX_GUARDIANS_ON_MAP   1
+#define MAX_MONSTERS_ON_MAP    5
 #define GUARDIAN_MAX_HEALTH    8
+#define MONSTER_MAX_HEALTH     20
+#define KEY_MONSTER_MAX_HEALTH 20
 
 #ifndef _WINUSER_
 #define VK_NUMPAD0 0x60
@@ -41,12 +37,22 @@ enum item_t {
     DEFENCE = 'D',
 };
 
+enum cell_t {
+    FLOOR        = '.',
+    BRIDGE       = '#',
+    DOOR_LEFT    = '}',
+    DOOR_RIGHT   = '{',
+    DOOR_MIDDLE  = '/',
+    LADDER_LEFT  = '>',
+    LADDER_RIGHT = '<',
+};
+
 enum usable_t {
     CHEST    = 'C',
     TREASURE = 'T',
 };
 
-enum {
+enum actor_t {
     PLAYER             = '@',
     GUARDIAN           = 'G',
     FOLLOW_MONSTER     = 'F',
@@ -68,9 +74,9 @@ enum direction_t {
     UP_LEFT    = -81,
 };
 
-extern item_t      g_playerInventory[ MAX_PLAYER_ITEM_COUNT ];
+extern item_t      g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
 extern uint32_t    g_playerInventoryItemCount;
-extern uint32_t    g_playerHealth;
+extern int32_t     g_playerHealth;
 extern uint32_t    g_playerExperience;
 extern uint32_t    g_playerPosition;
 
@@ -87,8 +93,8 @@ extern uint32_t    g_followMonstersLeft;
 extern uint32_t    g_randomMonstersLeft;
 
 extern const char* g_emptyMap;
-extern char        g_map[ MAP_SIZE ];
-extern char        g_vision[ OVERLOOK_RADIUS ];
+extern char        g_map[];
+extern char        g_vision[];
 
 void     initMap( void );
 void     initInventory( item_t item );
@@ -99,9 +105,7 @@ bool     usePlayerItem( const item_t item );
 uint32_t move( const char who, unsigned int currentPosition, const int offset );
 bool     doPlayerMove( const uint32_t offset );
 bool     doOpponentMove( void );
-uint32_t fightMonster(    const char who, uint32_t currentPosition, const int32_t offset );
-uint32_t fightKeyMonster( const char who, uint32_t currentPosition, const int32_t offset );
-uint32_t fightGuardian(   const char who, uint32_t currentPosition, const int32_t offset );
+uint32_t fight( const char who, uint32_t currentPosition, const int32_t offset );
 void     updateScreen( void );
 
 #ifndef _WIN32

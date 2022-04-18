@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#define MAP_SIZE        80 * 10
+#define OVERLOOK_RADIUS 29 + 2
+
 #include "../src/main.hpp"
 #include "../src/stdfunc.hpp"
 
@@ -68,7 +71,7 @@ TEST( logic, initInventory ) {
     g_playerInventoryItemCount++;
 
     ASSERT_EQ( g_playerInventory[ 2 ], HEALTH );
-    ASSERT_EQ( (int32_t)g_playerInventoryItemCount, MAX_PLAYER_ITEM_COUNT + 1 );
+    ASSERT_EQ( (int32_t)g_playerInventoryItemCount, PLAYER_MAX_ITEM_COUNT + 1 );
 
     initInventory( EMPTY );
 
@@ -84,8 +87,6 @@ TEST( logic, initInventory ) {
 
 TEST( logic, getOverview ) {
     char temp_vision[ OVERLOOK_RADIUS ];
-    // temp_vision[ 29 ] = '\n';
-    // temp_vision[ 30 ] = '\0';
 
     initMap();
 
@@ -152,7 +153,7 @@ TEST( logic, usePlayerItem ) {
     ASSERT_EQ( g_playerInventory[ 2 ], DEFENCE );
     ASSERT_EQ( g_playerInventory[ 3 ], DEFENCE );
     ASSERT_EQ( g_playerInventory[ 4 ], DEFENCE );
-    ASSERT_EQ( g_playerInventoryItemCount, (uint32_t)MAX_PLAYER_ITEM_COUNT );
+    ASSERT_EQ( g_playerInventoryItemCount, (uint32_t)PLAYER_MAX_ITEM_COUNT );
 
     ASSERT_TRUE( usePlayerItem( DEFENCE ) );
 

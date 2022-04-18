@@ -1,16 +1,12 @@
 #include "main.hpp"
 #include "stdfunc.hpp"
 
-int main( void ) {
+int main( int argumentCount, char** argumentArray ) {
     const bool l_gameRunning = true;
 
     initMap();
 
-    #ifdef EMPTY_PLAYER_INVENTORY
     initInventory( (item_t)EMPTY );
-    #else
-    initInventory( (item_t)NULL );
-    #endif
 
     g_playerInventory[ 2 ] = HEALTH;
     g_playerInventoryItemCount++;
@@ -106,6 +102,8 @@ int main( void ) {
 
         #ifdef _WIN32
         Sleep( 200 );
+        #else
+        sleep( 0.2 );
         #endif
     }
 
@@ -113,11 +111,15 @@ int main( void ) {
     if ( g_playerHealth ) {
         #ifdef _WIN32
         MessageBoxA( 0, "You Win!", "Victory!", 0 );
+        #else
+        print( "You Win!", 9 );
         #endif
 
     } else {
         #ifdef _WIN32
         MessageBoxA( 0, "You Lose!", "Defeat!", 0 );
+        #else
+        print( "You Lose!", 10 );
         #endif
     }
 

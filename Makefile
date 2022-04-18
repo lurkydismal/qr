@@ -14,7 +14,7 @@ all: $(OBJS)
 	$(WIN_CC) -g $(OBJS) -o build/$(OUT).exe $(LFLAGS)
 
 build/main.obj: src/main.cpp
-	$(WIN_CC) $(FLAGS) -DEMPTY_PLAYER_INVENTORY $? -o $@
+	$(WIN_CC) $(FLAGS) $? -o $@
 
 build/logic.obj: src/logic.cpp
 	$(WIN_CC) $(FLAGS) $? -o $@
