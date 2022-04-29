@@ -107,7 +107,7 @@ void initInventory( item_t _item ) {
 
 void getOverview( const uint32_t _currentPosition ) {
     uint32_t l_startPosition = ( _currentPosition - ( 80 * 2 ) - 2 );
-    uint32_t l_counter         = 0;
+    uint32_t l_counter       = 0;
 
     for ( uint32_t _overwiewAreaIndex = 1; _overwiewAreaIndex < 6; _overwiewAreaIndex++ ) {
         if ( ( l_startPosition % 80 ) > ( ( _currentPosition % 80 ) + 2 ) ) {

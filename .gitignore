@@ -3,4 +3,5 @@
 deprecated/
 *.bak
 build/*
+*.dll
 *.exe
