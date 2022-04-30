@@ -3,8 +3,8 @@
 #define MAP_SIZE        80 * 10
 #define OVERLOOK_RADIUS 29 + 2
 
-#include "../src/main.hpp"
-#include "../src/stdfunc.hpp"
+#include "../src/main.h"
+#include "../src/stdfunc.h"
 
 TEST( logic, initMap ) {
     char     temp_emptyMap[ MAP_SIZE ];
@@ -65,7 +65,7 @@ TEST( logic, initMap ) {
 }
 
 TEST( logic, initInventory ) {
-    initInventory( (item_t)NULL );
+    initInventory( (enum item_t)NULL );
 
     g_playerInventory[ 2 ] = HEALTH;
     g_playerInventoryItemCount++;
@@ -112,36 +112,36 @@ TEST( logic, getOverview ) {
 TEST( logic, getPlayerInventoryPlaceOf ) {
     initInventory( EMPTY );
 
-    inventoryAdd( DEFENCE );
-    inventoryAdd( ATTACK );
-    inventoryAdd( HEALTH );
-    inventoryAdd( KEY );
+    inventoryAdd( DEFENCE, INT8_MIN );
+    inventoryAdd( ATTACK, INT8_MIN );
+    inventoryAdd( HEALTH, INT8_MIN );
+    inventoryAdd( KEY, INT8_MIN );
 
     ASSERT_EQ( getPlayerInventoryPlaceOf( EMPTY ),   4 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( KEY ),     3 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( HEALTH ),  2 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ),  1 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENCE ), 0 );
-    ASSERT_EQ( getPlayerInventoryPlaceOf( (item_t)NULL ), INT8_MIN );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( (enum item_t)NULL ), INT8_MIN );
 }
 
 TEST( logic, inventoryAdd ) {
     initInventory( EMPTY );
 
-    ASSERT_TRUE( inventoryAdd( ATTACK ) );
+    ASSERT_TRUE( inventoryAdd( ATTACK, INT8_MIN ) );
     ASSERT_EQ( g_playerInventory[ 0 ], ATTACK );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ), 0 );
 
-    ASSERT_TRUE( inventoryAdd( (item_t)NULL ) );
+    ASSERT_TRUE( inventoryAdd( (enum item_t)NULL, INT8_MIN ) );
     ASSERT_EQ( g_playerInventory[ 1 ], NULL );
-    ASSERT_EQ( getPlayerInventoryPlaceOf( (item_t)NULL ), 1 );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( (enum item_t)NULL ), 1 );
 
     ASSERT_FALSE( inventoryAdd( ATTACK, 0 ) );
 
-    initInventory( (item_t)NULL );
+    initInventory( (enum item_t)NULL );
 
-    ASSERT_FALSE( inventoryAdd( ATTACK ) );
-    ASSERT_FALSE( inventoryAdd( (item_t)NULL ) );
+    ASSERT_FALSE( inventoryAdd( ATTACK, INT8_MIN ) );
+    ASSERT_FALSE( inventoryAdd( (enum item_t)NULL, INT8_MIN ) );
 }
 
 TEST( logic, usePlayerItem ) {
@@ -161,7 +161,7 @@ TEST( logic, usePlayerItem ) {
     ASSERT_EQ( getPlayerInventoryPlaceOf( EMPTY ), 0 );
 
     ASSERT_FALSE( usePlayerItem( ATTACK ) );
-    ASSERT_FALSE( usePlayerItem( (item_t)NULL ) );
+    ASSERT_FALSE( usePlayerItem( (enum item_t)NULL ) );
 }
 
 TEST( logic, move ) {

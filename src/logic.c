@@ -1,7 +1,9 @@
-#include "main.hpp"
-#include "stdfunc.hpp"
+#include <string.h>
 
-item_t   g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
+#include "main.h"
+#include "stdfunc.h"
+
+enum item_t   g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
 uint32_t g_playerInventoryItemCount = 0;
 int32_t  g_playerHealth              = 2;
 uint32_t g_playerExperience         = 0;
@@ -19,7 +21,7 @@ uint32_t      g_guardiansLeft      = 0;
 uint32_t      g_followMonstersLeft = 0;
 uint32_t      g_randomMonstersLeft = 0;
 
-const char* g_emptyMap = (
+const char* g_emptyMap =
 "\
 +------+     +-------+   ##                  ######                             \
 |......|  ###........|    #             +----.----+        #                    \
@@ -31,9 +33,9 @@ const char* g_emptyMap = (
 |......+-----+                    |...............|                             \
 >.............####################................|                             \
 +------------+                    +---------------+                           \n\
-");
+";
 
-char g_map[] = (
+char g_map[] =
 "\
 +------+     +-------+   M#                  K####T                             \
 |....K.|  ###}.......|    #             +----/----+        C                    \
@@ -45,7 +47,7 @@ char g_map[] = (
 |......+-----+                    |..........M....|                             \
 >............}K###################}....W..........|                             \
 +------------+                    +---------------+                           \n\
-");
+";
 
 char g_vision[] = "00000 00000 00000 00000 00000 0";
 
@@ -94,7 +96,7 @@ void initMap( void ) {
     }
 }
 
-void initInventory( item_t _item ) {
+void initInventory( enum item_t _item ) {
     g_playerInventoryItemCount = ( _item == EMPTY )
         ? 0
         : PLAYER_MAX_ITEM_COUNT;
@@ -131,7 +133,7 @@ void getOverview( const uint32_t _currentPosition ) {
     g_vision[ l_counter ] = '\0';
 }
 
-int32_t getPlayerInventoryPlaceOf( const item_t _item ) {
+int32_t getPlayerInventoryPlaceOf( const enum item_t _item ) {
     for ( uint32_t _inventoryCellIndex = 0; _inventoryCellIndex < PLAYER_MAX_ITEM_COUNT; _inventoryCellIndex++ ) {
         if ( g_playerInventory[ _inventoryCellIndex ] == _item ) {
             return ( (int32_t)_inventoryCellIndex );
@@ -141,7 +143,7 @@ int32_t getPlayerInventoryPlaceOf( const item_t _item ) {
     return ( INT8_MIN );
 }
 
-bool inventoryAdd( const item_t _item, const int32_t _itemIndex ) {
+bool inventoryAdd( const enum item_t _item, int32_t _itemIndex ) {
     if (
         ( g_playerInventoryItemCount >= PLAYER_MAX_ITEM_COUNT ) ||
         (
@@ -162,7 +164,7 @@ bool inventoryAdd( const item_t _item, const int32_t _itemIndex ) {
     return (true);
 }
 
-bool usePlayerItem( const item_t _item ) {
+bool usePlayerItem( const enum item_t _item ) {
     int l_itemPlace = getPlayerInventoryPlaceOf( _item );
 
     if ( ( g_playerInventoryItemCount < 1 ) || ( l_itemPlace < 0 ) ) {
@@ -294,7 +296,7 @@ bool doPlayerMove( const uint32_t _offset ) {
         case CHEST:
         {
             if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                const item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
+                const enum item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
 
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ];
                 g_playerInventoryItemCount++;
@@ -322,8 +324,8 @@ bool doPlayerMove( const uint32_t _offset ) {
     return (true);
 }
 
-static void _randomMove( const char _who, uint32_t& _currentPosition ) {
-    direction_t l_offset;
+static void _randomMove( const char _who, uint32_t* _currentPosition ) {
+    enum direction_t l_offset;
 
     switch ( Rand() % 4 ) {
         case 1:
@@ -361,26 +363,26 @@ static void _randomMove( const char _who, uint32_t& _currentPosition ) {
     };
 
     if (
-        ( g_map[ _currentPosition + l_offset ] == FLOOR ) ||
-        ( g_map[ _currentPosition + l_offset ] == BRIDGE )
+        ( g_map[ *_currentPosition + l_offset ] == FLOOR ) ||
+        ( g_map[ *_currentPosition + l_offset ] == BRIDGE )
     ) {
-        _currentPosition = move( _who, _currentPosition, l_offset );
+        *_currentPosition = move( _who, *_currentPosition, l_offset );
 
-    } else if ( g_map[ _currentPosition + l_offset ] == PLAYER ) {
-        _currentPosition = fight( _who, _currentPosition, l_offset );
+    } else if ( g_map[ *_currentPosition + l_offset ] == PLAYER ) {
+        *_currentPosition = fight( _who, *_currentPosition, l_offset );
     }
 }
 
-static void _followMove( const char _who, uint32_t& _currentPosition ) {
-    direction_t l_offset;
+static void _followMove( const char _who, uint32_t* _currentPosition ) {
+    enum direction_t l_offset;
 
-    if ( ( _currentPosition % 80 ) < ( g_playerPosition % 80 ) ) {
+    if ( ( *_currentPosition % 80 ) < ( g_playerPosition % 80 ) ) {
         l_offset = RIGHT;
 
-    } else if ( ( _currentPosition % 80 ) > ( g_playerPosition % 80 ) ) {
+    } else if ( ( *_currentPosition % 80 ) > ( g_playerPosition % 80 ) ) {
         l_offset = LEFT;
 
-    } else if ( _currentPosition < g_playerPosition ) {
+    } else if ( *_currentPosition < g_playerPosition ) {
         l_offset = DOWN;
 
     } else {
@@ -388,13 +390,13 @@ static void _followMove( const char _who, uint32_t& _currentPosition ) {
     }
 
     if (
-        ( g_map[ _currentPosition + l_offset ] == FLOOR ) ||
-        ( g_map[ _currentPosition + l_offset ] == BRIDGE )
+        ( g_map[ *_currentPosition + l_offset ] == FLOOR ) ||
+        ( g_map[ *_currentPosition + l_offset ] == BRIDGE )
     ) {
-        _currentPosition = move( _who, _currentPosition, l_offset );
+        *_currentPosition = move( _who, *_currentPosition, l_offset );
 
-    } else if ( g_map[ _currentPosition + l_offset ] == PLAYER ) {
-        _currentPosition = fight( _who, _currentPosition, l_offset );
+    } else if ( g_map[ *_currentPosition + l_offset ] == PLAYER ) {
+        *_currentPosition = fight( _who, *_currentPosition, l_offset );
     }
 }
 
@@ -408,24 +410,24 @@ bool doOpponentMove( void ) {
     }
 
     for ( uint32_t _randomMonsterIndex = 0; _randomMonsterIndex < g_randomMonstersLeft; _randomMonsterIndex++ ) {
-        _randomMove( RANDOM_MONSTER, g_randomMonstersPositions[ _randomMonsterIndex ] );
+        _randomMove( RANDOM_MONSTER, &g_randomMonstersPositions[ _randomMonsterIndex ] );
     }
 
     for ( uint32_t _followMonsterIndex = 0; _followMonsterIndex < g_followMonstersLeft; _followMonsterIndex++ ) {
         if ( l_isPlayerInVision ) {
-            _followMove( FOLLOW_MONSTER, g_followMonstersPositions[ _followMonsterIndex ] );
+            _followMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
 
         } else {
-            _randomMove( FOLLOW_MONSTER, g_followMonstersPositions[ _followMonsterIndex ] );
+            _randomMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
         }
     }
 
     for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ )
         if ( l_isPlayerInVision ) {
-            _followMove( GUARDIAN, g_guardiansPositions[ _guardianIndex ] );
+            _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
 
         } else {
-            _randomMove( GUARDIAN, g_guardiansPositions[ _guardianIndex ] );
+            _randomMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
         }
 
     return (true);
@@ -447,12 +449,28 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
             g_guardiansLeft--;
 
             if ( _who == PLAYER ) {
-                pop( g_guardiansPositions, _currentPosition + _offset );
+                memcpy(
+                    &g_guardiansPositions,
+                    pop(
+                        g_guardiansPositions,
+                        sizeof( g_guardiansPositions ),
+                        _currentPosition + _offset
+                    ),
+                    sizeof( g_guardiansPositions )
+                );
 
                 return ( move( _who, _currentPosition, _offset ) );
 
             } else {
-                pop( g_guardiansPositions, _currentPosition );
+                memcpy(
+                    &g_guardiansPositions,
+                    pop(
+                        g_guardiansPositions,
+                        sizeof( g_guardiansPositions ),
+                        _currentPosition
+                    ),
+                    sizeof( g_guardiansPositions )
+                );
 
                 g_map[ _currentPosition ] = g_emptyMap[ _currentPosition ];
             }
@@ -490,11 +508,29 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 
                 if ( _who == PLAYER ) {
                     if ( g_map[ _currentPosition + _offset ] == RANDOM_MONSTER  ) {
-                        pop( g_randomMonstersPositions, _currentPosition + _offset );
+                        memcpy(
+                            &g_randomMonstersPositions,
+                            pop(
+                                g_randomMonstersPositions,
+                                sizeof( g_guardiansPositions ),
+                                _currentPosition + _offset
+                            ),
+                            sizeof( g_randomMonstersPositions )
+                        );
+
                         g_randomMonstersLeft--;
 
                     } else {
-                        pop( g_followMonstersPositions, _currentPosition + _offset );
+                        memcpy(
+                            &g_randomMonstersPositions,
+                            pop(
+                                g_randomMonstersPositions,
+                                sizeof( g_guardiansPositions ),
+                                _currentPosition + _offset
+                            ),
+                            sizeof( g_randomMonstersPositions )
+                        );
+
                         g_followMonstersLeft--;
                     }
 
@@ -502,11 +538,29 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 
                 } else {
                     if ( _who == RANDOM_MONSTER ) {
-                        pop( g_randomMonstersPositions, _currentPosition );
+                        memcpy(
+                            &g_randomMonstersPositions,
+                            pop(
+                                g_randomMonstersPositions,
+                                sizeof( g_guardiansPositions ),
+                                _currentPosition
+                            ),
+                            sizeof( g_randomMonstersPositions )
+                        );
+
                         g_randomMonstersLeft--;
 
                     } else {
-                        pop( g_followMonstersPositions, _currentPosition );
+                        memcpy(
+                            &g_randomMonstersPositions,
+                            pop(
+                                g_randomMonstersPositions,
+                                sizeof( g_guardiansPositions ),
+                                _currentPosition
+                            ),
+                            sizeof( g_randomMonstersPositions )
+                        );
+
                         g_followMonstersLeft--;
                     }
 

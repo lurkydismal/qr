@@ -1,12 +1,78 @@
 ///////////////
-/// @file stdfunc.cpp
+/// @file stdfunc.c
 /// @brief Definition of many useful functions related to replace standart if needed.
 ///////////////
 
 #ifndef _WIN32
 #include <stdio.h>
 #endif
-#include "stdfunc.hpp"                     // windows.h
+#include "stdfunc.h" // windows.h
+
+///////////////
+/// @brief Inline function that converts \c bool to string.
+/// @param[in] _boolean Boolean value to convert to string.
+/// @return Constant char pointer to text. <b>( OK || Failed )</b>
+///////////////
+const char* const boolToString( bool _boolean ) {
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.c}
+    return ( _boolean ? "OK" : "Failed" );
+    /// @endcode
+    //! <b>[return]</b>
+}
+
+///////////////
+/// @brief Function that pop out element of array.
+/// @details Can pop out element of any type, but array should be of the same type. Pop out first element with needed value.
+/// @param[in] _array Elements array to pop from.
+/// @param[in] _elementToPop Element to pop.
+///////////////
+uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elementToPop ) {
+    //! <b>[for_each]</b>
+    /// For each element of _array as index.
+    /// @code{.c}
+    for ( uint32_t _elementOfArray = 0; _elementOfArray < _lengthOfArray; _elementOfArray++ ) {
+    /// @endcode
+        //! <b>[compare]</b>
+        /// Comparison each element of _array to needed value.
+        /// @code{.c}
+        if ( _array[ _elementOfArray ] == _elementToPop ) {
+        /// @endcode
+            //! <b>[pop]</b>
+            /// Moving values from next index to current.
+            /// @code{.c}
+            while ( _elementOfArray < ( _lengthOfArray - 1 ) ) {
+                _array[ _elementOfArray ] = _array[ _elementOfArray + 1 ];
+
+                _elementOfArray++;
+            }
+            /// @endcode
+
+            /// Replace the last element of _array with NULL value.
+            /// @code{.c}
+            _array[ _elementOfArray ] = (uint32_t)NULL;
+            /// @endcode
+            //! <b>[pop]</b>
+
+            //! <b>[explicit]</b>
+            /// Explicit end of loop.
+            /// @code{.c}
+            break;
+            /// @endcode
+            //! <b>[explicit]</b>
+        }
+        //! <b>[compare]</b>
+    }
+    //! <b>[for_each]</b>
+
+    //! <b>[return]</b>
+    /// End of function.
+    /// @code{.c}
+    return ( _array );
+    /// @endcode
+    //! <b>[return]</b>
+}
 
 ///////////////
 /// @brief Function that find length of an integer number.
@@ -17,14 +83,14 @@
 uint_fast32_t lengthOfInt( long _number ) {
     //! <b>[declare]</b>
     /// Length of _number.
-    /// @code{.cpp}
+    /// @code{.c}
     uint_fast32_t l_length = 0;
     /// @endcode
     //! <b>[declare]</b>
 
     //! <b>[count_length]</b>
     /// Divide by 10 while value not equal to 0.
-    /// @code{.cpp}
+    /// @code{.c}
     do {
         l_length++;
         _number /= 10;
@@ -34,7 +100,7 @@ uint_fast32_t lengthOfInt( long _number ) {
 
     //! <b>[return]</b>
     /// End of function.
-    /// @code{.cpp}
+    /// @code{.c}
     return ( l_length );
     /// @endcode
     //! <b>[return]</b>
@@ -48,14 +114,14 @@ uint_fast32_t lengthOfInt( long _number ) {
 uint_fast32_t stringLength( char* _string ) {
     //! <b>[declare]</b>
     /// Last symbol from _string.
-    /// @code{.cpp}
+    /// @code{.c}
     char* l_temp_string = _string;
     /// @endcode
     //! <b>[declare]</b>
 
     //! <b>[count_length]</b>
     /// Go through _string upon null-terminator.
-    /// @code{.cpp}
+    /// @code{.c}
     while ( *l_temp_string != '\0' ) {
         l_temp_string++;
     }
@@ -64,7 +130,7 @@ uint_fast32_t stringLength( char* _string ) {
 
     //! <b>[return]</b>
     /// End of function.
-    /// @code{.cpp}
+    /// @code{.c}
     return ( l_temp_string - _string + 1 );
     /// @endcode
     //! <b>[return]</b>
@@ -72,7 +138,7 @@ uint_fast32_t stringLength( char* _string ) {
 
 //! <b>[declare]</b>
 /// \c seed that is in use by \c Rand and \c SRand functions.
-/// @code{.cpp}
+/// @code{.c}
 static unsigned long g_seed = 1;
 /// @endcode
 //! <b>[declare]</b>
@@ -86,7 +152,7 @@ static unsigned long g_seed = 1;
 void print( const char* _text, const uint32_t _lengthOfText ) {
     //! <b>[print]</b>
     /// Write text to console
-    /// @code{.cpp}
+    /// @code{.c}
     #ifdef _WIN32
     WriteConsoleA(
         GetStdHandle( STD_OUTPUT_HANDLE ), // Console handle
@@ -115,7 +181,7 @@ int32_t Pow( int32_t _number, uint32_t _exp ) {
     if ( _exp == 1 ) {
         //! <b>[return]</b>
         /// End of function.
-        /// @code{.cpp}
+        /// @code{.c}
         return (1);
         /// @endcode
         //! <b>[return]</b>
@@ -123,7 +189,7 @@ int32_t Pow( int32_t _number, uint32_t _exp ) {
     } else {
         //! <b>[return]</b>
         /// Recursive multiply.
-        /// @code{.cpp}
+        /// @code{.c}
         return ( _number * Pow( _number, _exp-- ) );
         /// @endcode
         //! <b>[return]</b>
@@ -138,7 +204,7 @@ int32_t Pow( int32_t _number, uint32_t _exp ) {
 uint32_t Rand( void ) {
     //! <b>[random]</b>
     /// Generating random number from the \c seed.
-    /// @code{.cpp}
+    /// @code{.c}
     g_seed = g_seed * (int32_t)16807 % (uint32_t)0x7fffffff;
     /// @endcode
     //! <b>[random]</b>
@@ -157,7 +223,7 @@ uint32_t Rand( void ) {
 void SRand( unsigned long l_seed ) {
     //! <b>[change]</b>
     /// Setting the \c seed.
-    /// @code{.cpp}
+    /// @code{.c}
     g_seed = l_seed;
     /// @endcode
     //! <b>[change]</b>
@@ -171,7 +237,7 @@ void clearConsole( void ) {
     #ifdef _WIN32
     //! <b>[declare]</b>
     /// Getting and declaring coordinates and console handle where to write.
-    /// @code{.cpp}
+    /// @code{.c}
     COORD l_topLeft = {
         0,              // X
         0               // Y
@@ -183,7 +249,7 @@ void clearConsole( void ) {
 
     //! <b>[length]</b>
     /// Getting length of console.
-    /// @code{.cpp}
+    /// @code{.c}
     GetConsoleScreenBufferInfo( l_consoleHandle, &l_consoleScreenInfo );
     DWORD l_numberOfWrittenCharacters, l_lengthOfText = l_consoleScreenInfo.dwSize.X * l_consoleScreenInfo.dwSize.Y;
     /// @endcode
@@ -191,7 +257,7 @@ void clearConsole( void ) {
 
     //! <b>[print]</b>
     /// Write empty text to console.
-    /// @code{.cpp}
+    /// @code{.c}
     FillConsoleOutputCharacter( l_consoleHandle, ' ', l_lengthOfText, l_topLeft, &l_numberOfWrittenCharacters );
     FillConsoleOutputAttribute( l_consoleHandle, l_consoleScreenInfo.wAttributes, l_lengthOfText, l_topLeft, &l_numberOfWrittenCharacters );
     /// @endcode
@@ -199,7 +265,7 @@ void clearConsole( void ) {
 
     //! <b>[reset]</b>
     /// Reset cursor position in console.
-    /// @code{.cpp}
+    /// @code{.c}
     SetConsoleCursorPosition( l_consoleHandle, l_topLeft );
     /// @endcode
     //! <b>[reset]</b>
@@ -212,96 +278,46 @@ void clearConsole( void ) {
 }
 
 ///////////////
-/// @brief Function that implements left mouse click.
-/// @details Clicks by \b X and \b Y coordinates.
-/// param[in] _windowHandle Window handle.
+/// @brief Function that find duplicate number in integer array.
+/// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
+/// @param[in] _numbers Array of integer values.
+/// @return Duplicate number or first number in array, if there is no duplicate.
 ///////////////
-#ifdef _WIN32
-bool LMC( HWND _windowHandle, const long _coordX, const long _coordY ) {
-    POINT l_point = { _coordX, _coordY};
-    // l_point.x = _coordX;
-    // l_point.y = _coordY;
-
-    //! <b>[]</b>
-    /// The ClientToScreen function converts the client-area coordinates of a specified l_point to screen coordinates.
-    /// @code{.cpp}
-    if ( ClientToScreen(
-        _windowHandle,              // A handle to the window whose client area is used for the conversion.
-        &l_point                    // A l_pointer to a \c POINT structure that contains the client coordinates to be converted. The new screen coordinates are copied into this structure if the function succeeds.
-        )
-    ) {
+int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray ) {
+    //! <b>[declare]</b>
+    /// Two variables that contains first element of array
+    /// @code{.c}
+    int32_t l_tortoise = _numbers[ 0 ];
+    int32_t l_hare     = _numbers[ 0 ];
     /// @endcode
-    //! <b>[]</b>
-        //! <b>[set_cursor_position]</b>
-        /// Setting cursor position by X and Y.
-        /// @code{.cpp}
-        SetCursorPos(
-            l_point.x,              // X
-            l_point.y               // Y
-        );
-        /// @endcode
-        //! <b>[set_cursor_position]</b>
+    //! <b>[declare]</b>
 
-        //! <b>[input]</b>
-        /// Creating the \c INPUT structure with parameters to down left mouse button.
-        /// @code{.cpp}
-        INPUT l_mouseInput = { 0 }; // Empty
+    //! <b>[intersection]</b>
+    /// Find the intersection point of the two runners.
+    /// @code{.c}
+    do {
+        l_tortoise = _numbers[ l_tortoise ];
+        l_hare     = _numbers[ _numbers[ l_hare ] ];
+    } while ( l_tortoise != l_hare );
+    /// @endcode
+    //! <b>[intersection]</b>
 
-        l_mouseInput.type       = INPUT_MOUSE;
-        l_mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-        /// @endcode
-        //! <b>[input]</b>
+    //! <b>[entrance]</b>
+    /// Find the "entrance" to the cycle.
+    /// @code{.c}
+    l_tortoise = _numbers[ 0 ];
 
-        //! <b>[click]</b>
-        /// Sendind input with \c INPUT structure to \c winuser.
-        /// @code{.cpp}
-        SendInput(
-            1,                      // The number of structures in the \c pInputs array.
-            &l_mouseInput,          // An array of \c INPUT structures. Each structure represents an event to be inserted into the keyboard or mouse input stream.
-            sizeof( l_mouseInput )  // The size, in bytes, of an \c INPUT structure. If cbSize is not the size of an \c INPUT structure, the function fails.
-        );
-        /// @endcode
-        //! <b>[click]</b>
-
-        //! <b>[sleep]</b>
-        /// Pause between mouse down and mouse up.
-        /// @code{.cpp}
-        Sleep( 200 );               // 200 ms
-        /// @endcode
-        //! <b>[sleep]</b>
-
-        //! <b>[input]</b>
-        /// Editing the \c INPUT structure with parameters to up left mouse button.
-        /// @code{.cpp}
-        l_mouseInput.type       = INPUT_MOUSE;
-        l_mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-        /// @endcode
-        //! <b>[input]</b>
-
-        //! <b>[click]</b>
-        /// Sendind input with \c INPUT structure to \c winuser.
-        /// @code{.cpp}
-        SendInput(
-            1,                      // The number of structures in the pInputs array.
-            &l_mouseInput,            // An array of INPUT structures. Each structure represents an event to be inserted into the keyboard or mouse input stream.
-            sizeof( l_mouseInput )    // The size, in bytes, of an INPUT structure. If cbSize is not the size of an INPUT structure, the function fails.
-        );
-        /// @endcode
-        //! <b>[click]</b>
-
-        //! <b>[return]</b>
-        /// Good end of function.
-        /// @code{.cpp}
-        return (true);
-        /// @endcode
-        //! <b>[return]</b>
+    while ( l_tortoise != l_hare ) {
+        l_tortoise = _numbers[ l_tortoise ];
+        l_hare     = _numbers[ l_hare ];
     }
+    /// @endcode
+    //! <b>[entrance]</b>
 
     //! <b>[return]</b>
-    /// Bad end of function.
-    /// @code{.cpp}
-    return (false);
+    /// Parentheses with whitespaces means what we could change the return value in the asked place without pitfalls.
+    /// @code{.c}
+    return ( l_hare );
     /// @endcode
     //! <b>[return]</b>
 }
-#endif

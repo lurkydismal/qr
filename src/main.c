@@ -1,12 +1,12 @@
-#include "main.hpp"
-#include "stdfunc.hpp"
+#include "main.h"
+#include "stdfunc.h"
 
 int main( int argumentCount, char** argumentArray ) {
-    const bool l_gameRunning = true;
+    bool l_gameRunning = true;
 
     initMap();
 
-    initInventory( (item_t)EMPTY );
+    initInventory( (enum item_t)EMPTY );
 
     g_playerInventory[ 2 ] = HEALTH;
     g_playerInventoryItemCount++;
@@ -23,7 +23,7 @@ int main( int argumentCount, char** argumentArray ) {
         // Input handling
         for ( uint8_t _keyScancodeIndex = 0; _keyScancodeIndex < sizeof( l_keyScancodes ); _keyScancodeIndex++ ) {
             if ( GetAsyncKeyState( l_keyScancodes[ _keyScancodeIndex ] ) ) {
-                direction_t l_offset;
+                enum direction_t l_offset;
 
                 switch ( l_keyScancodes[ _keyScancodeIndex ] ) {
                     case VK_NUMPAD8:
@@ -91,7 +91,7 @@ int main( int argumentCount, char** argumentArray ) {
                 }
 
                 if ( !doPlayerMove( l_offset ) || !doOpponentMove() ) {
-                    const_cast< bool& >( l_gameRunning ) = false;
+                    l_gameRunning = false;
 
                     break;
                 }

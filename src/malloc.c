@@ -1,30 +1,31 @@
 ///////////////
-/// @file malloc.cpp
+/// @file malloc.c
 /// @brief \c Malloc and \c Free definition.
 ///////////////
 
-#include <stddef.h>                          // size_t NULL
+#include <stddef.h>          // size_t NULL
 #include <stdint.h>
+#include <stdbool.h>
 
-#define HEAP_MEMORY_SIZE 150                 ///< How much memory we can use in total.
-#define MEMORY_AVAILABLE 1                   ///< Flag value if memory chunk is available.
-#define MEMORY_USED 0                        ///< Flag value if memory chunk is not available.
+#define HEAP_MEMORY_SIZE 150 ///< How much memory we can use in total.
+#define MEMORY_AVAILABLE 1   ///< Flag value if memory chunk is available.
+#define MEMORY_USED 0        ///< Flag value if memory chunk is not available.
 
 ///////////////
 /// @brief Only the storage referenced by the returned pointer is modified. No other storage locations are accessed by the call.
 /// @details If the function reuses the same unit of storage released by a deallocation function (such as \c free), the functions are synchronized in such a way that the deallocation happens entirely before the next allocation.
 ///////////////
 typedef struct CHUNK_HEADER {
-    int32_t startAddress;                    ///< Start address of this chunk.
-    CHUNK_HEADER* next;                      ///< Next pointer on free list.
-    size_t size;                             ///< The size of this chunk.
-    bool isAvailable;                        ///< Indicates if this chunk is \c MEMORY_AVAILABLE or \c MEMORY_USED.
-    int32_t endAddress;                      ///< End address of this chunk.
+    int32_t startAddress;    ///< Start address of this chunk.
+    struct CHUNK_HEADER* next;      ///< Next pointer on free list.
+    size_t size;             ///< The size of this chunk.
+    bool isAvailable;        ///< Indicates if this chunk is \c MEMORY_AVAILABLE or \c MEMORY_USED.
+    int32_t endAddress;      ///< End address of this chunk.
 } chunk_header_t;
 
 //! <b>[global]</b>
 /// Global declaration of variables.
-/// @code{.cpp}
+/// @code{.c}
 chunk_header_t* g_chunkHeaderBegin;
 static char g_buffer[ HEAP_MEMORY_SIZE ];
 uint32_t g_heapSize;
@@ -37,7 +38,7 @@ uint32_t g_heapSize;
 static void init( void ) {
     //! <b>[assign]</b>
     /// Assign some variables on first call.
-    /// @code{.cpp}
+    /// @code{.c}
     g_heapSize = HEAP_MEMORY_SIZE;
     g_chunkHeaderBegin = (chunk_header_t*)&g_buffer;
     g_chunkHeaderBegin->next = NULL;
@@ -55,7 +56,7 @@ static void init( void ) {
 static void initNextChunk( chunk_header_t* _currentChunk, unsigned int _numberOfBytes ) {
     //! <b>[assign]</b>
     /// Assign some variables on reinitialization free space chunk.
-    /// @code{.cpp}
+    /// @code{.c}
     g_heapSize -= _numberOfBytes;
     _currentChunk->next = NULL;
     _currentChunk->size = g_heapSize;
@@ -73,7 +74,7 @@ static void initNextChunk( chunk_header_t* _currentChunk, unsigned int _numberOf
 void* Malloc( unsigned int _numberOfBytes ) {
     //! <b>[init]</b>
     /// Do \c init on first call.
-    /// @code{.cpp}
+    /// @code{.c}
     static bool l_initFlag = false;
 
     if ( !l_initFlag ) {
@@ -85,7 +86,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
 
     //! <b>[declare]</b>
     /// Declare allocation size and begin of current chunk.
-    /// @code{.cpp}
+    /// @code{.c}
     int32_t l_allocSize = _numberOfBytes + sizeof( chunk_header_t );
     chunk_header_t* l_currentChunk = g_chunkHeaderBegin;
     /// @endcode
@@ -95,7 +96,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
         if ( l_currentChunk->isAvailable && (int)l_currentChunk->size >= l_allocSize ) {
             //! <b>[alloc]</b>
             /// Allocate chunk of memory.
-            /// @code{.cpp}
+            /// @code{.c}
             l_currentChunk->isAvailable = MEMORY_USED;
             l_currentChunk->size = l_allocSize;
             l_currentChunk->next = l_currentChunk + l_allocSize;
@@ -106,7 +107,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
 
             //! <b>[return]</b>
             /// Return pointer to memory region.
-            /// @code{.cpp}
+            /// @code{.c}
             return ( l_currentChunk + sizeof( chunk_header_t ) );
             /// @endcode
             //! <b>[return]</b>
@@ -114,7 +115,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
 
         //! <b>[step]</b>
         /// Step on next chunk if this not suits.
-        /// @code{.cpp}
+        /// @code{.c}
         l_currentChunk = l_currentChunk->next;
         /// @endcode
         //! <b>[step]</b>
@@ -122,7 +123,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
 
     //! <b>[return]</b>
     /// Return NULL if failed.
-    /// @code{.cpp}
+    /// @code{.c}
     return ( NULL );
     /// @endcode
     //! <b>[return]</b>
@@ -136,7 +137,7 @@ void* Malloc( unsigned int _numberOfBytes ) {
 void Free( void* _firstbyte ) {
     //! <b>[declare]</b>
     /// Declare start address of memory region and start address of allocation heap.
-    /// @code{.cpp}
+    /// @code{.c}
     chunk_header_t* l_mem = (chunk_header_t*)_firstbyte - sizeof( chunk_header_t );
     chunk_header_t* l_currentChunk = g_chunkHeaderBegin;
     /// @endcode
@@ -146,7 +147,7 @@ void Free( void* _firstbyte ) {
         if ( l_currentChunk == l_mem ) {
             //! <b>[deallocate]</b>
             /// Mark the block as being available.
-            /// @code{.cpp}
+            /// @code{.c}
             g_heapSize += l_currentChunk->size;
 
             l_currentChunk->isAvailable = MEMORY_AVAILABLE;
@@ -158,7 +159,7 @@ void Free( void* _firstbyte ) {
 
         //! <b>[step]</b>
         /// Step on next chunk if this not suits.
-        /// @code{.cpp}
+        /// @code{.c}
         l_currentChunk = l_currentChunk->next;
         /// @endcode
         //! <b>[step]</b>
@@ -166,7 +167,7 @@ void Free( void* _firstbyte ) {
 
     //! <b>[free]</b>
     /// Free a \c pointer to memory chunk. End of function.
-    /// @code{.cpp}
+    /// @code{.c}
     _firstbyte = NULL;
     /// @endcode
     //! <b>[free]</b>

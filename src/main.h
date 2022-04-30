@@ -1,8 +1,9 @@
-#pragma once
+#ifndef _MAIN_H
+#define _MAIN_H
 
 #include <stdint.h>
 
-#include "stdfunc.hpp"
+#include "stdfunc.h"
 
 // #define CHEST_ITEM_COUNT 3
 #define MAX_EXPERIENCE_FROM_TREASURE 20
@@ -74,7 +75,7 @@ enum direction_t {
     UP_LEFT    = -81,
 };
 
-extern item_t      g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
+extern enum item_t g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
 extern uint32_t    g_playerInventoryItemCount;
 extern int32_t     g_playerHealth;
 extern uint32_t    g_playerExperience;
@@ -97,11 +98,11 @@ extern char        g_map[];
 extern char        g_vision[];
 
 void     initMap( void );
-void     initInventory( item_t item );
+void     initInventory( enum item_t item );
 void     getOverview( const uint32_t position );
-int32_t  getPlayerInventoryPlaceOf( const item_t item );
-bool     inventoryAdd( const item_t item, const int32_t itemIndex = INT8_MIN );
-bool     usePlayerItem( const item_t item );
+int32_t  getPlayerInventoryPlaceOf( const enum item_t item );
+bool     inventoryAdd( const enum item_t item, int32_t itemIndex );
+bool     usePlayerItem( const enum item_t item );
 uint32_t move( const char who, unsigned int currentPosition, const int offset );
 bool     doPlayerMove( const uint32_t offset );
 bool     doOpponentMove( void );
@@ -110,4 +111,6 @@ void     updateScreen( void );
 
 #ifndef _WIN32
 bool GetAsyncKeyState( uint32_t key );
+#endif
+
 #endif
