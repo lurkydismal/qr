@@ -16,7 +16,7 @@
 /// @param[in] _source Pointer to source variable.
 /// @param[in] _numberOfBytes Size of source.
 ///////////////
-void Memcpy( void* _destination, void* _source, size_t _numberOfBytes )  {
+void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes )  {
     //! <b>[typecast]</b>
     /// Typecast _source and _destination addresses to <tt>(char*)</tt>.
     /// @code{.c}

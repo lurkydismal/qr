@@ -26,19 +26,8 @@
 ///////////////
 #define Pass (void*)0
 
-///////////////
-/// @brief Inline function that converts \c bool to string.
-/// @param[in] _boolean Boolean value to convert to string.
-/// @return Constant char pointer to text. <b>( OK || Failed )</b>
-///////////////
 const char* const boolToString( bool _boolean );
 
-///////////////
-/// @brief Function that pop out element of array.
-/// @details Can pop out element of any type, but array should be of the same type. Pop out first element with needed value.
-/// @param[in] _array Elements array to pop from.
-/// @param[in] _elementToPop Element to pop.
-///////////////
 uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elementToPop );
 
 uint_fast32_t lengthOfInt( long _number );
@@ -59,16 +48,10 @@ void* Malloc( uint32_t _numberOfBytes );
 
 void Free( void* _firstbyte );
 
-void Memcpy( void* _destination, void* _source, size_t _numberOfBytes );
+void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes );
 
 char* Ltoa( long _number, char* _cString );
 
-///////////////
-/// @brief Function that find duplicate number in integer array.
-/// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
-/// @param[in] _numbers Array of integer values.
-/// @return Duplicate number or first number in array, if there is no duplicate.
-///////////////
 int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray );
 
 #endif

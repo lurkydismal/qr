@@ -163,7 +163,7 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
     );
     #else
     for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
-        putc( _text[ _symbolIndex ], stdout );
+        putchar( _text[ _symbolIndex ] );
     }
     #endif
     /// @endcode
@@ -270,9 +270,10 @@ void clearConsole( void ) {
     /// @endcode
     //! <b>[reset]</b>
     #else
-    const char l_magicText[ 11 ] = "\e[1;1H\e[2J";
+    const char l_magicText[] = "\033[1;1H\033[2J";
+
     for ( uint32_t _symbolIndex = 0; _symbolIndex < sizeof( l_magicText ); _symbolIndex++ ) {
-        putc( l_magicText[ _symbolIndex ], stdout );
+        putchar( l_magicText[ _symbolIndex ] );
     }
     #endif
 }

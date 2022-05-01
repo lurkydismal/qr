@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "main.h"
 #include "stdfunc.h"
 
@@ -449,7 +447,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
             g_guardiansLeft--;
 
             if ( _who == PLAYER ) {
-                memcpy(
+                Memcpy(
                     &g_guardiansPositions,
                     pop(
                         g_guardiansPositions,
@@ -462,7 +460,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
                 return ( move( _who, _currentPosition, _offset ) );
 
             } else {
-                memcpy(
+                Memcpy(
                     &g_guardiansPositions,
                     pop(
                         g_guardiansPositions,
@@ -508,7 +506,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 
                 if ( _who == PLAYER ) {
                     if ( g_map[ _currentPosition + _offset ] == RANDOM_MONSTER  ) {
-                        memcpy(
+                        Memcpy(
                             &g_randomMonstersPositions,
                             pop(
                                 g_randomMonstersPositions,
@@ -521,7 +519,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
                         g_randomMonstersLeft--;
 
                     } else {
-                        memcpy(
+                        Memcpy(
                             &g_randomMonstersPositions,
                             pop(
                                 g_randomMonstersPositions,
@@ -538,7 +536,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 
                 } else {
                     if ( _who == RANDOM_MONSTER ) {
-                        memcpy(
+                        Memcpy(
                             &g_randomMonstersPositions,
                             pop(
                                 g_randomMonstersPositions,
@@ -551,7 +549,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
                         g_randomMonstersLeft--;
 
                     } else {
-                        memcpy(
+                        Memcpy(
                             &g_randomMonstersPositions,
                             pop(
                                 g_randomMonstersPositions,

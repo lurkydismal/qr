@@ -35,7 +35,7 @@ enum item_t {
     KEY     = 'K',
     HEALTH  = 'H',
     ATTACK  = 'A',
-    DEFENCE = 'D',
+    DEFENCE = 'D'
 };
 
 enum cell_t {
@@ -45,12 +45,12 @@ enum cell_t {
     DOOR_RIGHT   = '{',
     DOOR_MIDDLE  = '/',
     LADDER_LEFT  = '>',
-    LADDER_RIGHT = '<',
+    LADDER_RIGHT = '<'
 };
 
 enum usable_t {
     CHEST    = 'C',
-    TREASURE = 'T',
+    TREASURE = 'T'
 };
 
 enum actor_t {
@@ -60,7 +60,7 @@ enum actor_t {
     RANDOM_MONSTER     = 'R',
     KEY_MONSTER        = 'A',
     MONSTER            = 'M',
-    MONSTER_WITH_A_KEY = 'W',
+    MONSTER_WITH_A_KEY = 'W'
 };
 
 enum direction_t {
@@ -72,7 +72,7 @@ enum direction_t {
     DOWN       = 80,
     DOWN_LEFT  = 79,
     LEFT       = -1,
-    UP_LEFT    = -81,
+    UP_LEFT    = -81
 };
 
 extern enum item_t g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];

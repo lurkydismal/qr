@@ -3,9 +3,9 @@ TEST_OBJS	= build/main_test.o build/logic.o build/ltoa.o build/malloc.o build/st
 SOURCE	= src/main.c
 HEADER	= 
 OUT	= qr
-CC	= g++ -std=c++98
+CC	= g++ -std=c++98 -pedantic-errors
 WIN_CC	= wine ~/Downloads/tcc/tcc.exe
-FLAGS	= -c -Wall
+FLAGS	= -c -Wall -fms-extensions -fdollars-in-identifiers -mms-bitfields -fcommon -Wl,-no-whole-archive -nostdlib
 TEST_FLAGS	= -g -c -Wall -I ./include/
 LFLAGS	= -luser32
 TEST_LFLAGS	= -L ./lib/ -lgtest -lpthread -lgtest_main
