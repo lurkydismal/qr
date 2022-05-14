@@ -92,8 +92,6 @@ int main( int argumentCount, char** argumentArray ) {
 
                 if ( !doPlayerMove( l_offset ) || !doOpponentMove() ) {
                     l_gameRunning = false;
-
-                    break;
                 }
 
                 updateScreen();

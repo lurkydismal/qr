@@ -105,19 +105,19 @@ void initInventory( enum item_t _item ) {
     }
 }
 
-void getOverview( const uint32_t _currentPosition ) {
-    uint32_t l_startPosition = ( _currentPosition - ( 80 * 2 ) - 2 );
-    uint32_t l_counter       = 0;
+void getOverview( const uint32_t _playerPosition ) {
+    uint32_t l_overviewCell = ( _playerPosition - ( 80 * 2 ) - 2 );
+    uint32_t l_counter      = 0;
 
     for ( uint32_t _overwiewAreaIndex = 1; _overwiewAreaIndex < 6; _overwiewAreaIndex++ ) {
-        if ( ( l_startPosition % 80 ) > ( ( _currentPosition % 80 ) + 2 ) ) {
-            l_startPosition++;
+        if ( ( l_overviewCell % 80 ) > ( ( _playerPosition % 80 ) + 2 ) ) {
+            l_overviewCell++;
 
-        } else if ( ( l_startPosition % 80 ) < ( ( _currentPosition % 80 ) - 2 ) ) {
-            l_startPosition--;
+        } else if ( ( l_overviewCell % 80 ) < ( ( _playerPosition % 80 ) - 2 ) ) {
+            l_overviewCell--;
         }
 
-        for ( uint32_t _mapCellIndex = l_startPosition; _mapCellIndex < ( l_startPosition + 4 + 1 ); _mapCellIndex++ ) {
+        for ( uint32_t _mapCellIndex = l_overviewCell; _mapCellIndex < ( l_overviewCell + 4 + 1 ); _mapCellIndex++ ) {
             g_vision[ l_counter ] = g_map[ _mapCellIndex ];
             l_counter++;
         }
@@ -125,7 +125,7 @@ void getOverview( const uint32_t _currentPosition ) {
         g_vision[ l_counter ] = '\n';
         l_counter++;
 
-        l_startPosition = ( _currentPosition - ( 80 * ( 2 - _overwiewAreaIndex ) ) - 2 );
+        l_overviewCell = ( _playerPosition - ( 80 * ( 2 - _overwiewAreaIndex ) ) - 2 );
     }
 
     g_vision[ l_counter ] = '\0';
