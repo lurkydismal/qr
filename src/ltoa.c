@@ -2,7 +2,7 @@
 /// @file ltoa.c
 /// @brief Definitions of \c Memcpy and \c Ltoa functions.
 ///////////////
-#include <stddef.h>                 // size_t
+#include <stddef.h>
 #include <stdint.h>
 
 ///////////////

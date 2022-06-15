@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <main.h>
+#include <stdfunc.h>
+
 #define MAP_SIZE        80 * 10
 #define OVERLOOK_RADIUS 29 + 2
-
-#include "../src/main.h"
-#include "../src/stdfunc.h"
 
 TEST( logic, initMap ) {
     char     temp_emptyMap[ MAP_SIZE ];
@@ -92,19 +92,19 @@ TEST( logic, getOverview ) {
 
     getOverview( g_playerPosition );
 
-    memset( &temp_vision, 0,        stringLength( g_vision ) );
-    memcpy( temp_vision,  g_vision, stringLength( g_vision ) );
+    memset( &temp_vision, 0,        lengthOfString( g_vision ) );
+    memcpy( temp_vision,  g_vision, lengthOfString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 
-    doPlayerMove( RIGHT );
+    doPlayerMove( RIGHT, false );
 
     getOverview( g_playerPosition );
 
     ASSERT_STRNE( temp_vision, g_vision );
 
-    memset( &temp_vision, 0,        stringLength( g_vision ) );
-    memcpy( temp_vision,  g_vision, stringLength( g_vision ) );
+    memset( &temp_vision, 0,        lengthOfString( g_vision ) );
+    memcpy( temp_vision,  g_vision, lengthOfString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 }
@@ -176,18 +176,18 @@ TEST( logic, DoPlayerMove ) {
 
     uint32_t temp_playerPosition = g_playerPosition;
 
-    ASSERT_TRUE( doPlayerMove( DOWN ) );
+    ASSERT_TRUE( doPlayerMove( DOWN, false ) );
     ASSERT_NE( temp_playerPosition, g_playerPosition );
 
     temp_playerPosition = g_playerPosition;
 
-    ASSERT_TRUE( doPlayerMove( 5 ) ); // + 5 from current position, '.' or '#' expected
+    ASSERT_TRUE( doPlayerMove( 5, false ) ); // + 5 from current position, '.' or '#' expected
     ASSERT_EQ( temp_playerPosition, g_playerPosition );
 
     initMap(); // Reset player position
 
     g_guardiansLeft = 0; // We can pass through door if all guardians annihilated
 
-    ASSERT_FALSE( doPlayerMove( 396 ) ); // + 396 from current position, door expected ( '>' or '<' )
+    ASSERT_FALSE( doPlayerMove( 396, false ) ); // + 396 from current position, door expected ( '>' or '<' )
     ASSERT_EQ( temp_playerPosition, g_playerPosition );
 }

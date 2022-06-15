@@ -2,11 +2,13 @@
 /// @file stdfunc.c
 /// @brief Definition of many useful functions related to replace standart if needed.
 ///////////////
-
 #ifndef _WIN32
+
 #include <stdio.h>
+
 #endif
-#include "stdfunc.h" // windows.h
+
+#include <stdfunc.h>
 
 ///////////////
 /// @brief Inline function that converts \c bool to string.
@@ -111,7 +113,7 @@ uint_fast32_t lengthOfInt( long _number ) {
 /// @param[in] _string String pointer to get length from.
 /// @return String length.
 ///////////////
-uint_fast32_t stringLength( char* _string ) {
+uint_fast32_t lengthOfString( char* _string ) {
     //! <b>[declare]</b>
     /// Last symbol from _string.
     /// @code{.c}
@@ -153,7 +155,8 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
     //! <b>[print]</b>
     /// Write text to console
     /// @code{.c}
-    #ifdef _WIN32
+#ifdef _WIN32
+
     WriteConsoleA(
         GetStdHandle( STD_OUTPUT_HANDLE ), // Console handle
         _text,                             // Pointer to text
@@ -161,11 +164,15 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
         NULL,                              // Buffer to write value of characters written
         NULL                               // Reserved. Must be NULL
     );
-    #else
+
+#else
+
     for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
         putchar( _text[ _symbolIndex ] );
     }
-    #endif
+
+#endif
+
     /// @endcode
     //! <b>[print]</b>
 }
@@ -234,7 +241,8 @@ void SRand( unsigned long l_seed ) {
 /// @details Filling console length with empty text.
 ///////////////
 void clearConsole( void ) {
-    #ifdef _WIN32
+#ifdef _WIN32
+
     //! <b>[declare]</b>
     /// Getting and declaring coordinates and console handle where to write.
     /// @code{.c}
@@ -269,13 +277,17 @@ void clearConsole( void ) {
     SetConsoleCursorPosition( l_consoleHandle, l_topLeft );
     /// @endcode
     //! <b>[reset]</b>
-    #else
+
+#else
+
     const char l_magicText[] = "\033[1;1H\033[2J";
 
     for ( uint32_t _symbolIndex = 0; _symbolIndex < sizeof( l_magicText ); _symbolIndex++ ) {
         putchar( l_magicText[ _symbolIndex ] );
     }
-    #endif
+
+#endif
+
 }
 
 ///////////////

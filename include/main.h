@@ -1,9 +1,10 @@
 #ifndef _MAIN_H
+
 #define _MAIN_H
 
 #include <stdint.h>
 
-#include "stdfunc.h"
+#include <stdfunc.h>
 
 // #define CHEST_ITEM_COUNT 3
 #define MAX_EXPERIENCE_FROM_TREASURE 20
@@ -18,6 +19,7 @@
 #define KEY_MONSTER_MAX_HEALTH 20
 
 #ifndef _WINUSER_
+
 #define VK_NUMPAD0 0x60
 #define VK_NUMPAD1 0x61
 #define VK_NUMPAD2 0x62
@@ -28,6 +30,7 @@
 #define VK_NUMPAD7 0x67
 #define VK_NUMPAD8 0x68
 #define VK_NUMPAD9 0x69
+
 #endif
 
 enum item_t {
@@ -80,6 +83,11 @@ extern uint32_t    g_playerInventoryItemCount;
 extern int32_t     g_playerHealth;
 extern uint32_t    g_playerExperience;
 extern uint32_t    g_playerPosition;
+#if defined( CLIENT ) || defined( SERVER )
+
+extern uint32_t    g_secondPlayerPosition;
+
+#endif
 
 extern uint32_t    g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
 extern uint32_t    g_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
@@ -104,13 +112,15 @@ int32_t  getPlayerInventoryPlaceOf( const enum item_t item );
 bool     inventoryAdd( const enum item_t item, int32_t itemIndex );
 bool     usePlayerItem( const enum item_t item );
 uint32_t move( const char who, unsigned int currentPosition, const int offset );
-bool     doPlayerMove( const uint32_t offset );
+bool     doPlayerMove( const uint32_t offset, const bool isSecondPlayer );
 bool     doOpponentMove( void );
 uint32_t fight( const char who, uint32_t currentPosition, const int32_t offset );
 void     updateScreen( void );
 
 #ifndef _WIN32
+
 bool GetAsyncKeyState( uint32_t key );
+
 #endif
 
 #endif

@@ -3,7 +3,7 @@
 /// @brief \c Malloc and \c Free definition.
 ///////////////
 
-#include <stddef.h>          // size_t NULL
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 

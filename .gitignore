@@ -2,6 +2,7 @@
 *.code-workspace
 deprecated/
 *.bak
-build/*
+build/
 *.dll
 *.exe
+*.txt

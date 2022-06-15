@@ -1,11 +1,16 @@
-#include "main.h"
-#include "stdfunc.h"
+#include <main.h>
+#include <stdfunc.h>
 
 enum item_t   g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
 uint32_t g_playerInventoryItemCount = 0;
-int32_t  g_playerHealth              = 2;
+int32_t  g_playerHealth             = 2;
 uint32_t g_playerExperience         = 0;
 uint32_t g_playerPosition;
+#if defined( CLIENT ) || defined( SERVER )
+
+uint32_t g_secondPlayerPosition;
+
+#endif
 
 uint32_t      g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
 uint32_t      g_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
@@ -55,6 +60,12 @@ void initMap( void ) {
             case PLAYER:
             {
                 g_playerPosition = _mapCellIndex;
+
+            #if defined( CLIENT ) || defined( SERVER )
+
+                g_secondPlayerPosition = _mapCellIndex;
+
+            #endif
 
                 break;
             }
@@ -183,30 +194,47 @@ uint32_t move( const char _who, uint32_t _currentPosition, const int32_t _offset
     return ( _currentPosition );
 }
 
-bool doPlayerMove( const uint32_t _offset ) {
-    const char l_cellToMove = g_map[ g_playerPosition + _offset ];
+bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
+#if defined( CLIENT ) || defined( SERVER )
+
+    uint32_t* l_playerPosition;
+
+    if ( isSecondPlayer ) {
+        l_playerPosition = &g_secondPlayerPosition;
+
+    } else {
+         l_playerPosition = &g_playerPosition;
+    }
+
+#else
+
+    uint32_t* l_playerPosition = &g_playerPosition;
+
+#endif
+
+    const char l_cellToMove = g_map[ *l_playerPosition + _offset ];
 
     for ( uint32_t _monsterIndex = 0; _monsterIndex < sizeof( g_monsters ); _monsterIndex++ ) {
         if ( l_cellToMove == g_monsters[ _monsterIndex ] ) {
-            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
+            *l_playerPosition = fight( PLAYER, *l_playerPosition, _offset );
 
-            return ( g_playerPosition );
+            return ( *l_playerPosition );
         }
     }
 
     for ( uint32_t _keyMonsterIndex = 0; _keyMonsterIndex < sizeof( g_keyMonsters ); _keyMonsterIndex++ ) {
         if ( l_cellToMove == g_keyMonsters[ _keyMonsterIndex ] ) {
-            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
+            *l_playerPosition = fight( PLAYER, *l_playerPosition, _offset );
 
-            return ( g_playerPosition );
+            return ( *l_playerPosition );
         }
     }
 
-    switch ( g_map[ g_playerPosition + _offset ] ) {
+    switch ( g_map[ *l_playerPosition + _offset ] ) {
         case FLOOR:
         case BRIDGE:
         {
-            g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+            *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
 
             break;
         }
@@ -216,7 +244,7 @@ bool doPlayerMove( const uint32_t _offset ) {
         case DOOR_MIDDLE:
         {
             if ( usePlayerItem( KEY ) ){
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
             }
 
             break;
@@ -234,9 +262,9 @@ bool doPlayerMove( const uint32_t _offset ) {
 
         case GUARDIAN:
         {
-            g_playerPosition = fight( PLAYER, g_playerPosition, _offset );
+            *l_playerPosition = fight( PLAYER, *l_playerPosition, _offset );
 
-            return ( g_playerPosition );
+            return ( *l_playerPosition );
         }
 
         case KEY:
@@ -245,7 +273,7 @@ bool doPlayerMove( const uint32_t _offset ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
                 g_playerInventoryItemCount++;
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -258,7 +286,7 @@ bool doPlayerMove( const uint32_t _offset ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = HEALTH;
                 g_playerInventoryItemCount++;
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -271,7 +299,7 @@ bool doPlayerMove( const uint32_t _offset ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = ATTACK;
                 g_playerInventoryItemCount++;
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -284,7 +312,7 @@ bool doPlayerMove( const uint32_t _offset ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = DEFENCE;
                 g_playerInventoryItemCount++;
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -299,7 +327,7 @@ bool doPlayerMove( const uint32_t _offset ) {
                 g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ];
                 g_playerInventoryItemCount++;
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -311,7 +339,7 @@ bool doPlayerMove( const uint32_t _offset ) {
             if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
                 g_playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
 
-                g_playerPosition = move( PLAYER, g_playerPosition, _offset );
+                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
 
@@ -371,16 +399,33 @@ static void _randomMove( const char _who, uint32_t* _currentPosition ) {
     }
 }
 
-static void _followMove( const char _who, uint32_t* _currentPosition ) {
+static void _followMove( const char _who, uint32_t* _currentPosition, const bool forSecondPlayer ) {
     enum direction_t l_offset;
 
-    if ( ( *_currentPosition % 80 ) < ( g_playerPosition % 80 ) ) {
+#if defined( CLIENT ) || defined( SERVER )
+
+    uint32_t* l_playerPosition;
+
+    if ( forSecondPlayer ) {
+        l_playerPosition = &g_secondPlayerPosition;
+
+    } else {
+         l_playerPosition = &g_playerPosition;
+    }
+
+#else
+
+    uint32_t* l_playerPosition = &g_playerPosition;
+
+#endif
+
+    if ( ( *_currentPosition % 80 ) < ( *l_playerPosition % 80 ) ) {
         l_offset = RIGHT;
 
-    } else if ( ( *_currentPosition % 80 ) > ( g_playerPosition % 80 ) ) {
+    } else if ( ( *_currentPosition % 80 ) > ( *l_playerPosition % 80 ) ) {
         l_offset = LEFT;
 
-    } else if ( *_currentPosition < g_playerPosition ) {
+    } else if ( *_currentPosition < *l_playerPosition ) {
         l_offset = DOWN;
 
     } else {
@@ -401,7 +446,7 @@ static void _followMove( const char _who, uint32_t* _currentPosition ) {
 bool doOpponentMove( void ) {
     bool l_isPlayerInVision = false;
 
-    for ( uint_fast64_t _visionCellIndex = 0; _visionCellIndex < stringLength( g_vision ); _visionCellIndex++ ) {
+    for ( uint_fast64_t _visionCellIndex = 0; _visionCellIndex < lengthOfString( g_vision ); _visionCellIndex++ ) {
         if ( g_vision[ _visionCellIndex ] == PLAYER ) {
             l_isPlayerInVision = true;
         }
@@ -413,7 +458,7 @@ bool doOpponentMove( void ) {
 
     for ( uint32_t _followMonsterIndex = 0; _followMonsterIndex < g_followMonstersLeft; _followMonsterIndex++ ) {
         if ( l_isPlayerInVision ) {
-            _followMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
+            _followMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ], false );
 
         } else {
             _randomMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
@@ -422,7 +467,7 @@ bool doOpponentMove( void ) {
 
     for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ )
         if ( l_isPlayerInVision ) {
-            _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
+            _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ], false );
 
         } else {
             _randomMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
@@ -589,7 +634,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 void updateScreen( void ) {
     clearConsole();
     getOverview( g_playerPosition );
-    print( g_vision, stringLength( g_vision ) );
+    print( g_vision, lengthOfString( g_vision ) );
 
     print( "\nHP:", 5 );
 

@@ -1,4 +1,5 @@
 #ifndef _STDFUNC_H
+
 #define _STDFUNC_H
 
 ///////////////
@@ -8,17 +9,27 @@
 #pragma once
 
 #ifdef _WIN32
-#include <windows.h>                // PVOID GetCurrentThread uint_fast32_t WriteConsoleA GetStdHandle HWND
+
+#include <windows.h>
 // #pragma comment( lib, "user32" )
+// #pragma comment (lib, "Ws2_32.lib")
+// #pragma comment (lib, "Mswsock.lib")
+// #pragma comment (lib, "AdvApi32.lib")
+
 #else
+
 #include <unistd.h>
 #include <stdio.h>
+
 #endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
 #ifndef INT8_MIN
+
 #define INT8_MIN -128
+
 #endif
 
 ///////////////
@@ -32,7 +43,7 @@ uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elemen
 
 uint_fast32_t lengthOfInt( long _number );
 
-uint_fast32_t stringLength( char* _string );
+uint_fast32_t lengthOfString( char* _string );
 
 void print( const char* _text, const uint32_t _lengthOfText );
 
