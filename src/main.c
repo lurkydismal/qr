@@ -3,11 +3,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#else
+#else // _WIN32
 
 #error Only Windows is supported
 
-#endif
+#endif // _WIN32
 
 #include <main.h>
 #include <stdfunc.h>
@@ -242,62 +242,38 @@ int main( int _argumentCount, char* _arguments[] ) {
 
                 send( ConnectSocket, buffer, sizeof( l_offset ), 0 );
 
-                l_gameRunning = doPlayerMove( l_offset, false );
+                recv( ConnectSocket, buffer, sizeof( l_offset ), 0 );
 
-                if ( recv( ConnectSocket, buffer, sizeof( l_offset ), 0 ) ) {
-                    l_gameRunning = doPlayerMove( *buffer, true );
-                }
+                l_gameRunning = (
+                    doPlayerMove( l_offset, false ) &&
+                    doPlayerMove( *buffer, true ) &&
+                    doOpponentMove()
+                );
 
                 Free( buffer );
 
-                l_gameRunning = doOpponentMove();
-
-            #else
+            #else // CLIENT || SERVER
 
                 l_gameRunning = (
                     doPlayerMove( l_offset, false ) &&
                     doOpponentMove()
                 );
 
-            #endif
+            #endif // CLIENT || SERVER
 
                 updateScreen();
             }
         }
 
-    #ifdef _WIN32
-
-        Sleep( 200 );
-
-    #else
-
-        sleep( 0.2 );
-
-    #endif
+        Sleep( 100 );
     }
 
     // Level passed
     if ( g_playerHealth ) {
-    #ifdef _WIN32
-
         MessageBoxA( 0, "You Win!", "Victory!", 0 );
 
-    #else
-
-        print( "You Win!", 9 );
-
-    #endif
-
     } else {
-    #ifdef _WIN32
-
         MessageBoxA( 0, "You Lose!", "Defeat!", 0 );
-
-    #else
-
-        print( "You Lose!", 10 );
-
-    #endif
     }
 
 #if defined( CLIENT ) || defined( SERVER )
@@ -310,7 +286,7 @@ int main( int _argumentCount, char* _arguments[] ) {
     closesocket( ConnectSocket );
     WSACleanup();
 
-#endif
+#endif // CLIENT || SERVER
 
     return ( 0 );
 }

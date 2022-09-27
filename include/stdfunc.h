@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#endif
+#endif // _WIN32
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -30,7 +30,7 @@
 
 #define INT8_MIN -128
 
-#endif
+#endif // INT8_MIN
 
 ///////////////
 /// @brief Pass from Python, same as NULL.
@@ -65,4 +65,4 @@ char* Ltoa( long _number, char* _cString );
 
 int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray );
 
-#endif
+#endif // _STDFUNC_H

@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#endif
+#endif // _WIN32
 
 #include <stdfunc.h>
 
@@ -155,6 +155,7 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
     //! <b>[print]</b>
     /// Write text to console
     /// @code{.c}
+
 #ifdef _WIN32
 
     WriteConsoleA(
@@ -165,13 +166,13 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
         NULL                               // Reserved. Must be NULL
     );
 
-#else
+#else // _WIN32
 
     for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
         putchar( _text[ _symbolIndex ] );
     }
 
-#endif
+#endif // _WIN32
 
     /// @endcode
     //! <b>[print]</b>
@@ -241,6 +242,7 @@ void SRand( unsigned long l_seed ) {
 /// @details Filling console length with empty text.
 ///////////////
 void clearConsole( void ) {
+
 #ifdef _WIN32
 
     //! <b>[declare]</b>
@@ -278,7 +280,7 @@ void clearConsole( void ) {
     /// @endcode
     //! <b>[reset]</b>
 
-#else
+#else // _WIN32
 
     const char l_magicText[] = "\033[1;1H\033[2J";
 
@@ -286,7 +288,7 @@ void clearConsole( void ) {
         putchar( l_magicText[ _symbolIndex ] );
     }
 
-#endif
+#endif // _WIN32
 
 }
 

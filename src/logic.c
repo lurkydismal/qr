@@ -1,16 +1,17 @@
 #include <main.h>
 #include <stdfunc.h>
 
-enum item_t   g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
-uint32_t g_playerInventoryItemCount = 0;
-int32_t  g_playerHealth             = 2;
-uint32_t g_playerExperience         = 0;
-uint32_t g_playerPosition;
+enum item_t g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
+uint32_t    g_playerInventoryItemCount = 0;
+int32_t     g_playerHealth             = 2;
+uint32_t    g_playerExperience         = 0;
+uint32_t    g_playerPosition           = 0;
+
 #if defined( CLIENT ) || defined( SERVER )
 
-uint32_t g_secondPlayerPosition;
+uint32_t g_secondPlayerPosition        = 0;
 
-#endif
+#endif // CLIENT || SERVER
 
 uint32_t      g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
 uint32_t      g_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
@@ -63,9 +64,11 @@ void initMap( void ) {
 
             #if defined( CLIENT ) || defined( SERVER )
 
-                g_secondPlayerPosition = _mapCellIndex;
+                if ( g_playerPosition ) {
+                    g_secondPlayerPosition = _mapCellIndex;
+                }
 
-            #endif
+            #endif // CLIENT || SERVER
 
                 break;
             }
@@ -103,6 +106,14 @@ void initMap( void ) {
             }
         };
     }
+
+#if defined( CLIENT ) || defined( SERVER )
+
+    if ( !g_secondPlayerPosition ) {
+        g_secondPlayerPosition = g_playerPosition;
+    }
+
+#endif // CLIENT || SERVER
 }
 
 void initInventory( enum item_t _item ) {
@@ -195,22 +206,22 @@ uint32_t move( const char _who, uint32_t _currentPosition, const int32_t _offset
 }
 
 bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
-#if defined( CLIENT ) || defined( SERVER )
-
     uint32_t* l_playerPosition;
+
+#if defined( CLIENT ) || defined( SERVER )
 
     if ( isSecondPlayer ) {
         l_playerPosition = &g_secondPlayerPosition;
 
     } else {
-         l_playerPosition = &g_playerPosition;
+        l_playerPosition = &g_playerPosition;
     }
 
-#else
+#else // CLIENT || SERVER
 
-    uint32_t* l_playerPosition = &g_playerPosition;
+    l_playerPosition = &g_playerPosition;
 
-#endif
+#endif // CLIENT || SERVER
 
     const char l_cellToMove = g_map[ *l_playerPosition + _offset ];
 
@@ -399,25 +410,24 @@ static void _randomMove( const char _who, uint32_t* _currentPosition ) {
     }
 }
 
-static void _followMove( const char _who, uint32_t* _currentPosition, const bool forSecondPlayer ) {
+static void _followMove( const char _who, uint32_t* _currentPosition ) {
     enum direction_t l_offset;
+    uint32_t* l_playerPosition;
 
 #if defined( CLIENT ) || defined( SERVER )
 
-    uint32_t* l_playerPosition;
-
-    if ( forSecondPlayer ) {
+    if ( Rand() % 2 ) {
         l_playerPosition = &g_secondPlayerPosition;
 
     } else {
-         l_playerPosition = &g_playerPosition;
+        l_playerPosition = &g_playerPosition;
     }
 
-#else
+#else // CLIENT || SERVER
 
-    uint32_t* l_playerPosition = &g_playerPosition;
+    l_playerPosition = &g_playerPosition;
 
-#endif
+#endif // CLIENT || SERVER
 
     if ( ( *_currentPosition % 80 ) < ( *l_playerPosition % 80 ) ) {
         l_offset = RIGHT;
@@ -458,7 +468,7 @@ bool doOpponentMove( void ) {
 
     for ( uint32_t _followMonsterIndex = 0; _followMonsterIndex < g_followMonstersLeft; _followMonsterIndex++ ) {
         if ( l_isPlayerInVision ) {
-            _followMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ], false );
+            _followMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
 
         } else {
             _randomMove( FOLLOW_MONSTER, &g_followMonstersPositions[ _followMonsterIndex ] );
@@ -467,13 +477,13 @@ bool doOpponentMove( void ) {
 
     for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ )
         if ( l_isPlayerInVision ) {
-            _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ], false );
+            _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
 
         } else {
             _randomMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
         }
 
-    return (true);
+    return ( true );
 }
 
 uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offset ) {
@@ -634,6 +644,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 void updateScreen( void ) {
     clearConsole();
     getOverview( g_playerPosition );
+
     print( g_vision, lengthOfString( g_vision ) );
 
     print( "\nHP:", 5 );

@@ -31,7 +31,7 @@
 #define VK_NUMPAD8 0x68
 #define VK_NUMPAD9 0x69
 
-#endif
+#endif // _WINUSER_
 
 enum item_t {
     EMPTY   = 'E',
@@ -83,11 +83,12 @@ extern uint32_t    g_playerInventoryItemCount;
 extern int32_t     g_playerHealth;
 extern uint32_t    g_playerExperience;
 extern uint32_t    g_playerPosition;
+
 #if defined( CLIENT ) || defined( SERVER )
 
 extern uint32_t    g_secondPlayerPosition;
 
-#endif
+#endif // // CLIENT || SERVER
 
 extern uint32_t    g_guardiansPositions[ MAX_GUARDIANS_ON_MAP ];
 extern uint32_t    g_followMonstersPositions[ MAX_MONSTERS_ON_MAP ];
@@ -117,10 +118,4 @@ bool     doOpponentMove( void );
 uint32_t fight( const char who, uint32_t currentPosition, const int32_t offset );
 void     updateScreen( void );
 
-#ifndef _WIN32
-
-bool GetAsyncKeyState( uint32_t key );
-
-#endif
-
-#endif
+#endif // _MAIN_H
