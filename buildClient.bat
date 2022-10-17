@@ -16,7 +16,7 @@ move *.obj ../
 cd ../
 
 set linker=Crinkler.exe
-set linker_flags=/CRINKLER /TINYHEADER /TINYIMPORT
+set linker_flags=/CRINKLER /TINYHEADER /TINYIMPORT /OUT:client.exe
 set linker_libs="kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.lib" "advapi32.lib" "shell32.lib" "ole32.lib" "oleaut32.lib" "uuid.lib" "odbc32.lib" "odbccp32.lib" "ws2_32.lib" "mswsock.lib"
 
 %linker% %linker_flags% %linker_libs% %object_files%

@@ -3,6 +3,7 @@
 deprecated/
 *.bak
 build/
+lib/
 *.dll
 *.exe
 *.txt

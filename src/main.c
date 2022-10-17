@@ -17,83 +17,86 @@ int main( int _argumentCount, char* _arguments[] ) {
 
 #if defined( CLIENT ) || defined( SERVER )
 
-    // Initialize Winsock
-    WSADATA wsaData;
-    WSAStartup( MAKEWORD( 2,2 ), &wsaData );
-
-    print( "1\n", 3 );
-
-    struct addrinfo hints;
-
-    ZeroMemory( &hints, sizeof( hints ) );
-
-#if defined( CLIENT )
-
-    hints.ai_family   = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-#elif defined( SERVER )
-
-    hints.ai_family   = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags    = AI_PASSIVE;
+    WSADATA          l_wsaData;
+    struct addrinfo  l_hints;
+    struct addrinfo* l_result;
+    SOCKET           l_connectSocket;
+    char*            l_secondPlayerOffset;
 
 #endif // CLIENT || SERVER
 
-    // Resolve the server address and port
-    struct addrinfo* result;
+#if defined( CLIENT ) || defined( SERVER )
+
+    WSAStartup( MAKEWORD( 2,2 ), &l_wsaData );
+
+    ZeroMemory( &l_hints, sizeof( l_hints ) );
 
 #if defined( CLIENT )
 
-    print( "2\n", 3 );
+    l_hints.ai_family   = AF_UNSPEC;
+    l_hints.ai_socktype = SOCK_STREAM;
+    l_hints.ai_protocol = IPPROTO_TCP;
 
-    getaddrinfo( _arguments[ 1 ], _arguments[ 2 ], &hints, &result );
+#elif defined( SERVER ) // CLIENT
 
-#elif defined( SERVER )
+    l_hints.ai_family   = AF_INET;
+    l_hints.ai_socktype = SOCK_STREAM;
+    l_hints.ai_protocol = IPPROTO_TCP;
+    l_hints.ai_flags    = AI_PASSIVE;
 
-    print( "3\n", 3 );
+#endif // CLIENT
 
-    getaddrinfo( NULL, _arguments[ 1 ], &hints, &result );
+#if defined( CLIENT )
 
-#endif // CLIENT || SERVER
+    getaddrinfo(
+        _arguments[ 1 ],
+        _arguments[ 2 ],
+        &l_hints,
+        &l_result
+    );
 
-    SOCKET ConnectSocket;
+#elif defined( SERVER ) // CLIENT
+
+    getaddrinfo(
+        NULL,
+        _arguments[ 1 ],
+        &l_hints,
+        &l_result
+    );
+
+#endif // CLIENT
 
 #if defined( CLIENT )
 
     // Attempt to connect to an address until one succeeds
     for (
-        struct addrinfo* ptr = result;
-        ptr != NULL;
-        ptr = ptr->ai_next
+        struct addrinfo* _currentAddressInformation = l_result;
+        _currentAddressInformation != NULL;
+        _currentAddressInformation = _currentAddressInformation->ai_next
     ) {
-        print( "4\n", 3 );
-
-        // Create a SOCKET for connecting to server
-        ConnectSocket = socket(
-            ptr->ai_family,
-            ptr->ai_socktype,
-            ptr->ai_protocol
+        l_connectSocket = socket(
+            _currentAddressInformation->ai_family,
+            _currentAddressInformation->ai_socktype,
+            _currentAddressInformation->ai_protocol
         );
 
-        if ( ConnectSocket == INVALID_SOCKET ) {
+        if ( l_connectSocket == INVALID_SOCKET ) {
             WSACleanup();
-            return 1;
+
+            return ( 1 );
         }
 
-        // Connect to server.
+        // Connect to server
         if (
             connect(
-                ConnectSocket,
-                ptr->ai_addr,
-                (int)ptr->ai_addrlen
+                l_connectSocket,
+                _currentAddressInformation->ai_addr,
+                (int)_currentAddressInformation->ai_addrlen
             ) == SOCKET_ERROR
         ) {
-            closesocket( ConnectSocket );
+            closesocket( l_connectSocket );
 
-            ConnectSocket = INVALID_SOCKET;
+            l_connectSocket = INVALID_SOCKET;
 
             continue;
         }
@@ -101,50 +104,42 @@ int main( int _argumentCount, char* _arguments[] ) {
         break;
     }
 
-#elif defined( SERVER )
+#elif defined( SERVER ) // CLIENT
 
-    print( "5\n", 3 );
-
-    ConnectSocket = socket(
-        result->ai_family,
-        result->ai_socktype,
-        result->ai_protocol
+    l_connectSocket = socket(
+        l_result->ai_family,
+        l_result->ai_socktype,
+        l_result->ai_protocol
     );
 
     bind(
-        ConnectSocket,
-        result->ai_addr,
-        (int)result->ai_addrlen
+        l_connectSocket,
+        l_result->ai_addr,
+        (int)l_result->ai_addrlen
     );
 
-#endif // CLIENT || SERVER
+#endif // CLIENT
 
-    print( "6\n", 3 );
-
-    freeaddrinfo( result );
+    freeaddrinfo( l_result );
 
 #if defined( SERVER )
 
     listen(
-        ConnectSocket,
+        l_connectSocket,
         SOMAXCONN
     );
 
-    SOCKET CSocket = accept(
-        ConnectSocket,
+    SOCKET l_buffer = accept(
+        l_connectSocket,
         NULL,
         NULL
     );
 
-    print( "7\n", 3 );
+    closesocket( l_connectSocket );
 
-    closesocket( ConnectSocket );
-
-    ConnectSocket = CSocket;
+    l_connectSocket = l_buffer;
 
 #endif // SERVER
-
-    char* buffer;
 
 #endif // CLIENT || SERVER
 
@@ -236,21 +231,21 @@ int main( int _argumentCount, char* _arguments[] ) {
 
             #if defined( CLIENT ) || defined( SERVER )
 
-                buffer = (char*)Malloc( sizeof( l_offset ) );
+                l_secondPlayerOffset = (char*)Malloc( sizeof( l_offset ) );
 
-                *buffer = l_offset;
+                *l_secondPlayerOffset = l_offset;
 
-                send( ConnectSocket, buffer, sizeof( l_offset ), 0 );
+                send( l_connectSocket, l_secondPlayerOffset, sizeof( l_offset ), 0 );
 
-                recv( ConnectSocket, buffer, sizeof( l_offset ), 0 );
+                recv( l_connectSocket, l_secondPlayerOffset, sizeof( l_offset ), 0 );
 
                 l_gameRunning = (
                     doPlayerMove( l_offset, false ) &&
-                    doPlayerMove( *buffer, true ) &&
+                    doPlayerMove( *l_secondPlayerOffset, true ) &&
                     doOpponentMove()
                 );
 
-                Free( buffer );
+                Free( l_secondPlayerOffset );
 
             #else // CLIENT || SERVER
 
@@ -280,10 +275,10 @@ int main( int _argumentCount, char* _arguments[] ) {
 
     // Cleanup
     shutdown( 
-        ConnectSocket,
+        l_connectSocket,
         SD_SEND
     );
-    closesocket( ConnectSocket );
+    closesocket( l_connectSocket );
     WSACleanup();
 
 #endif // CLIENT || SERVER
