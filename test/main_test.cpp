@@ -34,6 +34,12 @@
 #define MAP_SIZE        80 * 10
 #define OVERLOOK_RADIUS 29 + 2
 
+#ifndef CopyMemory
+
+#define CopyMemory memcpy
+
+#endif
+
 TEST( logic, initMap ) {
     char     temp_emptyMap[ MAP_SIZE ];
     char     temp_map[ MAP_SIZE ];
@@ -46,19 +52,19 @@ TEST( logic, initMap ) {
     uint32_t temp_followMonstersLeft = g_followMonstersLeft;
 
     memset( &temp_emptyMap, 0,          sizeof( temp_emptyMap ) );
-    memcpy( temp_emptyMap,  g_emptyMap, sizeof( temp_emptyMap ) );
+    CopyMemory( temp_emptyMap,  g_emptyMap, sizeof( temp_emptyMap ) );
 
     memset( &temp_map, 0,     sizeof( temp_map ) );
-    memcpy( temp_map,  g_map, sizeof( temp_map ) );
+    CopyMemory( temp_map,  g_map, sizeof( temp_map ) );
 
     memset( &temp_guardiansPositions, 0,                    sizeof( g_guardiansPositions ) );
-    memcpy( temp_guardiansPositions,  g_guardiansPositions, sizeof( g_guardiansPositions ) );
+    CopyMemory( temp_guardiansPositions,  g_guardiansPositions, sizeof( g_guardiansPositions ) );
 
     memset( &temp_randomMonstersPositions, 0,                         sizeof( g_randomMonstersPositions ) );
-    memcpy( temp_randomMonstersPositions,  g_randomMonstersPositions, sizeof( g_randomMonstersPositions ) );
+    CopyMemory( temp_randomMonstersPositions,  g_randomMonstersPositions, sizeof( g_randomMonstersPositions ) );
 
     memset( &temp_followMonstersPositions, 0,                         sizeof( g_followMonstersPositions ) );
-    memcpy( temp_followMonstersPositions,  g_followMonstersPositions, sizeof( g_followMonstersPositions ) );
+    CopyMemory( temp_followMonstersPositions,  g_followMonstersPositions, sizeof( g_followMonstersPositions ) );
 
     initMap();
 
@@ -121,7 +127,7 @@ TEST( logic, getOverview ) {
     getOverview( g_playerPosition );
 
     memset( &temp_vision, 0,        lengthOfString( g_vision ) );
-    memcpy( temp_vision,  g_vision, lengthOfString( g_vision ) );
+    CopyMemory( temp_vision,  g_vision, lengthOfString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 
@@ -132,7 +138,7 @@ TEST( logic, getOverview ) {
     ASSERT_STRNE( temp_vision, g_vision );
 
     memset( &temp_vision, 0,        lengthOfString( g_vision ) );
-    memcpy( temp_vision,  g_vision, lengthOfString( g_vision ) );
+    CopyMemory( temp_vision,  g_vision, lengthOfString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 }
