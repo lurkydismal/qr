@@ -164,6 +164,19 @@ int32_t getPlayerInventoryPlaceOf( const enum item_t _item ) {
 }
 
 bool inventoryAdd( const enum item_t _item, int32_t _itemIndex ) {
+    // if ( g_playerInventoryItemCount >= PLAYER_MAX_ITEM_COUNT ) {
+    //     return (false);
+
+    // } else if (
+    //     ( _itemIndex != INT8_MIN ) &&
+    //     ( g_playerInventory[ _itemIndex ] != EMPTY )
+    // ) {
+    //     return (false);
+
+    // } else if ( _itemIndex == INT8_MIN ) {
+    //     _itemIndex = getPlayerInventoryPlaceOf( EMPTY );
+    // }
+
     if (
         ( g_playerInventoryItemCount >= PLAYER_MAX_ITEM_COUNT ) ||
         (
@@ -280,10 +293,7 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case KEY:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
-                g_playerInventoryItemCount++;
-
+            if ( inventoryAdd( KEY, INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -293,10 +303,7 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case HEALTH:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = HEALTH;
-                g_playerInventoryItemCount++;
-
+            if ( inventoryAdd( HEALTH, INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -306,10 +313,7 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case ATTACK:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = ATTACK;
-                g_playerInventoryItemCount++;
-
+            if ( inventoryAdd( ATTACK, INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -319,10 +323,7 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case DEFENCE:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = DEFENCE;
-                g_playerInventoryItemCount++;
-
+            if ( inventoryAdd( DEFENCE, INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -332,12 +333,9 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case CHEST:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                const enum item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
+            const enum item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
 
-                g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ];
-                g_playerInventoryItemCount++;
-
+            if ( inventoryAdd( l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ], INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -347,12 +345,10 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case TREASURE:
         {
-            if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) {
-                g_playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
+            g_playerExperience += ( ( Rand() % MAX_EXPERIENCE_FROM_TREASURE ) + 1 );
 
-                *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
-                // PlaySoundA( "SystemExit", NULL, SND_SYNC );
-            }
+            *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
+            // PlaySoundA( "SystemExit", NULL, SND_SYNC );
 
             break;
         }
@@ -544,9 +540,8 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
             g_keyMonsterHealth -= l_attackDamage;
 
             if ( !g_keyMonsterHealth ) {
-                if ( g_playerInventoryItemCount < PLAYER_MAX_ITEM_COUNT ) { // Monster are invulnerable, while player has no empty item slot
-                    g_playerInventory[ getPlayerInventoryPlaceOf( EMPTY ) ] = KEY;
-                    g_playerInventoryItemCount++;
+                // Monster are invulnerable, while player has no empty item slot
+                if ( inventoryAdd( KEY, INT8_MIN ) ) {
                     g_keyMonsterHealth = KEY_MONSTER_MAX_HEALTH;
 
                     return ( move( _who, _currentPosition, _offset ) );
@@ -663,6 +658,7 @@ void updateScreen( void ) {
 
     print( "\nITEMS:", 8 );
 
+    /// TODO: PLAYER_MAX_ITEM_COUNT * 2 to 3
     l_buffer = (char*)Malloc( PLAYER_MAX_ITEM_COUNT * 2 );
 
     for ( uint32_t l_item = 0; l_item < PLAYER_MAX_ITEM_COUNT; l_item++ ) {

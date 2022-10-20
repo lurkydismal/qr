@@ -28,7 +28,9 @@ const char* const boolToString( bool _boolean ) {
 /// @brief Function that pop out element of array.
 /// @details Can pop out element of any type, but array should be of the same type. Pop out first element with needed value.
 /// @param[in] _array Elements array to pop from.
+/// @param[in] _lengthOfArray Array length.
 /// @param[in] _elementToPop Element to pop.
+/// @result Array without popped element.
 ///////////////
 uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elementToPop ) {
     //! <b>[for_each]</b>
@@ -296,6 +298,7 @@ void clearConsole( void ) {
 /// @brief Function that find duplicate number in integer array.
 /// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
 /// @param[in] _numbers Array of integer values.
+/// @param[in] _lengthOfArray Array length.
 /// @return Duplicate number or first number in array, if there is no duplicate.
 ///////////////
 int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray ) {
