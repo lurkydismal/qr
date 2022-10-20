@@ -658,8 +658,7 @@ void updateScreen( void ) {
 
     print( "\nITEMS:", 8 );
 
-    /// TODO: PLAYER_MAX_ITEM_COUNT * 2 to 3
-    l_buffer = (char*)Malloc( PLAYER_MAX_ITEM_COUNT * 2 );
+    l_buffer = (char*)Malloc( 3 );
 
     for ( uint32_t l_item = 0; l_item < PLAYER_MAX_ITEM_COUNT; l_item++ ) {
         if ( g_playerInventory[ l_item ] ) {
