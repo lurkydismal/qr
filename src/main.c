@@ -274,7 +274,7 @@ int main( int _argumentCount, char* _arguments[] ) {
 #if defined( CLIENT ) || defined( SERVER )
 
     // Cleanup
-    shutdown( 
+    shutdown(
         l_connectSocket,
         SD_SEND
     );
