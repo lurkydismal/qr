@@ -58,10 +58,12 @@ freely, subject to the following restrictions:
 
 ## Setup
 
-Get [_Crinkler_](https://crinkler.net).
-Get **googletest** library.
-> For **Debian/ Ubuntu**:
-`apt install libgtest-dev`
+* > Get [_Crinkler_](https://crinkler.net).
+* > Get **googletest** library.
+  > For **Debian/ Ubuntu**:
+  > ``` console
+  > apt install libgtest-dev
+  > ```
 
 ## Usage
 
