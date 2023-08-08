@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      - 'main'
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  mirror_job:
+    permissions:
+        contents: write
+        deployments: write
+    runs-on: ubuntu-latest
+    name: Mirror SOURCE_BRANCH_NAME branch to DESTINATION_BRANCH_NAME branch
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@cba0d00b1fc9a034e1e642ea0f1103c282990604 # v2.5.0
+      with:
+        disable-sudo: true
+        egress-policy: block
+        allowed-endpoints: >
+          api.github.com:443
+
+    - name: Mirror action step
+      id: mirror
+      uses: google/mirror-branch-action@30c52ee21f5d3bd7fb28b95501c11aae7f17eebb # v2.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        source: 'main'
+        dest: 'master'
