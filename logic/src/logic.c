@@ -452,7 +452,7 @@ static void _followMove( const char _who, uint32_t* _currentPosition ) {
 bool doOpponentMove( void ) {
     bool l_isPlayerInVision = false;
 
-    for ( uint_fast64_t _visionCellIndex = 0; _visionCellIndex < lengthOfString( g_vision ); _visionCellIndex++ ) {
+    for ( uint_fast64_t _visionCellIndex = 0; _visionCellIndex < lengthOfCString( g_vision ); _visionCellIndex++ ) {
         if ( g_vision[ _visionCellIndex ] == PLAYER ) {
             l_isPlayerInVision = true;
         }
@@ -640,7 +640,7 @@ void updateScreen( void ) {
     clearConsole();
     getOverview( g_playerPosition );
 
-    print( g_vision, lengthOfString( g_vision ) );
+    print( g_vision, lengthOfCString( g_vision ) );
 
     print( "\nHP:", 5 );
 

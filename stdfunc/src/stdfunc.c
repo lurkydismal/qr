@@ -115,7 +115,7 @@ uint_fast32_t lengthOfInt( long _number ) {
 /// @param[in] _string String pointer to get length from.
 /// @return String length.
 ///////////////
-uint_fast32_t lengthOfString( char* _string ) {
+uint_fast32_t lengthOfCString( char* _string ) {
     //! <b>[declare]</b>
     /// Last symbol from _string.
     /// @code{.c}

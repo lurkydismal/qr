@@ -126,8 +126,8 @@ TEST( logic, getOverview ) {
 
     getOverview( g_playerPosition );
 
-    memset( &temp_vision, 0,        lengthOfString( g_vision ) );
-    CopyMemory( temp_vision,  g_vision, lengthOfString( g_vision ) );
+    memset( &temp_vision, 0,        lengthOfCString( g_vision ) );
+    CopyMemory( temp_vision,  g_vision, lengthOfCString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 
@@ -137,8 +137,8 @@ TEST( logic, getOverview ) {
 
     ASSERT_STRNE( temp_vision, g_vision );
 
-    memset( &temp_vision, 0,        lengthOfString( g_vision ) );
-    CopyMemory( temp_vision,  g_vision, lengthOfString( g_vision ) );
+    memset( &temp_vision, 0,        lengthOfCString( g_vision ) );
+    CopyMemory( temp_vision,  g_vision, lengthOfCString( g_vision ) );
 
     ASSERT_STREQ( temp_vision, g_vision );
 }

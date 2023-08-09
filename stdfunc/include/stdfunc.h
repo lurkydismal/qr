@@ -49,7 +49,7 @@ uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elemen
 
 uint_fast32_t lengthOfInt( long _number );
 
-uint_fast32_t lengthOfString( char* _string );
+uint_fast32_t lengthOfCString( char* _string );
 
 void print( const char* _text, const uint32_t _lengthOfText );
 
