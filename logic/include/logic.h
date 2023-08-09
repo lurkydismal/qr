@@ -18,27 +18,27 @@
 #define MONSTER_MAX_HEALTH     20
 #define KEY_MONSTER_MAX_HEALTH 20
 
-#ifndef _WINUSER_
+// #ifndef _WINUSER_
 
-#define VK_NUMPAD0 0x60
-#define VK_NUMPAD1 0x61
-#define VK_NUMPAD2 0x62
-#define VK_NUMPAD3 0x63
-#define VK_NUMPAD4 0x64
-#define VK_NUMPAD5 0x65
-#define VK_NUMPAD6 0x66
-#define VK_NUMPAD7 0x67
-#define VK_NUMPAD8 0x68
-#define VK_NUMPAD9 0x69
+// #define VK_NUMPAD0 0x60
+// #define VK_NUMPAD1 0x61
+// #define VK_NUMPAD2 0x62
+// #define VK_NUMPAD3 0x63
+// #define VK_NUMPAD4 0x64
+// #define VK_NUMPAD5 0x65
+// #define VK_NUMPAD6 0x66
+// #define VK_NUMPAD7 0x67
+// #define VK_NUMPAD8 0x68
+// #define VK_NUMPAD9 0x69
 
-#endif // _WINUSER_
+// #endif // _WINUSER_
 
 enum item_t {
     EMPTY   = 'E',
     KEY     = 'K',
     HEALTH  = 'H',
     ATTACK  = 'A',
-    DEFENCE = 'D'
+    DEFENSE = 'D'
 };
 
 enum cell_t {
@@ -106,6 +106,12 @@ extern const char* g_emptyMap;
 extern char        g_map[];
 extern char        g_vision[];
 
+#if defined( __cplusplus )
+
+extern "C" {
+
+#endif
+
 void     initMap( void );
 void     initInventory( enum item_t item );
 void     getOverview( const uint32_t position );
@@ -117,5 +123,11 @@ bool     doPlayerMove( const uint32_t offset, const bool isSecondPlayer );
 bool     doOpponentMove( void );
 uint32_t fight( const char who, uint32_t currentPosition, const int32_t offset );
 void     updateScreen( void );
+
+#if defined( __cplusplus )
+
+}
+
+#endif
 
 #endif // _MAIN_H

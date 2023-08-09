@@ -55,7 +55,7 @@ static void init( void ) {
 ///////////////
 static void initNextChunk( chunk_header_t* _currentChunk, unsigned int _numberOfBytes ) {
     //! <b>[assign]</b>
-    /// Assign some variables on reinitialization free space chunk.
+    /// Assign some variables on re-initialization free space chunk.
     /// @code{.c}
     g_heapSize -= _numberOfBytes;
     _currentChunk->next = NULL;
@@ -132,13 +132,13 @@ void* Malloc( unsigned int _numberOfBytes ) {
 ///////////////
 /// @brief A block of memory previously allocated by a call to \c Malloc is deallocated, making it available again for further allocations.
 /// @details If \c pointer does not point to a block of memory allocated with the above functions, it causes undefined behavior. If \c pointer is a null pointer, the function does nothing. Notice that this function does not change the value of \c pointer itself, hence it still points to the same (now invalid) location.
-/// @param[in] _firstbyte Pointer to a memory block previously allocated with \c Malloc.
+/// @param[in] _firstByte Pointer to a memory block previously allocated with \c Malloc.
 ///////////////
-void Free( void* _firstbyte ) {
+void Free( void* _firstByte ) {
     //! <b>[declare]</b>
     /// Declare start address of memory region and start address of allocation heap.
     /// @code{.c}
-    chunk_header_t* l_mem = (chunk_header_t*)_firstbyte - sizeof( chunk_header_t );
+    chunk_header_t* l_mem = (chunk_header_t*)_firstByte - sizeof( chunk_header_t );
     chunk_header_t* l_currentChunk = g_chunkHeaderBegin;
     /// @endcode
     //! <b>[declare]</b>
@@ -168,7 +168,7 @@ void Free( void* _firstbyte ) {
     //! <b>[free]</b>
     /// Free a \c pointer to memory chunk. End of function.
     /// @code{.c}
-    _firstbyte = NULL;
+    _firstByte = NULL;
     /// @endcode
     //! <b>[free]</b>
 }

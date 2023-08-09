@@ -4,7 +4,7 @@
 
 ///////////////
 /// @file stdfunc.h
-/// @brief Declarations of many useful functions and lambdas related to replace standart if needed.
+/// @brief Declarations of many useful functions and lambdas related to replace standard if needed.
 ///////////////
 #pragma once
 
@@ -37,6 +37,12 @@
 ///////////////
 #define Pass (void*)0
 
+#if defined( __cplusplus )
+
+extern "C" {
+
+#endif // __cplusplus
+
 const char* const boolToString( bool _boolean );
 
 uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elementToPop );
@@ -57,12 +63,18 @@ void clearConsole( void );
 
 void* Malloc( uint32_t _numberOfBytes );
 
-void Free( void* _firstbyte );
+void Free( void* _firstByte );
 
 void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes );
 
 char* Ltoa( long _number, char* _cString );
 
-int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray );
+int32_t findDuplicate( int32_t* _numbers );
+
+#if defined( __cplusplus )
+
+}
+
+#endif // __cplusplus
 
 #endif // _STDFUNC_H

@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtest/gtest.h>
 
-#include <main.h>
+#include <logic.h>
 #include <stdfunc.h>
 
 #define MAP_SIZE        80 * 10
@@ -146,7 +146,7 @@ TEST( logic, getOverview ) {
 TEST( logic, getPlayerInventoryPlaceOf ) {
     initInventory( EMPTY );
 
-    inventoryAdd( DEFENCE, INT8_MIN );
+    inventoryAdd( DEFENSE, INT8_MIN );
     inventoryAdd( ATTACK, INT8_MIN );
     inventoryAdd( HEALTH, INT8_MIN );
     inventoryAdd( KEY, INT8_MIN );
@@ -155,7 +155,7 @@ TEST( logic, getPlayerInventoryPlaceOf ) {
     ASSERT_EQ( getPlayerInventoryPlaceOf( KEY ),     3 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( HEALTH ),  2 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( ATTACK ),  1 );
-    ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENCE ), 0 );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENSE ), 0 );
     ASSERT_EQ( getPlayerInventoryPlaceOf( (enum item_t)NULL ), INT8_MIN );
 }
 
@@ -179,17 +179,17 @@ TEST( logic, inventoryAdd ) {
 }
 
 TEST( logic, usePlayerItem ) {
-    initInventory( DEFENCE );
+    initInventory( DEFENSE );
 
-    ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENCE ), 0 );
-    ASSERT_EQ( g_playerInventory[ 0 ], DEFENCE );
-    ASSERT_EQ( g_playerInventory[ 1 ], DEFENCE );
-    ASSERT_EQ( g_playerInventory[ 2 ], DEFENCE );
-    ASSERT_EQ( g_playerInventory[ 3 ], DEFENCE );
-    ASSERT_EQ( g_playerInventory[ 4 ], DEFENCE );
+    ASSERT_EQ( getPlayerInventoryPlaceOf( DEFENSE ), 0 );
+    ASSERT_EQ( g_playerInventory[ 0 ], DEFENSE );
+    ASSERT_EQ( g_playerInventory[ 1 ], DEFENSE );
+    ASSERT_EQ( g_playerInventory[ 2 ], DEFENSE );
+    ASSERT_EQ( g_playerInventory[ 3 ], DEFENSE );
+    ASSERT_EQ( g_playerInventory[ 4 ], DEFENSE );
     ASSERT_EQ( g_playerInventoryItemCount, (uint32_t)PLAYER_MAX_ITEM_COUNT );
 
-    ASSERT_TRUE( usePlayerItem( DEFENCE ) );
+    ASSERT_TRUE( usePlayerItem( DEFENSE ) );
 
     ASSERT_EQ( g_playerInventory[ 0 ], EMPTY );
     ASSERT_EQ( getPlayerInventoryPlaceOf( EMPTY ), 0 );

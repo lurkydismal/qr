@@ -1,6 +1,6 @@
 ///////////////
 /// @file stdfunc.c
-/// @brief Definition of many useful functions related to replace standart if needed.
+/// @brief Definition of many useful functions related to replace standard if needed.
 ///////////////
 #ifndef _WIN32
 
@@ -13,7 +13,7 @@
 ///////////////
 /// @brief Inline function that converts \c bool to string.
 /// @param[in] _boolean Boolean value to convert to string.
-/// @return Constant char pointer to text. <b>( OK || Failed )</b>
+/// @return Char pointer to text. <b>( OK || Failed )</b>
 ///////////////
 const char* const boolToString( bool _boolean ) {
     //! <b>[return]</b>
@@ -53,9 +53,9 @@ uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elemen
             }
             /// @endcode
 
-            /// Replace the last element of _array with NULL value.
+            /// Replace the last element of _array with 0.
             /// @code{.c}
-            _array[ _elementOfArray ] = (uint32_t)NULL;
+            _array[ _elementOfArray ] = 0;
             /// @endcode
             //! <b>[pop]</b>
 
@@ -298,10 +298,9 @@ void clearConsole( void ) {
 /// @brief Function that find duplicate number in integer array.
 /// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
 /// @param[in] _numbers Array of integer values.
-/// @param[in] _lengthOfArray Array length.
 /// @return Duplicate number or first number in array, if there is no duplicate.
 ///////////////
-int32_t findDuplicate( int32_t* _numbers, uint32_t _lengthOfArray ) {
+int32_t findDuplicate( int32_t* _numbers ) {
     //! <b>[declare]</b>
     /// Two variables that contains first element of array
     /// @code{.c}

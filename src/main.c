@@ -9,7 +9,7 @@
 
 #endif // _WIN32
 
-#include <main.h>
+#include <logic.h>
 #include <stdfunc.h>
 
 int main( int _argumentCount, char* _arguments[] ) {

@@ -1,4 +1,4 @@
-#include <main.h>
+#include <logic.h>
 #include <stdfunc.h>
 
 enum item_t g_playerInventory[ PLAYER_MAX_ITEM_COUNT ];
@@ -131,7 +131,7 @@ void getOverview( const uint32_t _playerPosition ) {
     uint32_t l_overviewCell = ( _playerPosition - ( 80 * 2 ) - 2 );
     uint32_t l_counter      = 0;
 
-    for ( uint32_t _overwiewAreaIndex = 1; _overwiewAreaIndex < 6; _overwiewAreaIndex++ ) {
+    for ( uint32_t _overviewAreaIndex = 1; _overviewAreaIndex < 6; _overviewAreaIndex++ ) {
         if ( ( l_overviewCell % 80 ) > ( ( _playerPosition % 80 ) + 2 ) ) {
             l_overviewCell++;
 
@@ -147,7 +147,7 @@ void getOverview( const uint32_t _playerPosition ) {
         g_vision[ l_counter ] = '\n';
         l_counter++;
 
-        l_overviewCell = ( _playerPosition - ( 80 * ( 2 - _overwiewAreaIndex ) ) - 2 );
+        l_overviewCell = ( _playerPosition - ( 80 * ( 2 - _overviewAreaIndex ) ) - 2 );
     }
 
     g_vision[ l_counter ] = '\0';
@@ -321,9 +321,9 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
             break;
         }
 
-        case DEFENCE:
+        case DEFENSE:
         {
-            if ( inventoryAdd( DEFENCE, INT8_MIN ) ) {
+            if ( inventoryAdd( DEFENSE, INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
                 // PlaySoundA( "SystemExit", NULL, SND_SYNC );
             }
@@ -333,7 +333,7 @@ bool doPlayerMove( const uint32_t _offset, const bool isSecondPlayer ) {
 
         case CHEST:
         {
-            const enum item_t l_chestItems[] = { HEALTH, ATTACK, DEFENCE };
+            const enum item_t l_chestItems[] = { HEALTH, ATTACK, DEFENSE };
 
             if ( inventoryAdd( l_chestItems[ ( Rand() % sizeof( l_chestItems ) ) ], INT8_MIN ) ) {
                 *l_playerPosition = move( PLAYER, *l_playerPosition, _offset );
@@ -486,7 +486,7 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
     const bool l_isPoweredAttack = usePlayerItem( ATTACK );
 
     if ( ( _who == GUARDIAN ) || ( g_map[ _currentPosition + _offset ] == GUARDIAN ) ) {
-        g_playerHealth -= ( usePlayerItem( DEFENCE ) ) ? 1 : 2;
+        g_playerHealth -= ( usePlayerItem( DEFENSE ) ) ? 1 : 2;
 
         g_guardianHealth -= (
             1 + (uint32_t)( g_playerExperience / EXPERIENCE_FOR_SUPER_DMG ) +
