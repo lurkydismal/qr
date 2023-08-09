@@ -58,6 +58,14 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      
+    - name: Get APT Package Wine
+      run: |
+        sudo apt-get install -y build-essential &&
+        sudo apt-get install -y ninja-build &&
+        sudo apt-get install -y meson &&
+        sudo apt-get install -y libmozjs-102-dev
+      shell: bash
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -74,8 +82,8 @@ jobs:
 
     # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
     # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@0ba4244466797eb048eb91a6cd43d5c03ca8bd05 # v2.21.2
+#     - name: Autobuild
+#       uses: github/codeql-action/autobuild@0ba4244466797eb048eb91a6cd43d5c03ca8bd05 # v2.21.2
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -83,9 +91,8 @@ jobs:
     #   If the Autobuild fails above, remove it and uncomment the following three lines.
     #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
 
-    # - run: |
-    #     echo "Run, Build Application using script"
-    #     ./location_of_script_within_repo/buildscript.sh
+    - run: |
+        meson build && cd build && meson test
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@0ba4244466797eb048eb91a6cd43d5c03ca8bd05 # v2.21.2
