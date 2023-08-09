@@ -189,7 +189,7 @@ uint32_t Rand( void ) {
     //! <b>[random]</b>
     /// Generating random number from the \c seed.
     /// @code{.c}
-    g_seed = g_seed * (int32_t)16807 % (uint32_t)0x7fffffff;
+    g_seed = ( g_seed * (int32_t)16807 % (uint32_t)0x7fffffff );
     /// @endcode
     //! <b>[random]</b>
 
@@ -266,49 +266,4 @@ void clearConsole( void ) {
 
 #endif // _WIN32
 
-}
-
-///////////////
-/// @brief Function that find duplicate number in integer array.
-/// @details Robert W. Floyd's tortoise and hare algorithm moves two pointers at different speeds through the sequence of values until they both point to equal values.
-/// @param[in] _numbers Array of integer values.
-/// @return Duplicate number or first number in array, if there is no duplicate.
-///////////////
-int32_t findDuplicate( int32_t* _numbers ) {
-    //! <b>[declare]</b>
-    /// Two variables that contains first element of array
-    /// @code{.c}
-    int32_t l_tortoise = _numbers[ 0 ];
-    int32_t l_hare     = _numbers[ 0 ];
-    /// @endcode
-    //! <b>[declare]</b>
-
-    //! <b>[intersection]</b>
-    /// Find the intersection point of the two runners.
-    /// @code{.c}
-    do {
-        l_tortoise = _numbers[ l_tortoise ];
-        l_hare     = _numbers[ _numbers[ l_hare ] ];
-    } while ( l_tortoise != l_hare );
-    /// @endcode
-    //! <b>[intersection]</b>
-
-    //! <b>[entrance]</b>
-    /// Find the "entrance" to the cycle.
-    /// @code{.c}
-    l_tortoise = _numbers[ 0 ];
-
-    while ( l_tortoise != l_hare ) {
-        l_tortoise = _numbers[ l_tortoise ];
-        l_hare     = _numbers[ l_hare ];
-    }
-    /// @endcode
-    //! <b>[entrance]</b>
-
-    //! <b>[return]</b>
-    /// Parentheses with whitespaces means what we could change the return value in the asked place without pitfalls.
-    /// @code{.c}
-    return ( l_hare );
-    /// @endcode
-    //! <b>[return]</b>
 }

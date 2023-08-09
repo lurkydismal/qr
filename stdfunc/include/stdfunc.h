@@ -67,8 +67,6 @@ void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes );
 
 char* Ltoa( long _number, char* _cString );
 
-int32_t findDuplicate( int32_t* _numbers );
-
 #if defined( __cplusplus )
 
 }
