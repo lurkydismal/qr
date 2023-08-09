@@ -53,8 +53,6 @@ uint_fast32_t lengthOfCString( char* _string );
 
 void print( const char* _text, const uint32_t _lengthOfText );
 
-int Pow( int32_t _number, uint32_t _exp );
-
 uint32_t Rand( void );
 
 void SRand( unsigned long _seed );

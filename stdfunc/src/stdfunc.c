@@ -181,32 +181,6 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
 }
 
 ///////////////
-/// @brief Function that exponentiation integer number.
-/// @details Recursive function.
-/// @param[in] _number Number to power.
-/// @param[in] _exp Exponentiation value.
-/// @return Exponentiation of number.
-///////////////
-int32_t Pow( int32_t _number, uint32_t _exp ) {
-    if ( _exp == 1 ) {
-        //! <b>[return]</b>
-        /// End of function.
-        /// @code{.c}
-        return (1);
-        /// @endcode
-        //! <b>[return]</b>
-
-    } else {
-        //! <b>[return]</b>
-        /// Recursive multiply.
-        /// @code{.c}
-        return ( _number * Pow( _number, _exp-- ) );
-        /// @endcode
-        //! <b>[return]</b>
-    }
-}
-
-///////////////
 /// @brief Function that generate random number from the \c seed.
 /// @details Use \c SRand() to set the seed.
 /// @return Generated random number.
