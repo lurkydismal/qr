@@ -60,18 +60,24 @@ char* Ltoa( long _number, char* _cString ) {
     //! <b>[convert]</b>
     /// Convert integer value to string value.
     /// @code{.c}
-    for ( l_characterIndex = 1; _number; ++l_characterIndex ) {
-        *l_tail-- = (char)(
-            ( _number % 10 ) + ( (
-                9L < ( _number % 10 )        // if decimal is not NULL
-            ) ? (
-                'A' - 10L
-            ) : (
-                '0'
-            ) )
-        );
+    if ( !_number ) {
+        *l_tail-- = '0';
+        l_characterIndex = 1;
 
-        _number /= 10;
+    } else {
+        for ( l_characterIndex = 1; _number; ++l_characterIndex ) {
+            *l_tail-- = (char)(
+                ( _number % 10 ) + ( (
+                    9L < ( _number % 10 )        // if decimal is not NULL
+                ) ? (
+                    'A' - 10L
+                ) : (
+                    '0'
+                ) )
+            );
+
+            _number /= 10;
+        }
     }
     /// @endcode
     //! <b>[convert]</b>
