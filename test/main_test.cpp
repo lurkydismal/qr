@@ -201,7 +201,7 @@ TEST( logic, usePlayerItem ) {
 TEST( logic, move ) {
     initMap();
 
-    EXPECT_EQ( g_map[ g_playerPosition + 1 ], '.' );
+    ASSERT_EQ( g_map[ g_playerPosition + 1 ], '.' );
     ASSERT_EQ( move( PLAYER, g_playerPosition, 1 ), g_playerPosition + 1 );
 }
 
@@ -224,4 +224,58 @@ TEST( logic, DoPlayerMove ) {
 
     ASSERT_FALSE( doPlayerMove( 396, false ) ); // + 396 from current position, door expected ( '>' or '<' )
     ASSERT_EQ( temp_playerPosition, g_playerPosition );
+}
+
+TEST( algorithm, boolToString ) {
+    ASSERT_STREQ( boolToString( true ), "OK" );
+    ASSERT_STREQ( boolToString( false ), "Failed" );
+    ASSERT_STREQ( boolToString( static_cast< bool >( NULL ) ), "Failed" );
+}
+
+TEST( algorithm, lengthOfInt ) {
+    #define MY_MACRO( _index ) \
+        ASSERT_EQ(\
+            lengthOfInt( _index ),\
+            ( ( _index / 10 ) + 1 )\
+        );
+
+    #include <IREPEAT.hpp>
+
+    #define VREPEAT_COUNT (9)
+    #define VREPEAT_MACRO MY_MACRO
+    #define VREPEAT_SEPARATOR NOSEP
+    #include <VREPEAT.hpp>
+
+    #include <IREPEAT_UNDEF.hpp>
+
+    #undef MY_MACRO
+}
+
+TEST( algorithm, lengthOfCString ) {
+    ASSERT_EQ( lengthOfCString( (char*)"0" ), 2 );
+    ASSERT_EQ( lengthOfCString( (char*)"1" ), 2 );
+    ASSERT_EQ( lengthOfCString( (char*)"5" ), 2 );
+    ASSERT_EQ( lengthOfCString( (char*)"10" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"13" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"21" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"27" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"40" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"69" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"89" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"99" ), 3 );
+    ASSERT_EQ( lengthOfCString( (char*)"100" ), 4 );
+
+    ASSERT_EQ( lengthOfCString( (char*)"" ), 1 );
+}
+
+TEST( algorithm, Rand ) {
+    EXPECT_GT( Rand(), 0 );
+}
+
+TEST( algorithm, SRand ) {
+    SRand( 0 );
+    ASSERT_EQ( Rand(), 0 );
+
+    SRand( 1 );
+    EXPECT_GT( Rand(), 0 );
 }

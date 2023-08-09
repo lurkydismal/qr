@@ -34,6 +34,7 @@ endif
 fmt = dependency( 'fmt' )
 gtest = dependency( 'gtest' )
 gtest_main = dependency( 'gtest_main' )
+irepeat = dependency( 'irepeat' )
 
 logic_include = include_directories( 'logic/include' )
 stdfunc_include = include_directories( 'stdfunc/include' )
@@ -66,7 +67,7 @@ endif
 main_test_executable = executable(
     'main_test',
     'test/main_test.cpp',
-    dependencies : [ fmt, gtest, gtest_main, logic, stdfunc ],
+    dependencies : [ fmt, gtest, gtest_main, logic, irepeat, stdfunc ],
     include_directories : [ logic_include, stdfunc_include ]
 )
 
