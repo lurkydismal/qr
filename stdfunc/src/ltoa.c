@@ -68,8 +68,7 @@ char* Ltoa( unsigned long _number, char* _cString ) {
         *l_tail-- = (char)( ( _number % 10 ) + '0' );
 
         _number /= 10;
-    }
-    while ( _number);
+    } while ( _number != 0 );
     /// @endcode
     //! <b>[convert]</b>
 

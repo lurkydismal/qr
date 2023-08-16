@@ -264,7 +264,7 @@ int main( int _argumentCount, char* _arguments[] ) {
     }
 
     // Level passed
-    if ( g_playerHealth ) {
+    if ( g_playerHealth > 0 ) {
         MessageBoxA( 0, "You Win!", "Victory!", 0 );
 
     } else {

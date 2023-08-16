@@ -64,7 +64,7 @@ void initMap( void ) {
 
             #if defined( CLIENT ) || defined( SERVER )
 
-                if ( g_playerPosition ) {
+                if ( g_playerPosition != 0 ) {
                     g_secondPlayerPosition = _mapCellIndex;
                 }
 
@@ -412,7 +412,7 @@ static void _followMove( const char _who, uint32_t* _currentPosition ) {
 
 #if defined( CLIENT ) || defined( SERVER )
 
-    if ( Rand() % 2 ) {
+    if ( ( Rand() % 2 ) != 0 ) {
         l_playerPosition = &g_secondPlayerPosition;
 
     } else {
@@ -661,13 +661,11 @@ void updateScreen( void ) {
     l_buffer = (char*)Malloc( 3 );
 
     for ( uint32_t l_item = 0; l_item < PLAYER_MAX_ITEM_COUNT; l_item++ ) {
-        if ( g_playerInventory[ l_item ] ) {
-            l_buffer[ 0 ] = g_playerInventory[ l_item ];
-            l_buffer[ 1 ] = ' ';
-            l_buffer[ 2 ] = '\0';
+        l_buffer[ 0 ] = g_playerInventory[ l_item ];
+        l_buffer[ 1 ] = ' ';
+        l_buffer[ 2 ] = '\0';
 
-            print( l_buffer, 3 );
-        }
+        print( l_buffer, 3 );
     }
 
     Free( l_buffer );
