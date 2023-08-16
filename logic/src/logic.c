@@ -471,13 +471,14 @@ bool doOpponentMove( void ) {
         }
     }
 
-    for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ )
+    for ( uint32_t _guardianIndex = 0; _guardianIndex < g_guardiansLeft; _guardianIndex++ ) {
         if ( l_isPlayerInVision ) {
             _followMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
 
         } else {
             _randomMove( GUARDIAN, &g_guardiansPositions[ _guardianIndex ] );
         }
+    }
 
     return ( true );
 }
