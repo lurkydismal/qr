@@ -65,7 +65,7 @@ void Free( void* _firstByte );
 
 void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes );
 
-char* Ltoa( long _number, char* _cString );
+char* Ltoa( unsigned long _number, char* _cString );
 
 #if defined( __cplusplus )
 
