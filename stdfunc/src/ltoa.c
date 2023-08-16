@@ -52,7 +52,7 @@ char* Ltoa( unsigned long _number, char* _cString ) {
 
     /// Set the last character of string to NULL terminator.
     /// @code{.c}
-    l_tail    = &l_buf[ BUFSIZE - 1 ];       // last character position
+    l_tail    = &( l_buf[ BUFSIZE - 1 ] );       // last character position
     *l_tail-- = '\0';
     /// @endcode
     //! <b>[declare]</b>
