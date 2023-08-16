@@ -168,7 +168,7 @@ void Free( void* _firstByte ) {
     //! <b>[free]</b>
     /// Free a \c pointer to memory chunk. End of function.
     /// @code{.c}
-    _firstByte = NULL;
+    // _firstByte = NULL;
     /// @endcode
     //! <b>[free]</b>
 }
