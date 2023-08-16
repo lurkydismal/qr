@@ -20,7 +20,7 @@ void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes )  {
     //! <b>[typecast]</b>
     /// Typecast _source and _destination addresses to <tt>(char*)</tt>.
     /// @code{.c}
-    const char* const l_cSource      = (const char* const)_source;
+    const char* l_cSource      = (const char*)_source;
     char* l_cDestination = (char*)_destination;
     /// @endcode
     //! <b>[typecast]</b>
