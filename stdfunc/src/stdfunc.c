@@ -185,11 +185,11 @@ void print( const char* _text, const uint32_t _lengthOfText ) {
 /// @details Use \c SRand() to set the seed.
 /// @return Generated random number.
 ///////////////
-uint32_t Rand( void ) {
+unsigned long Rand( void ) {
     //! <b>[random]</b>
     /// Generating random number from the \c seed.
     /// @code{.c}
-    g_seed = ( g_seed * (int32_t)16807 % (uint32_t)0x7fffffff );
+    g_seed = ( g_seed * (unsigned long)16807 % (unsigned long)0x7fffffff );
     /// @endcode
     //! <b>[random]</b>
 
