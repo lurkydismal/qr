@@ -252,20 +252,20 @@ TEST( algorithm, lengthOfInt ) {
 }
 
 TEST( algorithm, lengthOfCString ) {
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "0" ) ), 2 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "1" ) ), 2 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "5") ), 2 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "10" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "13" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "21" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "27" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "40" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "69" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "89" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "99" ) ), 3 );
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "100" ) ), 4 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "0" ) ), 2 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "1" ) ), 2 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "5") ), 2 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "10" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "13" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "21" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "27" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "40" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "69" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "89" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "99" ) ), 3 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "100" ) ), 4 );
 
-    ASSERT_EQ( lengthOfCString( static_cast< char* > ( "" ) ), 1 );
+    ASSERT_EQ( lengthOfCString( static_cast< const char* > ( "" ) ), 1 );
 }
 
 TEST( algorithm, Rand ) {
