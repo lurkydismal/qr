@@ -37,6 +37,11 @@
 ///////////////
 #define Pass (void*)0
 
+///////////////
+/// @brief How much memory to allocate.
+///////////////
+#define HEAP_MEMORY_SIZE 150
+
 #if defined( __cplusplus )
 
 extern "C" {
@@ -58,10 +63,6 @@ unsigned long Rand( void );
 void SRand( unsigned long _seed );
 
 void clearConsole( void );
-
-void* Malloc( uint32_t _numberOfBytes );
-
-void Free( void* _firstByte );
 
 void Memcpy( void* _destination, const void* _source, size_t _numberOfBytes );
 

@@ -280,26 +280,17 @@ TEST( algorithm, SRand ) {
     EXPECT_GT( Rand(), 0 );
 }
 
-// TEST( algorithm, Malloc ) {
-//     ASSERT_EQ( 0, 0 );
-// }
-
-// TEST( algorithm, Free ) {
-//     ASSERT_EQ( 0, 0 );
-// }
-
 // TEST( algorithm, Memcpy ) {
 //     ASSERT_EQ( 0, 0 );
 // }
 
 TEST( algorithm, Ltoa ) {
-    char*    l_buffer = NULL;
+    char     l_allocatedMemory[ HEAP_MEMORY_SIZE ];
+    char*    l_buffer = &( l_allocatedMemory[ 0 ] );
     unsigned long l_long = 0;
 
-    l_buffer = (char*)Malloc( lengthOfInt( l_long ) );
     Ltoa( l_long, l_buffer );
     ASSERT_STREQ( l_buffer, "0" );
-    Free( l_buffer );
 
     Ltoa( sizeof( l_buffer ), l_buffer );
     ASSERT_STREQ( l_buffer, "8" );
@@ -331,8 +322,6 @@ TEST( algorithm, Ltoa ) {
 
     l_long = 5;
 
-    l_buffer = (char*)Malloc( lengthOfInt( l_long ) );
     Ltoa( l_long, l_buffer );
     ASSERT_STREQ( l_buffer, "5" );
-    Free( l_buffer );
 }

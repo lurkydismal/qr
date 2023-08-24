@@ -231,7 +231,9 @@ int main( int _argumentCount, char* _arguments[] ) {
 
             #if defined( CLIENT ) || defined( SERVER )
 
-                l_secondPlayerOffset = (char*)Malloc( sizeof( l_offset ) );
+                char l_allocatedMemory[ HEAP_MEMORY_SIZE ];
+
+                l_secondPlayerOffset = &( l_allocatedMemory[ 0 ] );
 
                 *l_secondPlayerOffset = l_offset;
 
@@ -244,8 +246,6 @@ int main( int _argumentCount, char* _arguments[] ) {
                     doPlayerMove( *l_secondPlayerOffset, true ) &&
                     doOpponentMove()
                 );
-
-                Free( l_secondPlayerOffset );
 
             #else // CLIENT || SERVER
 

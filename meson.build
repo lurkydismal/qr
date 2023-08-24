@@ -42,7 +42,7 @@ stdfunc_include = include_directories( 'stdfunc/include' )
 stdfunc = declare_dependency(
     compile_args : compile_argument_list,
     include_directories : [ stdfunc_include, logic_include ],
-    sources : [ 'stdfunc/src/stdfunc.c', 'stdfunc/src/malloc.c', 'stdfunc/src/ltoa.c' ],
+    sources : [ 'stdfunc/src/stdfunc.c', 'stdfunc/src/ltoa.c' ],
     version : '1.0.0'
 )
 logic = declare_dependency(

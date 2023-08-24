@@ -638,6 +638,8 @@ uint32_t fight( const char _who, uint32_t _currentPosition, const int32_t _offse
 }
 
 void updateScreen( void ) {
+    char l_allocatedMemory[ HEAP_MEMORY_SIZE ];
+
     clearConsole();
     getOverview( g_playerPosition );
 
@@ -645,21 +647,16 @@ void updateScreen( void ) {
 
     print( "\nHP:", 5 );
 
-    char* l_buffer = (char*)Malloc( lengthOfInt( g_playerHealth ) );
+    char* l_buffer = &( l_allocatedMemory[ 0 ] );
     Ltoa( g_playerHealth, l_buffer );
     print( l_buffer, lengthOfInt( g_playerHealth ) );
-    Free( l_buffer );
 
     print( "\nEXP:", 6 );
 
-    l_buffer = (char*)Malloc( lengthOfInt( g_playerExperience ) );
     Ltoa( g_playerExperience, l_buffer );
     print( l_buffer, lengthOfInt( g_playerExperience ) );
-    Free( l_buffer );
 
     print( "\nITEMS:", 8 );
-
-    l_buffer = (char*)Malloc( 3 );
 
     for ( uint32_t l_item = 0; l_item < PLAYER_MAX_ITEM_COUNT; l_item++ ) {
         l_buffer[ 0 ] = g_playerInventory[ l_item ];
@@ -668,6 +665,4 @@ void updateScreen( void ) {
 
         print( l_buffer, 3 );
     }
-
-    Free( l_buffer );
 }
