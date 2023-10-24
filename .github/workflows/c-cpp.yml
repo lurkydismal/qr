@@ -40,6 +40,6 @@ jobs:
         cache: 'pip'
     - run: pip install -r requirements.txt
 
-    - name: Meson build
+    - name: Meson build tests
       run: |
         meson build && cd build && meson test
