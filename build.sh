@@ -7,7 +7,7 @@ export BUILD_DEFINES=""
 export LINK_FLAGS="-flto -nostdlib -nostartfiles -m32 -fno-PIC -O1 -s -Wl,--static -static -fuse-ld=mold -Wl,--gc-sections -Wl,--omagic -Wl,--nmagic -Wl,--no-eh-frame-hdr"
 export LINKER="ccache gcc"
 export EXECUTABLE_NAME="main.out"
-export declare -a EXECUTABLE_SECTIONS_TO_STRIP=(
+export declare EXECUTABLE_SECTIONS_TO_STRIP=(
     ".note.gnu.build-id"
     ".note.gnu.property"
     ".comment"
