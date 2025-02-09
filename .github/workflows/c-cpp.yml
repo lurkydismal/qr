@@ -32,14 +32,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    - name: Setup Python with Meson
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
-      with:
-        python-version: '>=3.10.12'
-        check-latest: true
-        cache: 'pip'
-    - run: pip install -r requirements.txt
-
-    - name: Meson build tests
+    - name: Build
       run: |
-        meson build && cd build && meson test
+        TERM=xterm IS_CI=1 ./build.sh

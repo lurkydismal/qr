@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/05dac30587aa4b8695e4dfef8493b8cb)](https://app.codacy.com/gh/lurkydismal/qr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-> NetHack-like game that fits in less than 3 kb.
+> NetHack-like game ~~that fits in less than 3 kb~~.
 
 ## Table of Contents
 
@@ -19,52 +19,61 @@
 
 ## General Information
 
-* Console rogue-like RPG adventure game with co-operative that can be transferred via QR code.
+* Console rogue-like RPG adventure game ~~with co-operative~~ ~~that can be transferred via QR code~~.
 
 ## Technologies Used
 
 <!--
-Crinkler - compressing linker for Windows
-Copyright (c) 2005-2020 Aske Simon Christensen and Rune L. H. Stubbe.
-
-This software is provided 'as-is', without any express or implied
-warranty. In no event will the authors be held liable for any damages
-arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute it
-freely, subject to the following restrictions:
-
-1. The origin of this software must not be misrepresented; you must not
-   claim that you wrote the original software. If you use this software
-   in a product, an acknowledgment in the product documentation would be
-   appreciated but is not required.
-2. Altered source versions must be plainly marked as such, and must not be
-   misrepresented as being the original software.
-3. This notice may not be removed or altered from any source distribution.
+Copyright (C) 1988-2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
 -->
-* Crinkler - version 2.3
-* gtest - version 1.11.0-3
+* GNU Make 4.4.1
+<!--
+Copyright (C) 2022 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+
+This is free software; you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+-->
+* GNU bash, version 5.2.37(1)-release (x86\_64-pc-linux-gnu)
+<!--
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) any later version.
+This program has absolutely no warranty.
+-->
+* GNU objcopy (GNU Binutils) 2.43.1
+<!--
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) any later version.
+This program has absolutely no warranty.
+-->
+* GNU strip (GNU Binutils) 2.43.1
+<!--
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-->
+* gcc (GCC) 14.2.1 20250128
 
 ## Features
 
-* 2 players co-operative.
-* Characters leveling.
+* ~~2 players co-operative.~~
+* Character leveling.
 * Different type items.
-* Different type enemies.
+* ~~Different type opponents.~~
 * Map recognizing on start-up.
 
 ## Screenshots
 
-![Gameplay screenshot](./screenshots/screenshot.png)
-
-## Setup
-
-* > Get [_Crinkler_](https://crinkler.net).
+![Gameplay screenshot](./screenshots/1.jpg)
 
 ## Usage
 
-Run one of batch script files or [_Crinkler manual_](https://github.com/runestubbe/Crinkler/blob/master/doc/manual.txt).
+build.sh used to build the project. While config.sh's used to configure the build process.
 
 ## Project Status
 
@@ -75,22 +84,17 @@ Project is: _in progress_.
 Room for improvement:
 
 * Reduce size.
-* Reduce RAM usage.
-* Improve code quality.
 
 To do:
 
+* More opponent types.
 * Random map generation.
-* Level to level transition.
-* Progress save.
-* Sounds.
-* Unix support.
 
 ## Acknowledgements
 
 * This project was inspired by [_NetHack_](https://github.com/NetHack/NetHack)
 * This project was based on [_this tutorial_](https://www.youtube.com/watch?v=DfA2BKPOhCA)
-* Many thanks to [_zergon321_](https://github.com/zergon321) and [_arsenez1999_](https://github.com/arsenez1999)
+* Many thanks to [_zergon321_](https://github.com/zergon321) and [_arsenez1999_](https://github.com/arsenez2006)
 
 ## License
 

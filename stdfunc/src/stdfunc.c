@@ -1,269 +1,225 @@
-///////////////
-/// @file stdfunc.c
-/// @brief Definition of many useful functions related to replace standard if needed.
-///////////////
-#ifndef _WIN32
+#include "stdfunc.h"
 
-#include <stdio.h>
+#include <sys/types.h>
 
-#endif // _WIN32
+#define __NR_exit 1
+#define __NR_read 3
+#define __NR_write 4
+#define __NR_ioctl 54
+#define __NR_nanosleep 162
 
-#include <stdfunc.h>
+struct timeSpecifier {
+    long seconds;
+    long nanoseconds;
+};
 
-///////////////
-/// @brief Inline function that converts \c bool to string.
-/// @param[in] _boolean Boolean value to convert to string.
-/// @return Char pointer to text. <b>( OK || Failed )</b>
-///////////////
-const char* const boolToString( bool _boolean ) {
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.c}
-    return ( _boolean ? "OK" : "Failed" );
-    /// @endcode
-    //! <b>[return]</b>
+void syscall( uint16_t _systemCallNumber,
+              uintptr_t _argument1,
+              uintptr_t _argument2,
+              uintptr_t _argument3 ) {
+    __asm__ volatile(
+        "movl %0, %%eax\n"
+        "movl %1, %%ebx\n"
+        "movl %2, %%ecx\n"
+        "movl %3, %%edx\n"
+        "int $0x80\n"
+        :
+        : "g"( _systemCallNumber ), "g"( _argument1 ), "g"( _argument2 ),
+          "g"( _argument3 )
+        : "%eax", "%ebx", "%ecx", "%edx" );
 }
 
-///////////////
-/// @brief Function that pop out element of array.
-/// @details Can pop out element of any type, but array should be of the same type. Pop out first element with needed value.
-/// @param[in] _array Elements array to pop from.
-/// @param[in] _lengthOfArray Array length.
-/// @param[in] _elementToPop Element to pop.
-/// @result Array without popped element.
-///////////////
-uint32_t* pop( uint32_t* _array, uint32_t _lengthOfArray, const uint32_t _elementToPop ) {
-    //! <b>[for_each]</b>
-    /// For each element of _array as index.
-    /// @code{.c}
-    for ( uint32_t _elementOfArray = 0; _elementOfArray < _lengthOfArray; _elementOfArray++ ) {
-    /// @endcode
-        //! <b>[compare]</b>
-        /// Comparison each element of _array to needed value.
-        /// @code{.c}
-        if ( _array[ _elementOfArray ] == _elementToPop ) {
-        /// @endcode
-            //! <b>[pop]</b>
-            /// Moving values from next index to current.
-            /// @code{.c}
-            while ( _elementOfArray < ( _lengthOfArray - 1 ) ) {
-                _array[ _elementOfArray ] = _array[ _elementOfArray + 1 ];
+NO_RETURN FORCE_INLINE void exit( int _exitCode ) {
+    __asm__ volatile(
+        "movl %0, %%eax\n"
+        "movl %1, %%ebx\n"
+        "int $0x80\n"
+        :
+        : "g"( __NR_exit ), "g"( _exitCode )
+        : "%eax", "%ebx" );
 
-                _elementOfArray++;
-            }
-            /// @endcode
-
-            /// Replace the last element of _array with 0.
-            /// @code{.c}
-            _array[ _elementOfArray ] = 0;
-            /// @endcode
-            //! <b>[pop]</b>
-
-            //! <b>[explicit]</b>
-            /// Explicit end of loop.
-            /// @code{.c}
-            break;
-            /// @endcode
-            //! <b>[explicit]</b>
-        }
-        //! <b>[compare]</b>
-    }
-    //! <b>[for_each]</b>
-
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.c}
-    return ( _array );
-    /// @endcode
-    //! <b>[return]</b>
+    __builtin_unreachable();
 }
 
-///////////////
-/// @brief Function that find length of an integer number.
-/// @details Can get length of negative and positive number.
-/// @param[in] _number Number to get length from.
-/// @return Number length.
-///////////////
-uint_fast32_t lengthOfInt( long _number ) {
-    //! <b>[declare]</b>
-    /// Length of _number.
-    /// @code{.c}
-    uint_fast32_t l_length = 0;
-    /// @endcode
-    //! <b>[declare]</b>
+NO_OPTIMIZE void ioctl( uint8_t _fileDescriptor,
+                        uint32_t _operationCode,
+                        uintptr_t _memory ) {
+    syscall( __NR_ioctl, _fileDescriptor, _operationCode, _memory );
+}
 
-    //! <b>[count_length]</b>
-    /// Divide by 10 while value not equal to 0.
-    /// @code{.c}
+FORCE_INLINE void usleep( uint32_t _milliseconds ) {
+#define MILLISECONDS_IN_SECOND 1000
+#define NANOSECONDS_IN_SECOND ( MILLISECONDS_IN_SECOND * 1000 )
+
+#define MILLISECONDS_TO_SECONDS( _milliseconds ) \
+    ( ( _milliseconds ) / MILLISECONDS_IN_SECOND )
+#define MILLISECONDS_TO_NANOSECONDS( _milliseconds ) \
+    ( ( _milliseconds ) * NANOSECONDS_IN_SECOND )
+
+#define SECONDS_TO_MILLISECONDS( _seconds ) \
+    ( ( _seconds ) * MILLISECONDS_IN_SECOND )
+
+    volatile struct timeSpecifier l_timeToSleep;
+
+    const size_t l_secondsToSleep = MILLISECONDS_TO_SECONDS( _milliseconds );
+    const size_t l_remainderLessThanASecond =
+        ( _milliseconds - SECONDS_TO_MILLISECONDS( l_secondsToSleep ) );
+    const size_t l_nanoSecondsToSleep =
+        MILLISECONDS_TO_NANOSECONDS( l_remainderLessThanASecond );
+
+    l_timeToSleep.seconds = l_secondsToSleep;
+    l_timeToSleep.nanoseconds = l_nanoSecondsToSleep;
+
+    __asm__ volatile(
+        "movl %0, %%eax\n"
+        "movl %1, %%ebx\n"
+        "xorl %%ecx, %%ecx\n"
+        "int $0x80\n"
+        :
+        : "g"( __NR_nanosleep ), "g"( ( uintptr_t )( &l_timeToSleep ) )
+        : "%eax", "%ebx" );
+
+#undef SECONDS_TO_MILLISECONDS
+
+#undef MILLISECONDS_TO_NANOSECONDS
+#undef MILLISECONDS_TO_SECONDS
+
+#undef MILLISECONDS_IN_SECOND
+#undef NANOSECONDS_IN_SECOND
+}
+
+void tcgetattr( uint8_t _fileDescriptor, struct termios* _termios ) {
+#define TERMINAL_IO_CONTROL_GET_ATTRIBUTES 0x5401
+
+    struct termios l_termios;
+
+    ioctl( _fileDescriptor, TERMINAL_IO_CONTROL_GET_ATTRIBUTES,
+           ( uintptr_t )( &l_termios ) );
+
+    *_termios = l_termios;
+
+    __builtin_memset(
+        __builtin_mempcpy(
+            &_termios->characters[ 0 ], &l_termios.characters[ 0 ],
+            ( CONTROL_CHARACTERS_COUNT_KERNEL * sizeof( uint8_t ) ) ),
+        0,
+        ( ( CONTROL_CHARACTERS_COUNT - CONTROL_CHARACTERS_COUNT_KERNEL ) *
+          sizeof( uint8_t ) ) );
+
+#undef TERMINAL_IO_CONTROL_GET_ATTRIBUTES
+}
+
+void tcsetattr( uint8_t _fileDescriptor,
+                /* unused */ uint8_t _optionalActions,
+                const struct termios* _termios ) {
+    // Unused
+    ( void )( sizeof( _optionalActions ) );
+
+#define TERMINAL_IO_CONTROL_SET_ATTRIBUTES 0x5402
+
+    ioctl( _fileDescriptor, TERMINAL_IO_CONTROL_SET_ATTRIBUTES,
+           ( uintptr_t )_termios );
+
+#undef TERMINAL_IO_CONTROL_SET_ATTRIBUTES
+}
+
+NO_OPTIMIZE void write( uint8_t _fileDescriptor,
+                        const char* _buffer,
+                        uint8_t _bufferLength ) {
+    syscall( __NR_write, _fileDescriptor, ( uintptr_t )_buffer, _bufferLength );
+}
+
+FORCE_INLINE void print( const char* _text, const uint16_t _lengthOfText ) {
+    write( 1, _text, _lengthOfText );
+}
+
+FORCE_INLINE void clearScreen( void ) {
+#define ANSI_TO_POINT_AT_THE_BEGINNING "\033[H"
+#define ANSI_TO_CLEAR_ENTIRE_SCREEN "\033[J"
+
+    print( ( ANSI_TO_POINT_AT_THE_BEGINNING ANSI_TO_CLEAR_ENTIRE_SCREEN ),
+           ( sizeof( ANSI_TO_POINT_AT_THE_BEGINNING ) +
+             sizeof( ANSI_TO_CLEAR_ENTIRE_SCREEN ) ) );
+
+#undef ANSI_TO_CLEAR_ENTIRE_SCREEN
+#undef ANSI_TO_POINT_AT_THE_BEGINNING
+}
+
+size_t lengthOfNumber( size_t _number ) {
+    size_t l_length = 0;
+
     do {
         l_length++;
+
         _number /= 10;
-    } while ( _number != 0 );
-    /// @endcode
-    //! <b>[count_length]</b>
+    } while ( _number );
 
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.c}
     return ( l_length );
-    /// @endcode
-    //! <b>[return]</b>
 }
 
-///////////////
-/// @brief Function that find length of an string.
-/// @param[in] _string String pointer to get length from.
-/// @return String length.
-///////////////
-uint_fast32_t lengthOfCString( char* _string ) {
-    //! <b>[declare]</b>
-    /// Last symbol from _string.
-    /// @code{.c}
-    char* l_temp_string = _string;
-    /// @endcode
-    //! <b>[declare]</b>
+FORCE_INLINE size_t power( size_t _base, uint8_t _exponent ) {
+    size_t l_returnValue = 1;
 
-    //! <b>[count_length]</b>
-    /// Go through _string upon null-terminator.
-    /// @code{.c}
-    while ( *l_temp_string != '\0' ) {
-        l_temp_string++;
-    }
-    /// @endcode
-    //! <b>[count_length]</b>
+    for ( ;; ) {
+        if ( _exponent & 1 ) {
+            l_returnValue *= _base;
+        }
 
-    //! <b>[return]</b>
-    /// End of function.
-    /// @code{.c}
-    return ( l_temp_string - _string + 1 );
-    /// @endcode
-    //! <b>[return]</b>
-}
+        _exponent >>= 1;
 
-//! <b>[declare]</b>
-/// \c seed that is in use by \c Rand and \c SRand functions.
-/// @code{.c}
-static unsigned long g_seed = 1;
-/// @endcode
-//! <b>[declare]</b>
+        if ( !_exponent ) {
+            break;
+        }
 
-///////////////
-/// @brief Function that print out char pointer text to console.
-/// @details Uses \c WriteConsoleA from \c Windows.h
-/// @param[in] _text Pointer to text.
-/// @param[in] _lengthOfText Length of text.
-///////////////
-void print( const char* _text, const uint32_t _lengthOfText ) {
-    //! <b>[print]</b>
-    /// Write text to console
-    /// @code{.c}
-
-#ifdef _WIN32
-
-    WriteConsoleA(
-        GetStdHandle( STD_OUTPUT_HANDLE ), // Console handle
-        _text,                             // Pointer to text
-        _lengthOfText,                     // Length of text
-        NULL,                              // Buffer to write value of characters written
-        NULL                               // Reserved. Must be NULL
-    );
-
-#else // _WIN32
-
-    for ( uint32_t _symbolIndex = 0; _symbolIndex < _lengthOfText; _symbolIndex++ ) {
-        putchar( _text[ _symbolIndex ] );
+        _base *= _base;
     }
 
-#endif // _WIN32
-
-    /// @endcode
-    //! <b>[print]</b>
+    return ( l_returnValue );
 }
 
-///////////////
-/// @brief Function that generate random number from the \c seed.
-/// @details Use \c SRand() to set the seed.
-/// @return Generated random number.
-///////////////
-unsigned long Rand( void ) {
-    //! <b>[random]</b>
-    /// Generating random number from the \c seed.
-    /// @code{.c}
-    g_seed = ( g_seed * (unsigned long)16807 % (unsigned long)0x7fffffff );
-    /// @endcode
-    //! <b>[random]</b>
+void convertNumberToString( char* _buffer,
+                            size_t _number,
+                            size_t _lengthOfNumber ) {
+    char* l_buffer = _buffer;
 
-    //! <b>[return]</b>
-    /// End of function.
-    return ( g_seed );
-    //! <b>[return]</b>
-}
-
-///////////////
-/// @brief Function that set the \c seed.
-/// @details Use \c Rand() to generate random number from the \c seed.
-/// @param[in] l_seed Seed to set.
-///////////////
-void SRand( unsigned long l_seed ) {
-    //! <b>[change]</b>
-    /// Setting the \c seed.
-    /// @code{.c}
-    g_seed = l_seed;
-    /// @endcode
-    //! <b>[change]</b>
-}
-
-///////////////
-/// @brief Function that clear the console out screen.
-/// @details Filling console length with empty text.
-///////////////
-void clearConsole( void ) {
-
-#ifdef _WIN32
-
-    //! <b>[declare]</b>
-    /// Getting and declaring coordinates and console handle where to write.
-    /// @code{.c}
-    COORD l_topLeft = {
-        0,              // X
-        0               // Y
-    };
-    CONSOLE_SCREEN_BUFFER_INFO l_consoleScreenInfo;
-    HANDLE l_consoleHandle = GetStdHandle( STD_OUTPUT_HANDLE );
-    /// @endcode
-    //! <b>[declare]</b>
-
-    //! <b>[length]</b>
-    /// Getting length of console.
-    /// @code{.c}
-    GetConsoleScreenBufferInfo( l_consoleHandle, &l_consoleScreenInfo );
-    DWORD l_numberOfWrittenCharacters, l_lengthOfText = l_consoleScreenInfo.dwSize.X * l_consoleScreenInfo.dwSize.Y;
-    /// @endcode
-    //! <b>[length]</b>
-
-    //! <b>[print]</b>
-    /// Write empty text to console.
-    /// @code{.c}
-    FillConsoleOutputCharacter( l_consoleHandle, ' ', l_lengthOfText, l_topLeft, &l_numberOfWrittenCharacters );
-    FillConsoleOutputAttribute( l_consoleHandle, l_consoleScreenInfo.wAttributes, l_lengthOfText, l_topLeft, &l_numberOfWrittenCharacters );
-    /// @endcode
-    //! <b>[print]</b>
-
-    //! <b>[reset]</b>
-    /// Reset cursor position in console.
-    /// @code{.c}
-    SetConsoleCursorPosition( l_consoleHandle, l_topLeft );
-    /// @endcode
-    //! <b>[reset]</b>
-
-#else // _WIN32
-
-    const char l_magicText[] = "\033[1;1H\033[2J";
-
-    for ( uint32_t _symbolIndex = 0; _symbolIndex < sizeof( l_magicText ); _symbolIndex++ ) {
-        putchar( l_magicText[ _symbolIndex ] );
+#pragma omp simd
+    for ( register ssize_t _characterIndex = ( _lengthOfNumber - 1 );
+          _characterIndex >= 0; _characterIndex-- ) {
+        l_buffer[ _characterIndex ] =
+            ( char )( ( ( _number /
+                          ( size_t )( power( 10, ( _lengthOfNumber -
+                                                   _characterIndex - 1 ) ) ) ) %
+                        10 ) +
+                      '0' );
     }
+}
 
-#endif // _WIN32
+size_t randomNumber( void ) {
+#define COMPILATION_TIME_AS_SEED                                      \
+    ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 2 ] + __TIME__[ 3 ] + \
+      __TIME__[ 4 ] + __TIME__[ 5 ] )
 
+    static uint32_t l_seed = COMPILATION_TIME_AS_SEED;
+
+    l_seed ^= ( l_seed << 13 );
+    l_seed ^= ( l_seed >> 17 );
+    l_seed ^= ( l_seed << 5 );
+
+    return ( l_seed );
+
+#undef COMPILATION_TIME_AS_SEED
+}
+
+FORCE_INLINE void read( uint8_t _fileDescriptor,
+                        char* _buffer,
+                        uint8_t _bufferLength ) {
+    syscall( __NR_read, _fileDescriptor, ( uintptr_t )_buffer, _bufferLength );
+}
+
+FORCE_INLINE uint8_t fetchEvent( void ) {
+    uint8_t l_event;
+
+    read( INPUT_FILE_DESCRIPTOR_NUMBER, ( char* )( &l_event ), 1 );
+
+    return ( l_event );
 }

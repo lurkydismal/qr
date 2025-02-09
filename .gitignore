@@ -1,9 +1,13 @@
-.vscode/
-*.code-workspace
-deprecated/
-*.bak
-build/
-lib/
-*.dll
-*.exe
-*.txt
+# Vim
+**/*~
+**/*.swp
+**/.*~
+**/.*.swp
+
+# Binary
+**/*.o
+**/out
+**/*vgcore*
+
+# In-progress
+Style_Guide.md
