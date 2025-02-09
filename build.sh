@@ -4,7 +4,7 @@ export BUILD_DIRECTORY_NAME='out'
 export BUILD_DIRECTORY="$SCRIPT_DIRECTORY/$BUILD_DIRECTORY_NAME"
 export BUILD_C_FLAGS="-flto -std=c99 -nostdlib -nostartfiles -m32 -Os -march=native -ffunction-sections -fdata-sections -fno-PIC -fno-stack-protector -fopenmp-simd -s -fno-ident -fno-asynchronous-unwind-tables -ffreestanding -falign-jumps=1 -falign-loops=1 -falign-functions=1 -fshort-enums -fpack-struct -static -Wall -Wextra"
 export BUILD_DEFINES=""
-export LINK_FLAGS="-flto -nostdlib -nostartfiles -m32 -s -O1 -Wl,--gc-sections"
+export LINK_FLAGS="-flto -nostdlib -nostartfiles -m32 -fno-PIC -O1 -s -Wl,--static -static -fuse-ld=mold -Wl,--gc-sections -Wl,--omagic -Wl,--nmagic -Wl,--no-eh-frame-hdr"
 export LINKER="ccache gcc"
 export EXECUTABLE_NAME="main.out"
 
