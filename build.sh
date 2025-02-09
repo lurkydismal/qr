@@ -2,7 +2,7 @@
 export SCRIPT_DIRECTORY=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 export BUILD_DIRECTORY_NAME='out'
 export BUILD_DIRECTORY="$SCRIPT_DIRECTORY/$BUILD_DIRECTORY_NAME"
-export BUILD_C_FLAGS="-flto -nostdlib -nostartfiles -m32 -Os -march=native -ffunction-sections -fdata-sections -fno-PIC"
+export BUILD_C_FLAGS="-flto -std=c99 -nostdlib -nostartfiles -m32 -Os -march=native -ffunction-sections -fdata-sections -fno-PIC -fno-stack-protector -fopenmp-simd -s -fno-ident -fno-asynchronous-unwind-tables -ffreestanding -falign-jumps=1 -falign-loops=1 -falign-functions=1 -fshort-enums -fpack-struct -static -Wall -Wextra"
 export BUILD_DEFINES=""
 export LINK_FLAGS="-flto -nostdlib -nostartfiles -m32 -s -O1 -Wl,--gc-sections"
 export LINKER="ccache gcc"
