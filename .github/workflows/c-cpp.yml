@@ -34,4 +34,4 @@ jobs:
 
     - name: Build
       run: |
-        TERM=xterm ./build.sh
+        TERM=xterm IS_CI=1 ./build.sh
