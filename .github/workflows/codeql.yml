@@ -88,7 +88,7 @@ jobs:
     #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
 
     - run: |
-        TERM=xterm ./build.sh
+        TERM=xterm IS_CI=1 ./build.sh
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@dd746615b3b9d728a6a37ca2045b68ca76d4841a # v3.28.8
