@@ -47,6 +47,8 @@ if [ $? -eq 0 ]; then
     echo $sectionsToStripAsString
 
     objcopy "$BUILD_DIRECTORY/$EXECUTABLE_NAME" $sectionsToStripAsString
+
+    strip --strip-section-headers "$BUILD_DIRECTORY/$EXECUTABLE_NAME"
 fi
 
 }
