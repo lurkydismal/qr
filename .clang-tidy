@@ -1,0 +1,113 @@
+---
+# Turn off everything, then re-enable only the checks you want:
+Checks: >
+  clang-analyzer-*
+  ,bugprone-*
+  ,-bugprone-easily-swappable-parameters
+  ,-bugprone-multi-level-implicit-pointer-conversion
+  ,-bugprone-narrowing-conversions
+  ,-bugprone-reserved-identifier
+  ,-bugprone-sizeof-expression
+  ,-bugprone-suspicious-realloc-usage
+  ,-clang-diagnostic-#pragma-messages
+  ,cppcoreguidelines-*
+  ,-cppcoreguidelines-avoid-do-while
+  ,-cppcoreguidelines-avoid-goto
+  ,-cppcoreguidelines-avoid-magic-numbers
+  ,-cppcoreguidelines-avoid-non-const-global-variables
+  ,-cppcoreguidelines-macro-to-enum
+  ,-cppcoreguidelines-macro-usage
+  ,-cppcoreguidelines-narrowing-conversions
+  ,modernize-*
+  ,-modernize-macro-to-enum
+  ,performance-*
+  ,readability-identifier-naming
+
+# Never try to re-format your code:
+FormatStyle: none
+
+# Which headers to lint ( empty = all ):
+HeaderFilterRegex: ''
+
+CheckOptions:
+  - key: bugprone-assert-side-effect.StrictMode
+    value: true
+
+# Naming conventions to match .clang-format:
+  # Variables (local, globals, constants, members):
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstantCase
+    value: camelBack
+
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: g_
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: g_
+
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariablePrefix
+    value: l_
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalConstantPrefix
+    value: l_
+
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterPrefix
+    value: _
+  - key: readability-identifier-naming.ParameterConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterConstantPrefix
+    value: _
+
+  - key: readability-pointer-alignment.Alignment
+    value: Left
+
+  # Functions and methods:
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+
+  # Types:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.StructCase
+    value: camelBack
+
+  - key: readability-identifier-naming.EnumCase
+    value: camelBack
+  - key: readability-identifier-naming.EnumConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.EnumMemberPrefix
+    value: ''
+
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: _
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMethodPrefix
+    value: _
+
+  - key: readability-identifier-naming.TypeAliasCase
+    value: camelBack
+  - key: readability-identifier-naming.TypeAliasSuffix
+    value: _t
+
+  # Namespaces, macros:
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantCase
+    value: camelBack
+  # - key: readability-identifier-naming.MacroDefinitionCase
+  #   value: UPPER_CASE
