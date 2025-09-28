@@ -1,7 +1,5 @@
 # qr
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/05dac30587aa4b8695e4dfef8493b8cb)](https://app.codacy.com/gh/lurkydismal/qr/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-
 > NetHack-like game ~~that fits in less than 3 kb~~.
 
 ## Table of Contents

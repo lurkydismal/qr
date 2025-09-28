@@ -25,7 +25,14 @@
 
 namespace stdfunc {
 
-// Utility functions ( no side-effects )
+template < typename SymbolTypes, SymbolTypes... _symbols >
+    requires( ( std::convertible_to< SymbolTypes, char > ) &&
+              ( sizeof...( _symbols ) > 0 ) )
+[[nodiscard]] consteval auto operator""_array() {
+    return ( std::array< char, ( sizeof...( _symbols ) + 1 ) >{
+        char{ _symbols }..., '\0' } );
+}
+
 FORCE_INLINE constexpr auto lengthOfNumber( size_t _number ) -> size_t {
     size_t l_length = 0;
 

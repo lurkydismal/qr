@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 #include "io.hpp"
@@ -11,21 +12,9 @@
 
 namespace runtime {
 
-FORCE_INLINE auto fetchEvent() -> uint8_t {
-    uint8_t l_event;
+using result_t = enum class result : int8_t { remain = -1, success, failure };
 
-    io::read( ( char* )( &l_event ), 1 );
-
-    return ( l_event );
-}
-
-using callbackResult_t = enum class callbackResult : int8_t {
-    remain = -1,
-    success,
-    failure
-};
-
-using event_t = enum {
+using move_t = enum class move : uint8_t {
     stay = 's',
     up = 'w',
     upRight = 'e',
@@ -37,125 +26,125 @@ using event_t = enum {
     upLeft = 'q'
 };
 
-// Called once per application run
-auto init() -> callbackResult_t;
-auto quit( callbackResult_t _exitCode ) -> callbackResult_t;
+FORCE_INLINE auto waitMove() -> move_t {
+    std::array< uint8_t, 1 > l_event;
 
-// Called each frame
-auto event( event_t _event ) -> callbackResult_t;
-auto iterate() -> callbackResult_t;
+    io::read( l_event );
 
-// C
+    return ( static_cast< move_t >( l_event[ 0 ] ) );
+}
 
 static io::terminal::termios g_terminalAttributesBeforeLaunch;
 
-FORCE_INLINE auto init() -> callbackResult_t {
+// Called once per application run
+FORCE_INLINE auto init() -> result_t {
     g_terminalAttributesBeforeLaunch = io::terminal::disableCanonicalMode();
 
     io::terminal::hideCursor();
 
-    logic::map$init();
+    logic::map::init();
 
-    return ( callbackResult_t::remain );
+    return ( result_t::remain );
 }
 
-FORCE_INLINE auto quit( callbackResult_t _exitCode ) -> callbackResult_t {
-    tcsetattr( &( g_terminalAttributesBeforeLaunch ) );
+FORCE_INLINE auto quit( result_t _exitCode ) -> result_t {
+    tcsetattr( g_terminalAttributesBeforeLaunch );
 
     io::terminal::showCursor();
 
     system::exit( ( int )_exitCode );
 }
 
-FORCE_INLINE auto event( event_t _event ) -> callbackResult_t {
-    callbackResult_t l_returnValue = callbackResult_t::remain;
+// Called each frame
+FORCE_INLINE constexpr auto event( move_t _event ) -> result_t {
+    result_t l_returnValue = result_t::remain;
 
-    logic::direction_t l_direction;
+    logic::map::direction_t l_direction;
 
     switch ( _event ) {
-        case ( ( event_t )up ): {
-            l_direction = logic::direction_t::UP;
+        case ( move_t::up ): {
+            l_direction = logic::map::direction_t::UP;
 
             break;
         }
 
-        case ( ( event_t )upRight ): {
-            l_direction = logic::direction_t::UP_RIGHT;
+        case ( move_t::upRight ): {
+            l_direction = logic::map::direction_t::UP_RIGHT;
 
             break;
         }
 
-        case ( ( event_t )right ): {
-            l_direction = logic::direction_t::RIGHT;
+        case ( move_t::right ): {
+            l_direction = logic::map::direction_t::RIGHT;
 
             break;
         }
 
-        case ( ( event_t )downRight ): {
-            l_direction = logic::direction_t::DOWN_RIGHT;
+        case ( move_t::downRight ): {
+            l_direction = logic::map::direction_t::DOWN_RIGHT;
 
             break;
         }
 
-        case ( ( event_t )down ): {
-            l_direction = logic::direction_t::DOWN;
+        case ( move_t::down ): {
+            l_direction = logic::map::direction_t::DOWN;
 
             break;
         }
 
-        case ( ( event_t )downLeft ): {
-            l_direction = logic::direction_t::DOWN_LEFT;
+        case ( move_t::downLeft ): {
+            l_direction = logic::map::direction_t::DOWN_LEFT;
 
             break;
         }
 
-        case ( ( event_t )left ): {
-            l_direction = logic::direction_t::LEFT;
+        case ( move_t::left ): {
+            l_direction = logic::map::direction_t::LEFT;
 
             break;
         }
 
-        case ( ( event_t )upLeft ): {
-            l_direction = logic::direction_t::UP_LEFT;
+        case ( move_t::upLeft ): {
+            l_direction = logic::map::direction_t::UP_LEFT;
 
             break;
         }
 
         default: {
-            l_direction = logic::direction_t::STAY;
+            l_direction = logic::map::direction_t::STAY;
         }
     }
 
-    map$move$player( l_direction );
+    logic::map::move$player( l_direction );
 
-    if ( logic::player$lose$get() ) {
-        l_returnValue = callbackResult_t::failure;
+    if ( logic::player::lose::get() ) [[unlikely]] {
+        l_returnValue = result_t::failure;
     }
 
     return ( l_returnValue );
 }
 
-FORCE_INLINE auto iterate() -> callbackResult_t {
-    callbackResult_t l_returnValue = callbackResult_t::remain;
+FORCE_INLINE constexpr auto iterate() -> result_t {
+    result_t l_returnValue = result_t::remain;
 
     // Logic
     {
-        logic::map$move$ai();
+        logic::map::move$ai();
     }
 
-    if ( logic::player$lose$get() ) {
-        l_returnValue = callbackResult_t::failure;
+    if ( logic::player::lose::get() ) {
+        l_returnValue = result_t::failure;
     }
 
     // Render
-    {
+    if !consteval {
         io::clearScreen();
 
-        logic::map$render();
+        logic::map::render();
 
         // HUD
         {
-            logic::player$render$stats();
+            logic::player::render$stats();
 
 #if defined( RENDER_DEBUG_INFORMATION )
             player$render$debug();

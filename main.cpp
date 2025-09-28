@@ -4,11 +4,10 @@
 static_assert( ( sizeof( void* ) == 4 ), "This is for i386 (32-bit) only" );
 
 EXPORT void _start() {
-    runtime::callbackResult_t l_callbackResult = runtime::init();
+    runtime::result_t l_callbackResult = runtime::init();
 
     do {
-        if ( l_callbackResult != runtime::callbackResult_t::remain )
-            [[unlikely]] {
+        if ( l_callbackResult != runtime::result_t::remain ) [[unlikely]] {
             break;
         }
 
@@ -16,11 +15,11 @@ EXPORT void _start() {
             // Event handling
             {
                 // Wait-block
-                uint8_t l_event = runtime::fetchEvent();
+                runtime::move_t l_move = runtime::waitMove();
 
-                l_callbackResult = event( ( runtime::event_t )l_event );
+                l_callbackResult = event( l_move );
 
-                if ( l_callbackResult != runtime::callbackResult_t::remain )
+                if ( l_callbackResult != runtime::result_t::remain )
                     [[unlikely]] {
                     break;
                 }
@@ -30,7 +29,7 @@ EXPORT void _start() {
             {
                 l_callbackResult = runtime::iterate();
 
-                if ( l_callbackResult != runtime::callbackResult_t::remain )
+                if ( l_callbackResult != runtime::result_t::remain )
                     [[unlikely]] {
                     break;
                 }

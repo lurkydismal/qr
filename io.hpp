@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <string_view>
 
@@ -12,18 +13,18 @@ namespace io {
 // File descriptors
 using descriptor_t = enum class descriptor : uint8_t {
     input = 0,
-    out = 1,
+    output = 1,
 };
 
-FORCE_INLINE void read( char* _buffer, uint8_t _bufferLength ) {
+FORCE_INLINE void read( std::span< uint8_t > _buffer ) {
     syscall( system::call_t::read,
-             static_cast< uintptr_t >( descriptor_t::input ),
-             std::bit_cast< uintptr_t >( _buffer ), _bufferLength );
+             static_cast< uint8_t >( descriptor_t::input ),
+             std::bit_cast< uintptr_t >( _buffer.data() ), _buffer.size() );
 }
 
 FORCE_INLINE void write( const char* _buffer, uint8_t _bufferLength ) {
     syscall( system::call_t::write,
-             static_cast< uintptr_t >( descriptor_t::out ),
+             static_cast< uint8_t >( descriptor_t::output ),
              std::bit_cast< uintptr_t >( _buffer ), _bufferLength );
 }
 
@@ -50,6 +51,7 @@ FORCE_INLINE void print( const std::string_view& _text ) {
     write( _text );
 }
 
+// TODO: Maybe move to terminal
 FORCE_INLINE void clearScreen() {
 #define ANSI_TO_POINT_AT_THE_BEGINNING "\033[H"
 #define ANSI_TO_CLEAR_ENTIRE_SCREEN "\033[J"
@@ -65,14 +67,13 @@ FORCE_INLINE void clearScreen() {
 
 namespace terminal {
 
-namespace {
-
 using code_t = enum class code : uint16_t {
     getAttributes = 0x5401,
     setAttributes = 0x5402,
 };
 
-}
+constexpr size_t g_controlCharactersCount = 32;
+constexpr size_t g_controlCharactersCountKernel = 19;
 
 // Control mode flags for terminal attributes
 using attribute_t = enum class attribute : uint16_t {
@@ -100,22 +101,10 @@ using attribute_t = enum class attribute : uint16_t {
 
 using attributeUnderlying_t = std::underlying_type_t< attribute_t >;
 
-[[nodiscard]] constexpr auto operator|( attribute_t _storage,
-                                        attribute_t _value )
+[[nodiscard]] constexpr auto operator|( attribute_t _a, attribute_t _b )
     -> attributeUnderlying_t {
-    return ( static_cast< attributeUnderlying_t >( _storage ) |
-             static_cast< attributeUnderlying_t >( _value ) );
-}
-
-[[nodiscard]] constexpr auto operator&( attribute_t _storage,
-                                        attribute_t _value )
-    -> attributeUnderlying_t {
-    return ( static_cast< attributeUnderlying_t >( _storage ) &
-             static_cast< attributeUnderlying_t >( _value ) );
-}
-
-constexpr void operator|=( attribute_t& _storage, attribute_t _value ) {
-    _storage = static_cast< attribute_t >( _storage | _value );
+    return ( static_cast< attributeUnderlying_t >( _a ) |
+             static_cast< attributeUnderlying_t >( _b ) );
 }
 
 [[nodiscard]] constexpr auto operator~( attribute_t _value )
@@ -123,14 +112,7 @@ constexpr void operator|=( attribute_t& _storage, attribute_t _value ) {
     return ( ~( static_cast< attributeUnderlying_t >( _value ) ) );
 }
 
-using mode_t = enum class mode : uint8_t {
-    allNow = 0, // Apply all changes to terminal settings immediately
-};
-
-constexpr size_t CONTROL_CHARACTERS_COUNT = 32;
-constexpr size_t CONTROL_CHARACTERS_COUNT_KERNEL = 19;
-
-struct termios {
+using termios_t = struct termios {
     uint32_t inputModeFlags; // Input mode flags (e.g., raw or canonical mode)
     uint32_t
         outputModeFlags; // Output mode flags (e.g., non-canonical processing)
@@ -139,23 +121,31 @@ struct termios {
     uint32_t localModeFlags;   // Local mode flags (e.g., handling of special
                                // characters)
     uint8_t line; // Line discipline (e.g., terminal line processing)
-    std::array< uint8_t, CONTROL_CHARACTERS_COUNT >
+    std::array< uint8_t, g_controlCharactersCount >
         characters;       // Control characters (e.g.,
                           // Ctrl+C, Ctrl+Z)
     uint32_t inputSpeed;  // Input speed (baud rate)
     uint32_t outputSpeed; // Output speed (baud rate)
 };
 
-NOINLINE void ioctl( code_t _operationCode, uintptr_t _memory ) {
+FORCE_INLINE void ioctl( code_t _operationCode, termios_t& _memory ) {
     syscall( system::call_t::ioctl,
              static_cast< uint8_t >( descriptor_t::input ),
-             ( uint32_t )_operationCode, _memory );
+             static_cast< uint32_t >( _operationCode ),
+             std::bit_cast< uintptr_t >( &_memory ) );
 }
 
-void tcgetattr( termios& _termios ) {
-    termios l_termios;
+FORCE_INLINE void ioctl( code_t _operationCode, const termios_t& _memory ) {
+    syscall( system::call_t::ioctl,
+             static_cast< uint8_t >( descriptor_t::input ),
+             static_cast< uint32_t >( _operationCode ),
+             std::bit_cast< uintptr_t >( &_memory ) );
+}
 
-    ioctl( code_t::getAttributes, ( uintptr_t )( &l_termios ) );
+FORCE_INLINE void tcgetattr( termios_t& _termios ) {
+    termios_t l_termios;
+
+    ioctl( code_t::getAttributes, l_termios );
 
     _termios = l_termios;
 
@@ -169,36 +159,36 @@ void tcgetattr( termios& _termios ) {
           sizeof( uint8_t ) ) );
 #endif
 
-    // copy first part
+    // Copy first part
     std::ranges::copy_n( l_termios.characters.data(),
-                         CONTROL_CHARACTERS_COUNT_KERNEL,
+                         g_controlCharactersCountKernel,
                          _termios.characters.data() );
 
-    // zero-fill the rest
+    // Zero-fill the rest
     std::ranges::fill_n(
-        _termios.characters.data() + CONTROL_CHARACTERS_COUNT_KERNEL,
-        CONTROL_CHARACTERS_COUNT - CONTROL_CHARACTERS_COUNT_KERNEL,
-        static_cast< uint8_t >( 0 ) );
+        ( _termios.characters.data() + g_controlCharactersCountKernel ),
+        ( g_controlCharactersCount - g_controlCharactersCountKernel ),
+        uint8_t{} );
 }
 
-void tcsetattr( const termios* _termios ) {
-    ioctl( code_t::setAttributes, ( uintptr_t )_termios );
+FORCE_INLINE void tcsetattr( const termios_t& _termios ) {
+    ioctl( code_t::setAttributes, _termios );
 }
 
-FORCE_INLINE auto disableCanonicalMode() -> terminal::termios {
-    terminal::termios l_currentAttributes;
+FORCE_INLINE auto disableCanonicalMode() -> terminal::termios_t {
+    terminal::termios_t l_currentAttributes;
 
     tcgetattr( l_currentAttributes );
 
     // Return old attributes
-    terminal::termios l_returnValue = l_currentAttributes;
+    terminal::termios_t l_returnValue = l_currentAttributes;
 
     // Exclude flags from current
     l_currentAttributes.localModeFlags &=
         ~( terminal::attribute_t::enableCanonicalMode |
            terminal::attribute_t::enableEcho );
 
-    tcsetattr( &l_currentAttributes );
+    tcsetattr( l_currentAttributes );
 
     return ( l_returnValue );
 }

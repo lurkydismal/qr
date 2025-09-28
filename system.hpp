@@ -13,7 +13,6 @@ using call_t = enum class call : uint8_t {
     read = 3,
     write = 4,
     ioctl = 54,
-    nanosleep = 162,
 };
 
 template < typename... Arguments >
