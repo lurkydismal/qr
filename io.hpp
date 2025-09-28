@@ -146,18 +146,16 @@ struct termios {
     uint32_t outputSpeed; // Output speed (baud rate)
 };
 
-NOINLINE void ioctl( descriptor_t _fileDescriptor,
-                     code_t _operationCode,
-                     uintptr_t _memory ) {
-    syscall( system::call_t::ioctl, ( uint8_t )_fileDescriptor,
+NOINLINE void ioctl( code_t _operationCode, uintptr_t _memory ) {
+    syscall( system::call_t::ioctl,
+             static_cast< uint8_t >( descriptor_t::input ),
              ( uint32_t )_operationCode, _memory );
 }
 
-void tcgetattr( descriptor_t _fileDescriptor, termios& _termios ) {
+void tcgetattr( termios& _termios ) {
     termios l_termios;
 
-    ioctl( _fileDescriptor, code_t::getAttributes,
-           ( uintptr_t )( &l_termios ) );
+    ioctl( code_t::getAttributes, ( uintptr_t )( &l_termios ) );
 
     _termios = l_termios;
 
@@ -183,16 +181,14 @@ void tcgetattr( descriptor_t _fileDescriptor, termios& _termios ) {
         static_cast< uint8_t >( 0 ) );
 }
 
-void tcsetattr( descriptor_t _fileDescriptor,
-                [[maybe_unused]] mode_t _optionalActions,
-                const termios* _termios ) {
-    ioctl( _fileDescriptor, code_t::setAttributes, ( uintptr_t )_termios );
+void tcsetattr( const termios* _termios ) {
+    ioctl( code_t::setAttributes, ( uintptr_t )_termios );
 }
 
 FORCE_INLINE auto disableCanonicalMode() -> terminal::termios {
     terminal::termios l_currentAttributes;
 
-    tcgetattr( descriptor_t::input, l_currentAttributes );
+    tcgetattr( l_currentAttributes );
 
     // Return old attributes
     terminal::termios l_returnValue = l_currentAttributes;
@@ -202,26 +198,21 @@ FORCE_INLINE auto disableCanonicalMode() -> terminal::termios {
         ~( terminal::attribute_t::enableCanonicalMode |
            terminal::attribute_t::enableEcho );
 
-    tcsetattr( descriptor_t::input, terminal::mode_t::allNow,
-               &l_currentAttributes );
+    tcsetattr( &l_currentAttributes );
 
     return ( l_returnValue );
 }
 
 FORCE_INLINE void hideCursor() {
-#define ANSI_TO_HIDE_CURSOR "\033[?25l"
+    constexpr std::string_view l_ansiToHideCursor = "\033[?25l";
 
-    print( ANSI_TO_HIDE_CURSOR, sizeof( ANSI_TO_HIDE_CURSOR ) );
-
-#undef ANSI_TO_HIDE_CURSOR
+    print( l_ansiToHideCursor );
 }
 
 FORCE_INLINE void showCursor() {
-#define ANSI_TO_SHOW_CURSOR "\033[?25h"
+    constexpr std::string_view l_ansiToShowCursor = "\033[?25h";
 
-    print( ANSI_TO_SHOW_CURSOR, sizeof( ANSI_TO_SHOW_CURSOR ) );
-
-#undef ANSI_TO_SHOW_CURSOR
+    print( l_ansiToShowCursor );
 }
 
 } // namespace terminal

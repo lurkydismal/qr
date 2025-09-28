@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 
 #include "random.hpp"
 
@@ -60,6 +61,12 @@ FORCE_INLINE constexpr auto power( size_t _base, uint8_t _exponent ) -> size_t {
 constexpr void convertNumberToString( char* _buffer,
                                       size_t _number,
                                       size_t _lengthOfNumber ) {
+#if 0
+    for ( auto _characterIndex :
+          std::views::iota( ssize_t{},
+                            static_cast< ssize_t >( _lengthOfNumber - 1 ) ) |
+              std::views::reverse ) {
+#endif
     for ( ssize_t _characterIndex = ( _lengthOfNumber - 1 );
           _characterIndex >= 0; _characterIndex-- ) {
         _buffer[ _characterIndex ] = static_cast< char >(

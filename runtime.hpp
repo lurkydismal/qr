@@ -60,8 +60,7 @@ FORCE_INLINE auto init() -> callbackResult_t {
 }
 
 FORCE_INLINE auto quit( callbackResult_t _exitCode ) -> callbackResult_t {
-    tcsetattr( io::descriptor_t::input, io::terminal::mode_t::allNow,
-               &( g_terminalAttributesBeforeLaunch ) );
+    tcsetattr( &( g_terminalAttributesBeforeLaunch ) );
 
     io::terminal::showCursor();
 
