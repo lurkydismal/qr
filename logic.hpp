@@ -9,6 +9,10 @@
 #include <cstdint>
 #include <ranges>
 
+namespace logic {
+
+namespace {
+
 #define START_HEALTH_POINTS 100
 #define START_EXPERIENCE_POINTS 0
 
@@ -37,7 +41,9 @@
 #define EXPERIENCE_POINTS_TEXT_PLACEHOLDER "000"
 #define ITEMS_TEXT_PLACEHOLDER "E E E E E"
 
-using item_t = enum {
+} // namespace
+
+using item_t = enum class item : uint8_t {
     EMPTY = 'E',
     KEY = 'K',
     HEALTH = 'H',
@@ -45,7 +51,7 @@ using item_t = enum {
     DEFENSE = 'D'
 };
 
-using actor_t = enum {
+using actor_t = enum class actor : uint8_t {
     PLAYER = '@',
     GUARDIAN = 'G',
     FOLLOW_MONSTER = 'F',
@@ -56,30 +62,31 @@ using actor_t = enum {
 };
 
 // Inventory
-void logic$player$experience$add( const size_t _amount );
-void logic$player$inventory$add( const item_t _item );
-auto logic$player$inventory$use( const item_t _item ) -> bool;
+void player$experience$add( const size_t _amount );
+void player$inventory$add( const item_t _item );
+auto player$inventory$use( const item_t _item ) -> bool;
 
 // Stats
-auto logic$player$fight( const actor_t _who ) -> bool;
-auto logic$player$lose$get() -> bool;
-void logic$player$lose$set();
+auto player$fight( const actor_t _who ) -> bool;
+auto player$lose$get() -> bool;
+void player$lose$set();
 
 // Render
-void logic$player$render$stats();
-void logic$player$render$debug();
+void player$render$stats();
+void player$render$debug();
 
 // C
 uint8_t g_playerHealthPoints = START_HEALTH_POINTS;
 uint8_t g_playerExperiencePoints = START_EXPERIENCE_POINTS;
-item_t g_playerItems[ MAX_ITEM_COUNT ] = { EMPTY, EMPTY, EMPTY, EMPTY, EMPTY };
+item_t g_playerItems[ MAX_ITEM_COUNT ] = {
+    item_t::EMPTY, item_t::EMPTY, item_t::EMPTY, item_t::EMPTY, item_t::EMPTY };
 
 uint8_t g_monsterHealthPoints = START_MONSTER_HEALTH_POINTS;
 uint8_t g_guardianHealthPoints = START_GUARDIAN_HEALTH_POINTS;
 
 bool g_didLose = false;
 
-void logic$player$experience$add( const size_t _amount ) {
+void player$experience$add( const size_t _amount ) {
     g_playerExperiencePoints += _amount;
 
     if ( g_playerExperiencePoints > MAX_EXPERIENCE_POINTS ) {
@@ -87,9 +94,9 @@ void logic$player$experience$add( const size_t _amount ) {
     }
 }
 
-FORCE_INLINE void logic$player$inventory$add( const item_t _item ) {
+FORCE_INLINE void player$inventory$add( const item_t _item ) {
     FOR( item_t*, g_playerItems ) {
-        if ( *_element == EMPTY ) [[unlikely]] {
+        if ( *_element == item_t::EMPTY ) [[unlikely]] {
             *_element = _item;
 
             return;
@@ -99,10 +106,10 @@ FORCE_INLINE void logic$player$inventory$add( const item_t _item ) {
     g_playerItems[ 0 ] = _item;
 }
 
-bool logic$player$inventory$use( const item_t _item ) {
+bool player$inventory$use( const item_t _item ) {
     FOR( item_t*, g_playerItems ) {
         if ( *_element == _item ) {
-            *_element = EMPTY;
+            *_element = item_t::EMPTY;
 
             return ( true );
         }
@@ -111,7 +118,7 @@ bool logic$player$inventory$use( const item_t _item ) {
     return ( false );
 }
 
-FORCE_INLINE bool logic$player$fight$monster( void ) {
+FORCE_INLINE bool player$fight$monster( void ) {
     g_monsterHealthPoints -=
         ( 1 + ( g_playerExperiencePoints / EXPERIENCE_FOR_DAMAGE ) );
 
@@ -119,7 +126,7 @@ FORCE_INLINE bool logic$player$fight$monster( void ) {
          ( g_monsterHealthPoints > MAX_MONSTER_HEALTH_POINTS ) ) [[unlikely]] {
         g_monsterHealthPoints = MAX_MONSTER_HEALTH_POINTS;
 
-        logic$player$experience$add( EXPERIENCE_FROM_MONSTER );
+        player$experience$add( EXPERIENCE_FROM_MONSTER );
 
         return ( true );
     }
@@ -127,21 +134,21 @@ FORCE_INLINE bool logic$player$fight$monster( void ) {
     return ( false );
 }
 
-FORCE_INLINE bool logic$player$fight$guardian( void ) {
-    if ( !( logic$player$inventory$use( DEFENSE ) ) ) [[likely]] {
+FORCE_INLINE bool player$fight$guardian( void ) {
+    if ( !( player$inventory$use( item_t::DEFENSE ) ) ) [[likely]] {
         g_playerHealthPoints -= 4;
     }
 
     g_guardianHealthPoints -=
         ( 1 + ( g_playerExperiencePoints / EXPERIENCE_FOR_DAMAGE_GUARDIAN ) +
-          ( ( uint8_t )( logic$player$inventory$use( ATTACK ) ) * 5 ) );
+          ( ( uint8_t )( player$inventory$use( item_t::ATTACK ) ) * 5 ) );
 
     if ( ( !g_guardianHealthPoints ) ||
          ( g_guardianHealthPoints > MAX_GUARDIAN_HEALTH_POINTS ) )
         [[unlikely]] {
         g_guardianHealthPoints = MAX_GUARDIAN_HEALTH_POINTS;
 
-        logic$player$experience$add( EXPERIENCE_FROM_MONSTER );
+        player$experience$add( EXPERIENCE_FROM_MONSTER );
 
         return ( true );
     }
@@ -149,32 +156,33 @@ FORCE_INLINE bool logic$player$fight$guardian( void ) {
     return ( false );
 }
 
-FORCE_INLINE bool logic$player$fight( const actor_t _who ) {
+FORCE_INLINE bool player$fight( const actor_t _who ) {
     bool l_returnValue = false;
 
     g_playerHealthPoints -= 1;
 
-    if ( _who == GUARDIAN ) [[unlikely]] {
-        l_returnValue = logic$player$fight$guardian();
+    if ( _who == actor_t::GUARDIAN ) [[unlikely]] {
+        l_returnValue = player$fight$guardian();
 
     } else {
-        l_returnValue = logic$player$fight$monster();
+        l_returnValue = player$fight$monster();
 
-        if ( ( l_returnValue ) && ( _who == KEY_MONSTER ) ) [[unlikely]] {
-            logic$player$inventory$add( KEY );
+        if ( ( l_returnValue ) && ( _who == actor_t::KEY_MONSTER ) )
+            [[unlikely]] {
+            player$inventory$add( item_t::KEY );
         }
     }
 
     // Has player died
     if ( ( !g_playerHealthPoints ) ||
          ( g_playerHealthPoints > MAX_HEALTH_POINTS ) ) [[unlikely]] {
-        if ( logic$player$inventory$use( HEALTH ) ) [[unlikely]] {
+        if ( player$inventory$use( item_t::HEALTH ) ) [[unlikely]] {
             g_playerHealthPoints = MAX_HEALTH_POINTS;
 
             l_returnValue = true;
 
         } else {
-            logic$player$lose$set();
+            player$lose$set();
 
             l_returnValue = false;
         }
@@ -183,17 +191,17 @@ FORCE_INLINE bool logic$player$fight( const actor_t _who ) {
     return ( l_returnValue );
 }
 
-FORCE_INLINE bool logic$player$lose$get( void ) {
+FORCE_INLINE bool player$lose$get( void ) {
     return ( g_didLose );
 }
 
-FORCE_INLINE void logic$player$lose$set( void ) {
+FORCE_INLINE void player$lose$set( void ) {
     g_didLose = true;
 }
 
 FORCE_INLINE void renderPoints( char** _cursorPosition,
                                 uint8_t _points,
-                                const size_t _textLength ) {
+                                size_t _textLength ) {
     const size_t l_lengthOfPoints = stdfunc::lengthOfNumber( _points );
 
     *_cursorPosition += ( _textLength - l_lengthOfPoints );
@@ -207,7 +215,7 @@ FORCE_INLINE void renderPoints( char** _cursorPosition,
 // HP:100
 // EXP:100
 // ITEMS:E E E E E
-FORCE_INLINE void logic$player$render$stats( void ) {
+FORCE_INLINE void player$render$stats( void ) {
 #define FULL_HEALTH_TEXT HEALTH_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 #define FULL_EXPERIENCE_TEXT EXPERIENCE_TEXT EXPERIENCE_POINTS_TEXT_PLACEHOLDER
 #define FULL_ITEMS_TEXT ITEMS_TEXT ITEMS_TEXT_PLACEHOLDER
@@ -250,7 +258,7 @@ FORCE_INLINE void logic$player$render$stats( void ) {
 #undef FULL_HEALTH_TEXT
 }
 
-void logic$player$render$debug( void ) {
+void player$render$debug( void ) {
 #define MONSTER_TEXT "\nM:"
 #define GUARDIAN_TEXT "\nB:"
 
@@ -335,7 +343,7 @@ using actionable_t = enum {
  * content.
  *       - `g_playerPosition`: The player's starting position on the map.
  */
-void logic$map$init();
+void map$init();
 
 /**
  * @brief Moves the player on the map in a specified direction.
@@ -363,7 +371,7 @@ void logic$map$init();
  *       function ensures that the player's position on the map is updated based
  *       on their movement or interactions.
  */
-void logic$map$move$player( const direction_t _direction );
+void map$move$player( const direction_t _direction );
 
 /**
  * @brief Moves all AI-controlled monsters randomly on the map.
@@ -371,14 +379,14 @@ void logic$map$move$player( const direction_t _direction );
  * This function iterates through each tile on the map, and for each tile that
  * contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
  * GUARDIAN), it moves the corresponding monster to a random adjacent position
- * by calling the `logic$map$move$random` function. The movement is based on the
+ * by calling the `map$move$random` function. The movement is based on the
  * monster's type, ensuring that each specific type of monster is moved
  * according to predefined behavior.
  *
  * @note This function uses the FOR macro to iterate over the entire map and
  * process each tile.
  */
-void logic$map$move$ai();
+void map$move$ai();
 
 // Render
 /**
@@ -402,7 +410,7 @@ void logic$map$move$ai();
  *
  * @see `print()` for more information on how tiles are printed to the screen.
  */
-void logic$map$render();
+void map$render();
 
 // C
 
@@ -467,7 +475,7 @@ auto isTileWalkable( char _tile ) -> bool {
     return ( ( _tile == FLOOR ) || ( _tile == BRIDGE ) );
 }
 
-FORCE_INLINE void logic$map$init() {
+FORCE_INLINE void map$init() {
     std::ranges::copy_n( g_map, sizeof( g_map ), g_mapEmpty );
 
     // Define directions for potential tile replacements
@@ -481,7 +489,7 @@ FORCE_INLINE void logic$map$init() {
         char* l_tile = _element;
 
         // Search for player
-        if ( *l_tile == PLAYER ) {
+        if ( *l_tile == ( char )actor_t::PLAYER ) {
             g_playerPosition = ( _element - g_mapEmpty );
         }
 
@@ -509,29 +517,31 @@ FORCE_INLINE void logic$map$init() {
 
         // If the tile represents a monster with a key, replace it with random
         // key monster
-        if ( *l_tile == MONSTER_WITH_KEY ) {
-            const actor_t l_keyMonsters[] = { KEY_MONSTER };
+        if ( *l_tile == ( char )actor_t::MONSTER_WITH_KEY ) {
+            const actor_t l_keyMonsters[] = { actor_t::KEY_MONSTER };
 
-            *l_tile = randomValueFromContainer( l_keyMonsters );
+            *l_tile = ( char )randomValueFromContainer( l_keyMonsters );
         }
 
         // If the tile represents a monster, replace it with random monster
-        if ( *l_tile == MONSTER ) {
-            const actor_t l_monsters[] = { FOLLOW_MONSTER, RANDOM_MONSTER };
+        if ( *l_tile == ( char )actor_t::MONSTER ) {
+            const actor_t l_monsters[] = { actor_t::FOLLOW_MONSTER,
+                                           actor_t::RANDOM_MONSTER };
 
-            *l_tile = randomValueFromContainer( l_monsters );
+            *l_tile = ( char )randomValueFromContainer( l_monsters );
         }
     }
 }
 
 FORCE_INLINE bool tryFightTile( const char _tile ) {
     // Define the list of possible opponents represented by specific actor types
-    const actor_t l_opponents[] = { FOLLOW_MONSTER, RANDOM_MONSTER, KEY_MONSTER,
-                                    GUARDIAN };
+    const actor_t l_opponents[] = { actor_t::FOLLOW_MONSTER,
+                                    actor_t::RANDOM_MONSTER,
+                                    actor_t::KEY_MONSTER, actor_t::GUARDIAN };
 
     FOR( const actor_t*, l_opponents ) {
-        if ( *_element == _tile ) {
-            return ( logic$player$fight( ( actor_t )_tile ) );
+        if ( *_element == ( actor_t )_tile ) {
+            return ( player$fight( ( actor_t )_tile ) );
         }
     }
 
@@ -541,19 +551,20 @@ FORCE_INLINE bool tryFightTile( const char _tile ) {
 
 FORCE_INLINE void action$chest( void ) {
     // Define a list of possible items that can be found in the chest
-    const item_t l_items[] = { HEALTH, ATTACK, DEFENSE };
+    const item_t l_items[] = { item_t::HEALTH, item_t::ATTACK,
+                               item_t::DEFENSE };
 
     // Add a randomly selected item from the list to the player's inventory
-    logic$player$inventory$add( randomValueFromContainer( l_items ) );
+    player$inventory$add( randomValueFromContainer( l_items ) );
 }
 
 FORCE_INLINE void action$treasure( void ) {
-    logic$player$experience$add( EXPERIENCE_FROM_TREASURE );
+    player$experience$add( EXPERIENCE_FROM_TREASURE );
 }
 
 FORCE_INLINE bool action$door( void ) {
     // Attempt to use a key from the player's inventory to open the door
-    return ( logic$player$inventory$use( ( item_t )KEY ) );
+    return ( player$inventory$use( item_t::KEY ) );
 }
 
 FORCE_INLINE bool tryActionTile( const char _tile ) {
@@ -580,7 +591,7 @@ FORCE_INLINE bool tryActionTile( const char _tile ) {
 
             case ( ( actionable_t )LADDER_LEFT ):
             case ( ( actionable_t )LADDER_RIGHT ): {
-                logic$player$lose$set();
+                player$lose$set();
 
                 return ( false );
             }
@@ -589,11 +600,12 @@ FORCE_INLINE bool tryActionTile( const char _tile ) {
 
     // Pick-up item
     {
-        const item_t l_items[] = { KEY, HEALTH, ATTACK, DEFENSE };
+        const item_t l_items[] = { item_t::KEY, item_t::HEALTH, item_t::ATTACK,
+                                   item_t::DEFENSE };
 
         FOR( const item_t*, l_items ) {
-            if ( *_element == _tile ) {
-                logic$player$inventory$add( ( item_t )_tile );
+            if ( *_element == ( item_t )_tile ) {
+                player$inventory$add( ( item_t )_tile );
 
                 return ( true );
             }
@@ -604,7 +616,7 @@ FORCE_INLINE bool tryActionTile( const char _tile ) {
     return ( false );
 }
 
-FORCE_INLINE void logic$map$move$player( const direction_t _direction ) {
+FORCE_INLINE void map$move$player( const direction_t _direction ) {
     const size_t l_oldPosition = g_playerPosition;
     const size_t l_newPosition = ( g_playerPosition + _direction );
 
@@ -625,15 +637,15 @@ FORCE_INLINE void logic$map$move$player( const direction_t _direction ) {
     if ( l_needMove ) [[likely]] {
         g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
 
-        g_map[ l_newPosition ] = PLAYER;
+        g_map[ l_newPosition ] = ( char )actor_t::PLAYER;
 
         g_playerPosition = l_newPosition;
     }
 }
 
-void logic$map$move( const actor_t _who,
-                     const size_t _currentPosition,
-                     const direction_t _direction ) {
+void map$move( const actor_t _who,
+               const size_t _currentPosition,
+               const direction_t _direction ) {
     const size_t l_oldPosition = _currentPosition;
     const size_t l_newPosition = ( _currentPosition + _direction );
 
@@ -642,28 +654,27 @@ void logic$map$move( const actor_t _who,
     if ( isTileWalkable( l_tile ) ) [[likely]] {
         g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
 
-        g_map[ l_newPosition ] = _who;
+        g_map[ l_newPosition ] = ( char )_who;
 
-    } else if ( l_tile == PLAYER ) [[unlikely]] {
-        if ( tryFightTile( _who ) ) [[unlikely]] {
+    } else if ( l_tile == ( char )actor_t::PLAYER ) [[unlikely]] {
+        if ( tryFightTile( ( char )_who ) ) [[unlikely]] {
             g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
         }
     }
 }
 
-void logic$map$move$random( const actor_t _who,
-                            const size_t _currentPosition ) {
+void map$move$random( const actor_t _who, const size_t _currentPosition ) {
     // Define all possible movement directions, including staying in place
     const direction_t l_allDirections[] = {
         DOWN, LEFT, RIGHT, UP_RIGHT, UP, DOWN_RIGHT, DOWN_LEFT, UP_LEFT, STAY };
 
-    logic$map$move( _who, _currentPosition,
-                    randomValueFromContainer( l_allDirections ) );
+    map$move( _who, _currentPosition,
+              randomValueFromContainer( l_allDirections ) );
 }
 
 // TODO: Add movement to follow the player if close
 #if 0
-void logic$map$move$follow( const actor_t _who,
+void map$move$follow( const actor_t _who,
                             const size_t _currentPosition ) {
     const size_t l_playerPositionX = ( g_playerPosition % MAP_WIDTH );
     const size_t l_playerPositionY = ( g_playerPosition / MAP_WIDTH );
@@ -685,38 +696,38 @@ void logic$map$move$follow( const actor_t _who,
         l_whoNewPosition += ( direction_t )UP;
     }
 
-    logic$map$move( _who, _currentPosition, l_whoNewPosition );
+    map$move( _who, _currentPosition, l_whoNewPosition );
 }
 #endif
 
-FORCE_INLINE void logic$map$move$ai( void ) {
+FORCE_INLINE void map$move$ai( void ) {
     FOR( const char*, g_map ) {
         const char l_tile = *_element;
         const size_t l_position = ( _element - g_map );
 
-        switch ( l_tile ) {
-            case ( RANDOM_MONSTER ): {
-                logic$map$move$random( ( actor_t )RANDOM_MONSTER, l_position );
+        switch ( ( actor_t )l_tile ) {
+            case ( actor_t::RANDOM_MONSTER ): {
+                map$move$random( actor_t::RANDOM_MONSTER, l_position );
 
                 break;
             }
 
-            case ( FOLLOW_MONSTER ): {
+            case ( actor_t::FOLLOW_MONSTER ): {
                 // TODO: Add movement to follow the player if close
-                logic$map$move$random( ( actor_t )FOLLOW_MONSTER, l_position );
+                map$move$random( actor_t::FOLLOW_MONSTER, l_position );
 
                 break;
             }
 
-            case ( KEY_MONSTER ): {
-                logic$map$move$random( ( actor_t )KEY_MONSTER, l_position );
+            case ( actor_t::KEY_MONSTER ): {
+                map$move$random( actor_t::KEY_MONSTER, l_position );
 
                 break;
             }
 
-            case ( GUARDIAN ): {
+            case ( actor_t::GUARDIAN ): {
                 // TODO: Add movement to follow the player if close
-                logic$map$move$random( ( actor_t )GUARDIAN, l_position );
+                map$move$random( actor_t::GUARDIAN, l_position );
 
                 break;
             }
@@ -724,7 +735,7 @@ FORCE_INLINE void logic$map$move$ai( void ) {
     }
 }
 
-FORCE_INLINE void logic$map$render( void ) {
+FORCE_INLINE void map$render( void ) {
     // Iterate through each tile in the map (g_map)
     FOR( const char*, g_map ) {
         // Create a buffer of size 1 to hold the current tile's character
@@ -734,3 +745,5 @@ FORCE_INLINE void logic$map$render( void ) {
         io::print( l_buffer, 1 * sizeof( char ) );
     }
 }
+
+} // namespace logic

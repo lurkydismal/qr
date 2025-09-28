@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
+#include <string_view>
 
 #include "stdfunc.hpp"
 #include "system.hpp"
@@ -20,7 +22,8 @@ FORCE_INLINE void read( char* _buffer, uint8_t _bufferLength ) {
 }
 
 FORCE_INLINE void write( const char* _buffer, uint8_t _bufferLength ) {
-    syscall( system::call_t::write, ( uint8_t )descriptor_t::out,
+    syscall( system::call_t::write,
+             static_cast< uintptr_t >( descriptor_t::out ),
              std::bit_cast< uintptr_t >( _buffer ), _bufferLength );
 }
 

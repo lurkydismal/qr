@@ -54,7 +54,7 @@ FORCE_INLINE auto init() -> callbackResult_t {
 
     io::terminal::hideCursor();
 
-    logic$map$init();
+    logic::map$init();
 
     return ( callbackResult_t::remain );
 }
@@ -71,65 +71,65 @@ FORCE_INLINE auto quit( callbackResult_t _exitCode ) -> callbackResult_t {
 FORCE_INLINE auto event( event_t _event ) -> callbackResult_t {
     callbackResult_t l_returnValue = callbackResult_t::remain;
 
-    direction_t l_direction;
+    logic::direction_t l_direction;
 
     switch ( _event ) {
         case ( ( event_t )up ): {
-            l_direction = ( direction_t )UP;
+            l_direction = logic::direction_t::UP;
 
             break;
         }
 
         case ( ( event_t )upRight ): {
-            l_direction = ( direction_t )UP_RIGHT;
+            l_direction = logic::direction_t::UP_RIGHT;
 
             break;
         }
 
         case ( ( event_t )right ): {
-            l_direction = ( direction_t )RIGHT;
+            l_direction = logic::direction_t::RIGHT;
 
             break;
         }
 
         case ( ( event_t )downRight ): {
-            l_direction = ( direction_t )DOWN_RIGHT;
+            l_direction = logic::direction_t::DOWN_RIGHT;
 
             break;
         }
 
         case ( ( event_t )down ): {
-            l_direction = ( direction_t )DOWN;
+            l_direction = logic::direction_t::DOWN;
 
             break;
         }
 
         case ( ( event_t )downLeft ): {
-            l_direction = ( direction_t )DOWN_LEFT;
+            l_direction = logic::direction_t::DOWN_LEFT;
 
             break;
         }
 
         case ( ( event_t )left ): {
-            l_direction = ( direction_t )LEFT;
+            l_direction = logic::direction_t::LEFT;
 
             break;
         }
 
         case ( ( event_t )upLeft ): {
-            l_direction = ( direction_t )UP_LEFT;
+            l_direction = logic::direction_t::UP_LEFT;
 
             break;
         }
 
         default: {
-            l_direction = ( direction_t )STAY;
+            l_direction = logic::direction_t::STAY;
         }
     }
 
-    logic$map$move$player( l_direction );
+    map$move$player( l_direction );
 
-    if ( logic$player$lose$get() ) {
+    if ( logic::player$lose$get() ) {
         l_returnValue = callbackResult_t::failure;
     }
 
@@ -141,10 +141,10 @@ FORCE_INLINE auto iterate() -> callbackResult_t {
 
     // Logic
     {
-        logic$map$move$ai();
+        logic::map$move$ai();
     }
 
-    if ( logic$player$lose$get() ) {
+    if ( logic::player$lose$get() ) {
         l_returnValue = callbackResult_t::failure;
     }
 
@@ -152,14 +152,14 @@ FORCE_INLINE auto iterate() -> callbackResult_t {
     {
         io::clearScreen();
 
-        logic$map$render();
+        logic::map$render();
 
         // HUD
         {
-            logic$player$render$stats();
+            logic::player$render$stats();
 
 #if defined( RENDER_DEBUG_INFORMATION )
-            logic$player$render$debug();
+            player$render$debug();
 #endif
         }
     }
