@@ -7,11 +7,11 @@ static_assert( ( sizeof( void* ) == 4 ), "This is for i386 (32-bit) only" );
 #define EXPORT extern "C"
 
 EXPORT void _start() {
-    auto l_callbackResult = ( callbackResult_t )success;
+    auto l_callbackResult = callbackResult_t::success;
 
     l_callbackResult = init();
 
-    if ( !( l_callbackResult == ( callbackResult_t )remain ) ) [[unlikely]] {
+    if ( !( l_callbackResult == callbackResult_t::remain ) ) [[unlikely]] {
         goto EXIT;
     }
 
@@ -25,7 +25,7 @@ EXPORT void _start() {
 
             l_callbackResult = event( ( event_t )l_event );
 
-            if ( !( l_callbackResult == ( callbackResult_t )remain ) )
+            if ( !( l_callbackResult == callbackResult_t::remain ) )
                 [[unlikely]] {
                 break;
             }
@@ -35,7 +35,7 @@ EXPORT void _start() {
         {
             l_callbackResult = iterate();
 
-            if ( !( l_callbackResult == ( callbackResult_t )remain ) )
+            if ( !( l_callbackResult == callbackResult_t::remain ) )
                 [[unlikely]] {
                 break;
             }

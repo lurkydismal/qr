@@ -6,7 +6,7 @@
 
 # Binary
 .cache
-a.out
+*.out
 **/*.o
 **/*vgcore*
 

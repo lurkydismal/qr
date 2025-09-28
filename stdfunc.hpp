@@ -2,8 +2,11 @@
 
 #include <sys/types.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
+#include <span>
 
 // File descriptors
 #define INPUT_FILE_DESCRIPTOR_NUMBER 0
@@ -67,10 +70,11 @@ struct termios {
     uint32_t localModeFlags;   // Local mode flags (e.g., handling of special
                                // characters)
     uint8_t line; // Line discipline (e.g., terminal line processing)
-    uint8_t characters[ CONTROL_CHARACTERS_COUNT ]; // Control characters (e.g.,
-                                                    // Ctrl+C, Ctrl+Z)
-    uint32_t inputSpeed;                            // Input speed (baud rate)
-    uint32_t outputSpeed;                           // Output speed (baud rate)
+    std::array< uint8_t, CONTROL_CHARACTERS_COUNT >
+        characters;       // Control characters (e.g.,
+                          // Ctrl+C, Ctrl+Z)
+    uint32_t inputSpeed;  // Input speed (baud rate)
+    uint32_t outputSpeed; // Output speed (baud rate)
 };
 
 // System calls
@@ -81,10 +85,10 @@ void ioctl( uint8_t _fileDescriptor,
 
 // Wrapped system calls
 void usleep( uint32_t _milliseconds );
-void tcgetattr( uint8_t _fileDescriptor, struct termios* _termios );
+void tcgetattr( uint8_t _fileDescriptor, termios& _termios );
 void tcsetattr( uint8_t _fileDescriptor,
                 /* unused */ uint8_t _optionalActions,
-                const struct termios* _termios );
+                const termios* _termios );
 
 // Utility functions ( no side-effects )
 auto lengthOfNumber( size_t _number ) -> size_t;
@@ -189,7 +193,7 @@ FORCE_INLINE void usleep( uint32_t _milliseconds ) {
 #undef NANOSECONDS_IN_SECOND
 }
 
-void tcgetattr( uint8_t _fileDescriptor, termios* _termios ) {
+void tcgetattr( uint8_t _fileDescriptor, termios& _termios ) {
 #define TERMINAL_IO_CONTROL_GET_ATTRIBUTES 0x5401
 
     termios l_termios;
@@ -197,8 +201,9 @@ void tcgetattr( uint8_t _fileDescriptor, termios* _termios ) {
     ioctl( _fileDescriptor, TERMINAL_IO_CONTROL_GET_ATTRIBUTES,
            ( uintptr_t )( &l_termios ) );
 
-    *_termios = l_termios;
+    _termios = l_termios;
 
+#if 0
     __builtin_memset(
         __builtin_mempcpy(
             &_termios->characters[ 0 ], &l_termios.characters[ 0 ],
@@ -206,6 +211,18 @@ void tcgetattr( uint8_t _fileDescriptor, termios* _termios ) {
         0,
         ( ( CONTROL_CHARACTERS_COUNT - CONTROL_CHARACTERS_COUNT_KERNEL ) *
           sizeof( uint8_t ) ) );
+#endif
+
+    // copy first part
+    std::ranges::copy_n( l_termios.characters.data(),
+                         CONTROL_CHARACTERS_COUNT_KERNEL,
+                         _termios.characters.data() );
+
+    // zero-fill the rest
+    std::ranges::fill_n(
+        _termios.characters.data() + CONTROL_CHARACTERS_COUNT_KERNEL,
+        CONTROL_CHARACTERS_COUNT - CONTROL_CHARACTERS_COUNT_KERNEL,
+        static_cast< uint8_t >( 0 ) );
 
 #undef TERMINAL_IO_CONTROL_GET_ATTRIBUTES
 }
@@ -320,14 +337,4 @@ FORCE_INLINE auto fetchEvent() -> uint8_t {
     read( INPUT_FILE_DESCRIPTOR_NUMBER, ( char* )( &l_event ), 1 );
 
     return ( l_event );
-}
-
-EXPORT constexpr auto memcpy( void* _dst, const void* _src, std::size_t _n )
-    -> void* {
-    auto* l_d = static_cast< unsigned char* >( _dst );
-    auto* l_s = static_cast< const unsigned char* >( _src );
-    for ( std::size_t l_i = 0; l_i < _n; ++l_i ) {
-        l_d[ l_i ] = l_s[ l_i ];
-    }
-    return _dst;
 }
