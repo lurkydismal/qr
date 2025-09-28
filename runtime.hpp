@@ -2,10 +2,22 @@
 
 #include <cstdint>
 
+#include "io.hpp"
 #include "logic.hpp"
 #include "stdfunc.hpp"
+#include "system.hpp"
 
 // #define RENDER_DEBUG_INFORMATION
+
+namespace runtime {
+
+FORCE_INLINE auto fetchEvent() -> uint8_t {
+    uint8_t l_event;
+
+    io::read( ( char* )( &l_event ), 1 );
+
+    return ( l_event );
+}
 
 using callbackResult_t = enum class callbackResult : int8_t {
     remain = -1,
@@ -35,52 +47,12 @@ auto iterate() -> callbackResult_t;
 
 // C
 
-static termios g_terminalAttributesBeforeLaunch;
-
-FORCE_INLINE auto terminal$disableCanonicalMode() -> termios {
-#define TERMINAL_CANONICAL_MODE_FLAG ENABLE_CANONICAL_MODE
-#define TERMINALECHO_MODE_FLAG ENABLE_ECHO
-
-    termios l_currentAttributes;
-
-    tcgetattr( INPUT_FILE_DESCRIPTOR_NUMBER, l_currentAttributes );
-
-    // Return old attributes
-    termios l_returnValue = l_currentAttributes;
-
-    // Exclude flags from current
-    l_currentAttributes.localModeFlags &=
-        ~( TERMINAL_CANONICAL_MODE_FLAG | TERMINALECHO_MODE_FLAG );
-
-    tcsetattr( INPUT_FILE_DESCRIPTOR_NUMBER, TERMINAL_CONTROL_SET_ALL_NOW,
-               &l_currentAttributes );
-
-    return ( l_returnValue );
-
-#undef TERMINAL_CANONICAL_MODE_FLAG
-#undef TERMINALECHO_MODE_FLAG
-}
-
-FORCE_INLINE void terminal$hideCursor() {
-#define ANSI_TO_HIDE_CURSOR "\033[?25l"
-
-    print( ANSI_TO_HIDE_CURSOR, sizeof( ANSI_TO_HIDE_CURSOR ) );
-
-#undef ANSI_TO_HIDE_CURSOR
-}
-
-FORCE_INLINE void terminal$showCursor() {
-#define ANSI_TO_SHOW_CURSOR "\033[?25h"
-
-    print( ANSI_TO_SHOW_CURSOR, sizeof( ANSI_TO_SHOW_CURSOR ) );
-
-#undef ANSI_TO_SHOW_CURSOR
-}
+static io::terminal::termios g_terminalAttributesBeforeLaunch;
 
 FORCE_INLINE auto init() -> callbackResult_t {
-    g_terminalAttributesBeforeLaunch = terminal$disableCanonicalMode();
+    g_terminalAttributesBeforeLaunch = io::terminal::disableCanonicalMode();
 
-    terminal$hideCursor();
+    io::terminal::hideCursor();
 
     logic$map$init();
 
@@ -88,12 +60,12 @@ FORCE_INLINE auto init() -> callbackResult_t {
 }
 
 FORCE_INLINE auto quit( callbackResult_t _exitCode ) -> callbackResult_t {
-    tcsetattr( INPUT_FILE_DESCRIPTOR_NUMBER, TERMINAL_CONTROL_SET_ALL_NOW,
+    tcsetattr( io::descriptor_t::input, io::terminal::mode_t::allNow,
                &( g_terminalAttributesBeforeLaunch ) );
 
-    terminal$showCursor();
+    io::terminal::showCursor();
 
-    exit( ( int )_exitCode );
+    system::exit( ( int )_exitCode );
 }
 
 FORCE_INLINE auto event( event_t _event ) -> callbackResult_t {
@@ -178,7 +150,7 @@ FORCE_INLINE auto iterate() -> callbackResult_t {
 
     // Render
     {
-        clearScreen();
+        io::clearScreen();
 
         logic$map$render();
 
@@ -194,3 +166,5 @@ FORCE_INLINE auto iterate() -> callbackResult_t {
 
     return ( l_returnValue );
 }
+
+} // namespace runtime

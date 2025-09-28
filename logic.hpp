@@ -1,5 +1,6 @@
 #pragma once
 
+#include "io.hpp"
 #include "stdfunc.hpp"
 
 // Player
@@ -193,11 +194,12 @@ FORCE_INLINE void logic$player$lose$set( void ) {
 FORCE_INLINE void renderPoints( char** _cursorPosition,
                                 uint8_t _points,
                                 const size_t _textLength ) {
-    const size_t l_lengthOfPoints = lengthOfNumber( _points );
+    const size_t l_lengthOfPoints = stdfunc::lengthOfNumber( _points );
 
     *_cursorPosition += ( _textLength - l_lengthOfPoints );
 
-    convertNumberToString( *_cursorPosition, _points, l_lengthOfPoints );
+    stdfunc::convertNumberToString( *_cursorPosition, _points,
+                                    l_lengthOfPoints );
 
     *_cursorPosition += ( l_lengthOfPoints - 1 );
 }
@@ -241,7 +243,7 @@ FORCE_INLINE void logic$player$render$stats( void ) {
         }
     }
 
-    print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
+    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
 
 #undef FULL_ITEMS_TEXT
 #undef FULL_EXPERIENCE_TEXT
@@ -263,7 +265,7 @@ void logic$player$render$debug( void ) {
     renderPoints( &l_cursorPosition, g_guardianHealthPoints,
                   sizeof( FULL_GUARDIAN_TEXT ) );
 
-    print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
+    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
 
 #undef GUARDIAN_TEXT
 #undef MONSTER_TEXT
@@ -510,14 +512,14 @@ FORCE_INLINE void logic$map$init() {
         if ( *l_tile == MONSTER_WITH_KEY ) {
             const actor_t l_keyMonsters[] = { KEY_MONSTER };
 
-            *l_tile = randomValueFromArray( l_keyMonsters );
+            *l_tile = randomValueFromContainer( l_keyMonsters );
         }
 
         // If the tile represents a monster, replace it with random monster
         if ( *l_tile == MONSTER ) {
             const actor_t l_monsters[] = { FOLLOW_MONSTER, RANDOM_MONSTER };
 
-            *l_tile = randomValueFromArray( l_monsters );
+            *l_tile = randomValueFromContainer( l_monsters );
         }
     }
 }
@@ -542,7 +544,7 @@ FORCE_INLINE void action$chest( void ) {
     const item_t l_items[] = { HEALTH, ATTACK, DEFENSE };
 
     // Add a randomly selected item from the list to the player's inventory
-    logic$player$inventory$add( randomValueFromArray( l_items ) );
+    logic$player$inventory$add( randomValueFromContainer( l_items ) );
 }
 
 FORCE_INLINE void action$treasure( void ) {
@@ -656,7 +658,7 @@ void logic$map$move$random( const actor_t _who,
         DOWN, LEFT, RIGHT, UP_RIGHT, UP, DOWN_RIGHT, DOWN_LEFT, UP_LEFT, STAY };
 
     logic$map$move( _who, _currentPosition,
-                    randomValueFromArray( l_allDirections ) );
+                    randomValueFromContainer( l_allDirections ) );
 }
 
 // TODO: Add movement to follow the player if close
@@ -729,6 +731,6 @@ FORCE_INLINE void logic$map$render( void ) {
         char l_buffer[ sizeof( char ) ] = { *_element };
 
         // Print the current tile's character
-        print( l_buffer, 1 * sizeof( char ) );
+        io::print( l_buffer, 1 * sizeof( char ) );
     }
 }

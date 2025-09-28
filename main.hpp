@@ -9,7 +9,7 @@ static_assert( ( sizeof( void* ) == 4 ), "This is for i386 (32-bit) only" );
 namespace {
 
 #define FORCE_INLINE [[gnu::always_inline]] inline
-#define NOINLINE [[gnu::noinline, used]]
+#define NOINLINE [[gnu::noinline, gnu::used]]
 #define NO_RETURN [[gnu::noreturn]]
 #define EXPORT extern "C"
 
