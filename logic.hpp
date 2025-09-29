@@ -647,27 +647,26 @@ FORCE_INLINE void init() {
 
         // If the tile represents a monster, replace it with random monster
         if ( *l_tile == ( char )actor_t::monster ) [[unlikely]] {
-            constexpr std::array l_monsters{
-                actor_t::followMonster,
-                actor_t::randomMonster,
-            };
+            constexpr actor_t l_monsters[] = { actor_t::followMonster,
+                                               actor_t::randomMonster };
 
-            *l_tile = ( char )random::value( l_monsters );
+            // FIX: Does add 8 bytes if changed to random::value
+            *l_tile = ( char )randomValueFromContainer( l_monsters );
         }
     }
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
-    constexpr std::array l_opponents{
+    constexpr actor_t l_opponents[] = {
         actor_t::followMonster,
         actor_t::randomMonster,
         actor_t::keyMonster,
         actor_t::guardian,
     };
 
-    for ( actor_t _actor : l_opponents ) {
-        if ( _actor == ( actor_t )_tile ) {
+    FOR( const actor_t*, l_opponents ) {
+        if ( *_element == ( actor_t )_tile ) {
             return ( player::fight( ( actor_t )_tile ) );
         }
     }

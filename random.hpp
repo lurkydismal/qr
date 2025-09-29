@@ -27,25 +27,25 @@ namespace random {
 
 template < typename T >
 [[nodiscard]] FORCE_INLINE constexpr auto value( const T* _container,
-                                                 size_t _length ) -> const T& {
+                                                 size_t _length ) -> T {
     return ( _container[ random() % _length ] );
 }
 
 template < typename T, size_t N >
 [[nodiscard]] FORCE_INLINE constexpr auto value(
-    const std::array< T, N >& _container ) -> const T& {
+    const std::array< T, N >& _container ) -> T {
     return ( value( _container.data(), _container.size() ) );
 }
 
 template < typename T, size_t N >
 [[nodiscard]] FORCE_INLINE constexpr auto value(
-    const std::array< const T, N >& _container ) -> const T& {
+    const std::array< const T, N >& _container ) -> T {
     return ( value( _container.data(), _container.size() ) );
 }
 
 template < typename T >
 [[nodiscard]] FORCE_INLINE constexpr auto value(
-    const std::span< const T >& _container ) -> const T& {
+    const std::span< const T >& _container ) -> T {
     return ( value( _container.data(), _container.size() ) );
 }
 
