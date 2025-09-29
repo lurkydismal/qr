@@ -26,7 +26,7 @@ using move_t = enum class move : uint8_t {
     upLeft = 'q'
 };
 
-FORCE_INLINE auto waitMove() -> move_t {
+[[nodiscard]] FORCE_INLINE auto waitMove() -> move_t {
     std::array< uint8_t, 1 > l_event;
 
     io::read( l_event );
@@ -37,7 +37,7 @@ FORCE_INLINE auto waitMove() -> move_t {
 static io::terminal::termios g_terminalAttributesBeforeLaunch;
 
 // Called once per application run
-FORCE_INLINE auto init() -> result_t {
+[[nodiscard]] FORCE_INLINE auto init() -> result_t {
     g_terminalAttributesBeforeLaunch = io::terminal::disableCanonicalMode();
 
     io::terminal::hideCursor();
@@ -47,7 +47,7 @@ FORCE_INLINE auto init() -> result_t {
     return ( result_t::remain );
 }
 
-FORCE_INLINE auto quit( result_t _exitCode ) -> result_t {
+NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
     tcsetattr( g_terminalAttributesBeforeLaunch );
 
     io::terminal::showCursor();
@@ -56,62 +56,62 @@ FORCE_INLINE auto quit( result_t _exitCode ) -> result_t {
 }
 
 // Called each frame
-FORCE_INLINE constexpr auto event( move_t _event ) -> result_t {
+[[nodiscard]] FORCE_INLINE constexpr auto event( move_t _event ) -> result_t {
     result_t l_returnValue = result_t::remain;
 
     logic::map::direction_t l_direction;
 
     switch ( _event ) {
         case ( move_t::up ): {
-            l_direction = logic::map::direction_t::UP;
+            l_direction = logic::map::direction_t::up;
 
             break;
         }
 
         case ( move_t::upRight ): {
-            l_direction = logic::map::direction_t::UP_RIGHT;
+            l_direction = logic::map::direction_t::upRight;
 
             break;
         }
 
         case ( move_t::right ): {
-            l_direction = logic::map::direction_t::RIGHT;
+            l_direction = logic::map::direction_t::right;
 
             break;
         }
 
         case ( move_t::downRight ): {
-            l_direction = logic::map::direction_t::DOWN_RIGHT;
+            l_direction = logic::map::direction_t::downRight;
 
             break;
         }
 
         case ( move_t::down ): {
-            l_direction = logic::map::direction_t::DOWN;
+            l_direction = logic::map::direction_t::down;
 
             break;
         }
 
         case ( move_t::downLeft ): {
-            l_direction = logic::map::direction_t::DOWN_LEFT;
+            l_direction = logic::map::direction_t::downLeft;
 
             break;
         }
 
         case ( move_t::left ): {
-            l_direction = logic::map::direction_t::LEFT;
+            l_direction = logic::map::direction_t::left;
 
             break;
         }
 
         case ( move_t::upLeft ): {
-            l_direction = logic::map::direction_t::UP_LEFT;
+            l_direction = logic::map::direction_t::upLeft;
 
             break;
         }
 
         default: {
-            l_direction = logic::map::direction_t::STAY;
+            l_direction = logic::map::direction_t::stay;
         }
     }
 
@@ -124,7 +124,7 @@ FORCE_INLINE constexpr auto event( move_t _event ) -> result_t {
     return ( l_returnValue );
 }
 
-FORCE_INLINE constexpr auto iterate() -> result_t {
+[[nodiscard]] FORCE_INLINE constexpr auto iterate() -> result_t {
     result_t l_returnValue = result_t::remain;
 
     // Logic

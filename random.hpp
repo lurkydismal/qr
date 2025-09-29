@@ -7,7 +7,7 @@
 
 namespace random {
 
-constexpr auto randomNumber() -> size_t {
+[[nodiscard]] constexpr auto randomNumber() -> size_t {
 #define COMPILATION_TIME_AS_SEED                                      \
     ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 2 ] + __TIME__[ 3 ] + \
       __TIME__[ 4 ] + __TIME__[ 5 ] )

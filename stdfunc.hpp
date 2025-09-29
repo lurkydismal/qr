@@ -33,7 +33,8 @@ template < typename SymbolTypes, SymbolTypes... _symbols >
         char{ _symbols }..., '\0' } );
 }
 
-FORCE_INLINE constexpr auto lengthOfNumber( size_t _number ) -> size_t {
+[[nodiscard]] FORCE_INLINE constexpr auto lengthOfNumber( size_t _number )
+    -> size_t {
     size_t l_length = 0;
 
     do {
@@ -45,7 +46,8 @@ FORCE_INLINE constexpr auto lengthOfNumber( size_t _number ) -> size_t {
     return ( l_length );
 }
 
-FORCE_INLINE constexpr auto power( size_t _base, uint8_t _exponent ) -> size_t {
+[[nodiscard]] FORCE_INLINE constexpr auto power( size_t _base,
+                                                 uint8_t _exponent ) -> size_t {
     size_t l_returnValue = 1;
 
     for ( ;; ) {

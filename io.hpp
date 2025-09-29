@@ -175,7 +175,7 @@ FORCE_INLINE void tcsetattr( const termios_t& _termios ) {
     ioctl( code_t::setAttributes, _termios );
 }
 
-FORCE_INLINE auto disableCanonicalMode() -> terminal::termios_t {
+[[nodiscard]] FORCE_INLINE auto disableCanonicalMode() -> terminal::termios_t {
     terminal::termios_t l_currentAttributes;
 
     tcgetattr( l_currentAttributes );
