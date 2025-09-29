@@ -1,6 +1,6 @@
 # qr
 
-> NetHack-like game ~~that fits in less than 3 kb~~.
+> NetHack-like game that fits in less than 3 kb.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## General Information
 
-* Console rogue-like RPG adventure game ~~with co-operative~~ ~~that can be transferred via QR code~~.
+* Console rogue-like RPG adventure game ~~with co-operative~~ that can be transferred via QR code.
 
 ## Technologies Used
 

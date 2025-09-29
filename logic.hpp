@@ -10,19 +10,6 @@
 
 namespace logic {
 
-constexpr size_t g_startHealthPoints = 100;
-constexpr size_t g_startExperiencePoints = 0;
-
-constexpr size_t g_maxHealthPoints = 200;
-constexpr size_t g_maxExperiencePoints = 100;
-constexpr size_t g_maxItemCount = 5;
-
-constexpr size_t g_maxMonsterHealthPoints = 5;
-constexpr size_t g_maxGuardianHealthPoints = 20;
-
-constexpr size_t g_startMonsterHealthPoints = g_maxMonsterHealthPoints;
-constexpr size_t g_startGuardianHealthPoints = g_maxGuardianHealthPoints;
-
 #define HEALTH_TEXT "\nHP:"
 #define EXPERIENCE_TEXT "\nEXP:"
 #define ITEMS_TEXT "\nITEMS:"
@@ -30,14 +17,6 @@ constexpr size_t g_startGuardianHealthPoints = g_maxGuardianHealthPoints;
 #define HEALTH_POINTS_TEXT_PLACEHOLDER "000"
 #define EXPERIENCE_POINTS_TEXT_PLACEHOLDER "000"
 #define ITEMS_TEXT_PLACEHOLDER "E E E E E"
-
-using item_t = enum class item : uint8_t {
-    empty = 'E',
-    key = 'K',
-    health = 'H',
-    attack = 'A',
-    defense = 'D'
-};
 
 using actor_t = enum class actor : uint8_t {
     player = '@',
@@ -49,10 +28,12 @@ using actor_t = enum class actor : uint8_t {
     monsterWithKey = 'W'
 };
 
-uint8_t g_monsterHealthPoints = g_startMonsterHealthPoints;
-uint8_t g_guardianHealthPoints = g_startGuardianHealthPoints;
-
 namespace monster {
+
+constexpr size_t g_maxHealth = 5;
+constexpr size_t g_startHealth = g_maxHealth;
+
+uint8_t g_monsterHealthPoints = g_startHealth;
 
 FORCE_INLINE constexpr auto fight() -> bool;
 
@@ -60,9 +41,14 @@ FORCE_INLINE constexpr auto fight() -> bool;
 
 namespace guardian {
 
+constexpr size_t g_maxHealth = 20;
+constexpr size_t g_startHealth = g_maxHealth;
+
+uint8_t g_guardianHealthPoints = g_startHealth;
+
 FORCE_INLINE constexpr auto fight() -> bool;
 
-}
+} // namespace guardian
 
 namespace player {
 
@@ -71,11 +57,6 @@ namespace player {
 // the g_map array. This variable is critical for updating and rendering the
 // player's movement on the map.
 size_t g_position;
-
-uint8_t g_playerHealthPoints = g_startHealthPoints;
-uint8_t g_playerExperiencePoints = g_startExperiencePoints;
-auto g_playerItems = std::array{ item_t::empty, item_t::empty, item_t::empty,
-                                 item_t::empty, item_t::empty };
 
 namespace lose {
 
@@ -91,7 +72,23 @@ FORCE_INLINE constexpr void set() {
 
 } // namespace lose
 
+namespace stats {
+
+namespace health {
+
+constexpr size_t g_startHealthPoints = 100;
+constexpr size_t g_maxHealthPoints = 200;
+
+uint8_t g_playerHealthPoints = g_startHealthPoints;
+
+} // namespace health
+
 namespace experience {
+
+constexpr size_t g_startExperiencePoints = 0;
+constexpr size_t g_maxExperiencePoints = 100;
+
+uint8_t g_amount = g_startExperiencePoints;
 
 constexpr size_t g_fromMonster = 5;
 constexpr size_t g_fromGuardian = 10;
@@ -100,20 +97,39 @@ constexpr size_t g_fromTreasure = 20;
 constexpr size_t g_forDamage = 10;
 constexpr size_t g_forDamangeGuardian = 20;
 
-NOINLINE constexpr void add( size_t _amount ) {
-    g_playerExperiencePoints += _amount;
+constexpr auto get() -> uint8_t {
+    return ( g_amount );
+}
 
-    if ( g_playerExperiencePoints > g_maxExperiencePoints ) {
-        g_playerExperiencePoints = g_maxExperiencePoints;
+NOINLINE constexpr void add( size_t _amount ) {
+    g_amount += _amount;
+
+    if ( g_amount > g_maxExperiencePoints ) {
+        g_amount = g_maxExperiencePoints;
     }
 }
 
 } // namespace experience
 
+} // namespace stats
+
 namespace inventory {
 
+constexpr size_t g_maxItemCount = 5;
+
+using item_t = enum class item : uint8_t {
+    empty = 'E',
+    key = 'K',
+    health = 'H',
+    attack = 'A',
+    defense = 'D'
+};
+
+auto g_items = std::array{ item_t::empty, item_t::empty, item_t::empty,
+                           item_t::empty, item_t::empty };
+
 constexpr void add( item_t _item ) {
-    for ( item_t& _slot : g_playerItems ) {
+    for ( item_t& _slot : g_items ) {
         if ( _slot == item_t::empty ) {
             _slot = _item;
 
@@ -121,11 +137,11 @@ constexpr void add( item_t _item ) {
         }
     }
 
-    g_playerItems[ 0 ] = _item;
+    g_items[ 0 ] = _item;
 }
 
 [[nodiscard]] constexpr auto use( item_t _item ) -> bool {
-    for ( item_t& _slot : g_playerItems ) {
+    for ( item_t& _slot : g_items ) {
         if ( _slot == _item ) {
             _slot = item_t::empty;
 
@@ -141,7 +157,7 @@ constexpr void add( item_t _item ) {
 [[nodiscard]] constexpr auto fight( actor_t _who ) -> bool {
     bool l_returnValue = false;
 
-    g_playerHealthPoints -= 1;
+    stats::health::g_playerHealthPoints -= 1;
 
     if ( _who == actor_t::guardian ) [[unlikely]] {
         l_returnValue = guardian::fight();
@@ -151,15 +167,17 @@ constexpr void add( item_t _item ) {
 
         if ( ( l_returnValue ) && ( _who == actor_t::keyMonster ) )
             [[unlikely]] {
-            inventory::add( item_t::key );
+            inventory::add( inventory::item_t::key );
         }
     }
 
     // Has player died
-    if ( ( !g_playerHealthPoints ) ||
-         ( g_playerHealthPoints > g_maxHealthPoints ) ) [[unlikely]] {
-        if ( inventory::use( item_t::health ) ) [[unlikely]] {
-            g_playerHealthPoints = g_maxHealthPoints;
+    if ( ( !stats::health::g_playerHealthPoints ) ||
+         ( stats::health::g_playerHealthPoints >
+           stats::health::g_maxHealthPoints ) ) [[unlikely]] {
+        if ( inventory::use( inventory::item_t::health ) ) [[unlikely]] {
+            stats::health::g_playerHealthPoints =
+                stats::health::g_maxHealthPoints;
 
             l_returnValue = true;
 
@@ -201,13 +219,13 @@ FORCE_INLINE void render$stats() {
 
     // Health
     {
-        renderPoints( &l_cursorPosition, g_playerHealthPoints,
+        renderPoints( &l_cursorPosition, stats::health::g_playerHealthPoints,
                       sizeof( FULL_HEALTH_TEXT ) );
     }
 
     // Experience
     {
-        renderPoints( &l_cursorPosition, g_playerExperiencePoints,
+        renderPoints( &l_cursorPosition, stats::experience::get(),
                       sizeof( FULL_EXPERIENCE_TEXT ) );
     }
 
@@ -216,7 +234,7 @@ FORCE_INLINE void render$stats() {
         l_cursorPosition += ( sizeof( FULL_ITEMS_TEXT ) -
                               ( sizeof( ITEMS_TEXT_PLACEHOLDER ) - 1 ) );
 
-        for ( item_t& _item : g_playerItems ) {
+        for ( inventory::item_t& _item : inventory::g_items ) {
             *l_cursorPosition = ( char )( _item );
 
             // Move to the next character
@@ -245,9 +263,9 @@ void render$debug() {
     char l_buffer[] = FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT;
     char* l_cursorPosition = ( l_buffer - 1 );
 
-    renderPoints( &l_cursorPosition, g_monsterHealthPoints,
+    renderPoints( &l_cursorPosition, monster::g_monsterHealthPoints,
                   sizeof( FULL_MONSTER_TEXT ) );
-    renderPoints( &l_cursorPosition, g_guardianHealthPoints,
+    renderPoints( &l_cursorPosition, guardian::g_guardianHealthPoints,
                   sizeof( FULL_GUARDIAN_TEXT ) );
 
     io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
@@ -259,14 +277,15 @@ void render$debug() {
 } // namespace player
 
 [[nodiscard]] constexpr auto monster::fight() -> bool {
-    g_monsterHealthPoints -= ( 1 + ( player::g_playerExperiencePoints /
-                                     player::experience::g_forDamage ) );
+    g_monsterHealthPoints -= ( 1 + ( player::stats::experience::get() /
+                                     player::stats::experience::g_forDamage ) );
 
-    if ( ( !g_monsterHealthPoints ) ||
-         ( g_monsterHealthPoints > g_maxMonsterHealthPoints ) ) [[unlikely]] {
-        g_monsterHealthPoints = g_maxMonsterHealthPoints;
+    if ( ( !g_monsterHealthPoints ) || ( g_monsterHealthPoints > g_maxHealth ) )
+        [[unlikely]] {
+        g_monsterHealthPoints = g_maxHealth;
 
-        player::experience::add( player::experience::g_fromMonster );
+        player::stats::experience::add(
+            player::stats::experience::g_fromMonster );
 
         return ( true );
     }
@@ -275,21 +294,25 @@ void render$debug() {
 }
 
 [[nodiscard]] constexpr auto guardian::fight() -> bool {
-    if ( !( player::inventory::use( item_t::defense ) ) ) [[likely]] {
-        player::g_playerHealthPoints -= 4;
+    if ( !( player::inventory::use( player::inventory::item_t::defense ) ) )
+        [[likely]] {
+        player::stats::health::g_playerHealthPoints -= 4;
     }
 
     g_guardianHealthPoints -=
         ( 1 +
-          ( player::g_playerExperiencePoints /
-            player::experience::g_forDamangeGuardian ) +
-          ( ( uint8_t )( player::inventory::use( item_t::attack ) ) * 5 ) );
+          ( player::stats::experience::get() /
+            player::stats::experience::g_forDamangeGuardian ) +
+          ( ( uint8_t )( player::inventory::use(
+                player::inventory::item_t::attack ) ) *
+            5 ) );
 
     if ( ( !g_guardianHealthPoints ) ||
-         ( g_guardianHealthPoints > g_maxGuardianHealthPoints ) ) [[unlikely]] {
-        g_guardianHealthPoints = g_maxGuardianHealthPoints;
+         ( g_guardianHealthPoints > g_maxHealth ) ) [[unlikely]] {
+        g_guardianHealthPoints = g_maxHealth;
 
-        player::experience::add( player::experience::g_fromGuardian );
+        player::stats::experience::add(
+            player::stats::experience::g_fromGuardian );
 
         return ( true );
     }
@@ -473,9 +496,9 @@ FORCE_INLINE void init() {
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
-    const actor_t l_opponents[] = { actor_t::followMonster,
-                                    actor_t::randomMonster, actor_t::keyMonster,
-                                    actor_t::guardian };
+    constexpr actor_t l_opponents[] = {
+        actor_t::followMonster, actor_t::randomMonster, actor_t::keyMonster,
+        actor_t::guardian };
 
     FOR( const actor_t*, l_opponents ) {
         if ( *_element == ( actor_t )_tile ) {
@@ -489,20 +512,21 @@ FORCE_INLINE void init() {
 
 FORCE_INLINE constexpr void action$chest() {
     // Define a list of possible items that can be found in the chest
-    const item_t l_items[] = { item_t::health, item_t::attack,
-                               item_t::defense };
+    constexpr player::inventory::item_t l_items[] = {
+        player::inventory::item_t::health, player::inventory::item_t::attack,
+        player::inventory::item_t::defense };
 
     // Add a randomly selected item from the list to the player's inventory
     player::inventory::add( randomValueFromContainer( l_items ) );
 }
 
 FORCE_INLINE constexpr void action$treasure() {
-    player::experience::add( player::experience::g_fromTreasure );
+    player::stats::experience::add( player::stats::experience::g_fromTreasure );
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto action$door() -> bool {
     // Attempt to use a key from the player's inventory to open the door
-    return ( player::inventory::use( item_t::key ) );
+    return ( player::inventory::use( player::inventory::item_t::key ) );
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
@@ -538,12 +562,14 @@ FORCE_INLINE constexpr void action$treasure() {
 
     // Pick-up item
     {
-        const item_t l_items[] = { item_t::key, item_t::health, item_t::attack,
-                                   item_t::defense };
+        const player::inventory::item_t l_items[] = {
+            player::inventory::item_t::key, player::inventory::item_t::health,
+            player::inventory::item_t::attack,
+            player::inventory::item_t::defense };
 
-        FOR( const item_t*, l_items ) {
-            if ( *_element == ( item_t )_tile ) {
-                player::inventory::add( ( item_t )_tile );
+        FOR( const player::inventory::item_t*, l_items ) {
+            if ( *_element == ( player::inventory::item_t )_tile ) {
+                player::inventory::add( ( player::inventory::item_t )_tile );
 
                 return ( true );
             }
