@@ -403,9 +403,9 @@ constexpr void add( item_t _item ) {
 }
 
 // Stats
-FORCE_INLINE void renderPoints( char** _cursorPosition,
-                                uint8_t _points,
-                                size_t _textLength ) {
+FORCE_INLINE void render$points( char** _cursorPosition,
+                                 uint8_t _points,
+                                 size_t _textLength ) {
     const size_t l_lengthOfPoints = stdfunc::lengthOfNumber( _points );
 
     *_cursorPosition += ( _textLength - l_lengthOfPoints );
@@ -430,14 +430,14 @@ FORCE_INLINE void render$stats() {
 
     // Health
     {
-        renderPoints( &l_cursorPosition, stats::health::g_playerHealthPoints,
-                      sizeof( FULL_HEALTH_TEXT ) );
+        render$points( &l_cursorPosition, stats::health::g_playerHealthPoints,
+                       sizeof( FULL_HEALTH_TEXT ) );
     }
 
     // Experience
     {
-        renderPoints( &l_cursorPosition, stats::experience::get(),
-                      sizeof( FULL_EXPERIENCE_TEXT ) );
+        render$points( &l_cursorPosition, stats::experience::get(),
+                       sizeof( FULL_EXPERIENCE_TEXT ) );
     }
 
     // Items
@@ -474,10 +474,10 @@ void render$debug() {
     char l_buffer[] = FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT;
     char* l_cursorPosition = ( l_buffer - 1 );
 
-    renderPoints( &l_cursorPosition, monster::g_monsterHealthPoints,
-                  sizeof( FULL_MONSTER_TEXT ) );
-    renderPoints( &l_cursorPosition, guardian::g_guardianHealthPoints,
-                  sizeof( FULL_GUARDIAN_TEXT ) );
+    render$points( &l_cursorPosition, monster::g_monsterHealthPoints,
+                   sizeof( FULL_MONSTER_TEXT ) );
+    render$points( &l_cursorPosition, guardian::g_guardianHealthPoints,
+                   sizeof( FULL_GUARDIAN_TEXT ) );
 
     io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
 
