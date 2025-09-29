@@ -6,16 +6,11 @@
 #include <cstdint>
 #include <ranges>
 
-#include "random.hpp"
-
 // Function attributes
 #define FORCE_INLINE [[gnu::always_inline]] inline
 #define NOINLINE [[gnu::noinline, gnu::used]]
 #define NO_RETURN [[gnu::noreturn]]
 #define EXPORT extern "C"
-
-#define randomValueFromContainer( _array ) \
-    ( _array[ random::randomNumber() % arrayLength( _array ) ] )
 
 #define arrayLength( _array ) ( sizeof( _array ) / sizeof( _array[ 0 ] ) )
 

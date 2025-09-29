@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <bit>
 #include <cstdint>
+#include <initializer_list>
 #include <string_view>
 
 #include "stdfunc.hpp"
@@ -32,23 +33,12 @@ FORCE_INLINE void print( const char* _text, uint8_t _lengthOfText ) {
     write( _text, _lengthOfText );
 }
 
-template < std::size_t N >
-    requires( N > 0 )
-FORCE_INLINE void write( const std::array< char, N >& _buffer ) {
-    write( _buffer.data(), _buffer.size() );
+FORCE_INLINE void print( const std::span< const char >& _text ) {
+    print( _text.data(), _text.size() );
 }
 
-template < std::size_t N >
-FORCE_INLINE void print( const std::array< char, N >& _text ) {
-    write( _text );
-}
-
-FORCE_INLINE void write( const std::string_view& _buffer ) {
-    write( _buffer.data(), _buffer.size() );
-}
-
-FORCE_INLINE void print( const std::string_view& _text ) {
-    write( _text );
+FORCE_INLINE void print( std::initializer_list< char > _text ) {
+    print( std::span( _text ) );
 }
 
 // TODO: Maybe move to terminal

@@ -6,9 +6,191 @@
 #include <ranges>
 
 #include "io.hpp"
+#include "random.hpp"
 #include "stdfunc.hpp"
 
 namespace logic {
+
+namespace map {
+
+#define MAP                                                          \
+    "+------+     +-------+   M#                  K####T         \n" \
+    "|....K.|  ###}.......|    #             +----/----+        C\n" \
+    "|.@.....###  |.......|    #             |.........|        #\n" \
+    "|......|  #  |........###### ###########}.........|     W##M\n" \
+    "|......|     |.M.....|      K           |.........|     #   \n" \
+    "+------+     |...C...|            +-----+C........|     #   \n" \
+    "|.G....|     +-------+            |.....C.M.......{#####    \n" \
+    "|......+-----+                    |..........M....|         \n" \
+    ">............}K###################}....W..........|         \n" \
+    "+------------+                    +---------------+         \n"
+
+// g_map represents the current state of the game map, with each character in
+// the array corresponding to a specific tile in the game world. Each tile can
+// be a wall, floor, decoration, player, monster, chest, or other items. This
+// map is essential for game mechanics such as movement, actions, and
+// encounters.
+//
+// The map is initialized as a constant string with a detailed arrangement of
+// characters representing different elements in the game environment. This
+// global map is used for navigating and interacting with the game world during
+// gameplay.
+char g_current[] = MAP;
+
+// g_mapEmpty is a copy of g_map that is used to represent the empty state of
+// the map, where opponents and actionable tiles are replaced with walkable
+// ones. This map is used during certain game logic operations to track the
+// initial state of the map.
+char g_empty[ sizeof( g_current ) ];
+
+constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
+
+using tile_t = enum class tile : uint8_t {
+    // Walkable
+    floor = '.',
+    bridge = '#',
+
+    // Not walkable
+    wallHorizontal = '-',
+    wallVertical = '|',
+    wallCross = '+'
+};
+
+using direction_t = enum class direction : int8_t {
+    stay = 0,
+    up = -( g_width ),
+    upRight = -( g_width - 1 ),
+    right = 1,
+    downRight = ( g_width + 1 ),
+    down = g_width,
+    downLeft = ( g_width - 1 ),
+    left = -1,
+    upLeft = -( g_width + 1 )
+};
+
+using actionable_t = enum class actionable : uint8_t {
+    chest = 'C',
+    treasure = 'T',
+    doorLeft = '}',
+    doorRight = '{',
+    doorMiddle = '/',
+    ladderLeft = '>',
+    ladderRight = '<'
+};
+
+using actor_t = enum class actor : uint8_t {
+    player = '@',
+    guardian = 'G',
+    followMonster = 'F',
+    randomMonster = 'R',
+    keyMonster = 'O',
+
+    // Used during map generation
+    monster = 'M',
+    monsterWithKey = 'W'
+};
+
+[[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
+    -> bool;
+
+[[nodiscard]] constexpr auto isTileWalkable( tile_t _tile ) -> bool;
+
+// Positions
+/**
+ * @brief Initializes the game map.
+ *
+ * This function initializes the game map by copying the original map to an
+ * empty map, ensuring that all opponents and actionable tiles are replaced with
+ * adjacent walkable tiles, and the player's starting position is identified. It
+ * also places monsters in the game world.
+ *
+ * @details
+ * The function performs the following steps:
+ * 1. Copies the current map (`g_map`) to a new empty map (`g_mapEmpty`).
+ * 2. Identifies the player's starting position by searching for the tile marked
+ * as `PLAYER`.
+ * 3. Ensures that all opponents and actionable tiles (e.g., door tiles) are
+ *    replaced with walkable tiles from adjacent directions (e.g., floor tiles).
+ * 4. Randomly generates monsters placed on the map:
+ *    - If the tile contains a `MONSTER_WITH_KEY`, it is replaced with a
+ * randomly chosen key monster.
+ *    - If the tile contains a `MONSTER`, it is replaced with a randomly chosen
+ * monster.
+ *
+ * The function ensures that the map is prepared and ready for gameplay by
+ * setting the player’s position and ensuring that tiles are walkable.
+ *
+ * @note This function modifies the following global variables:
+ *       - `g_map`: The original map layout.
+ *       - `g_mapEmpty`: The map that has been processed for walkability and
+ * content.
+ *       - `player::osition`: The player's starting position on the map.
+ */
+FORCE_INLINE void init();
+
+[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool;
+
+FORCE_INLINE constexpr void action$chest();
+
+FORCE_INLINE constexpr void action$treasure();
+
+[[nodiscard]] FORCE_INLINE constexpr auto action$door() -> bool;
+
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile ) -> bool;
+
+constexpr void move( actor_t _who,
+                     size_t _currentPosition,
+                     direction_t _direction );
+
+FORCE_INLINE constexpr void move$random( actor_t _who,
+                                         size_t _currentPosition );
+
+// TODO: Add movement to follow the player if close
+#if 0
+constexpr void move$follow( const actor_t _who,
+                            const size_t _currentPosition );
+#endif
+
+/**
+ * @brief Moves all AI-controlled monsters randomly on the map.
+ *
+ * This function iterates through each tile on the map, and for each tile that
+ * contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
+ * GUARDIAN), it moves the corresponding monster to a random adjacent position
+ * by calling the `move$random` function. The movement is based on the
+ * monster's type, ensuring that each specific type of monster is moved
+ * according to predefined behavior.
+ *
+ * @note This function uses the FOR macro to iterate over the entire map and
+ * process each tile.
+ */
+FORCE_INLINE constexpr void ai();
+
+// Render
+/**
+ * @brief Renders the current state of the map to the output.
+ *
+ * This function iterates through each tile of the global `g_map` array and
+ * prints the character representing the tile. It essentially outputs the map as
+ * it is in the game's internal state, tile by tile.
+ *
+ * - Each tile in `g_map` is represented by a single character that could be
+ *   a floor, wall, player, monster, chest, treasure, etc.
+ *
+ * This function assumes that the map data (`g_map`) is structured in a way
+ * where each element corresponds to a character that needs to be printed to the
+ * screen.
+ *
+ * @note The rendering is done one character at a time. Depending on how the
+ * `print` function works, it could render a single line or the entire map one
+ * by one. Make sure the print function handles newlines and coordinates
+ * correctly.
+ *
+ * @see `print()` for more information on how tiles are printed to the screen.
+ */
+FORCE_INLINE constexpr void render();
+
+} // namespace map
 
 #define HEALTH_TEXT "\nHP:"
 #define EXPERIENCE_TEXT "\nEXP:"
@@ -17,16 +199,6 @@ namespace logic {
 #define HEALTH_POINTS_TEXT_PLACEHOLDER "000"
 #define EXPERIENCE_POINTS_TEXT_PLACEHOLDER "000"
 #define ITEMS_TEXT_PLACEHOLDER "E E E E E"
-
-using actor_t = enum class actor : uint8_t {
-    player = '@',
-    guardian = 'G',
-    followMonster = 'F',
-    randomMonster = 'R',
-    keyMonster = 'O',
-    monster = 'M',
-    monsterWithKey = 'W'
-};
 
 namespace monster {
 
@@ -52,11 +224,60 @@ FORCE_INLINE constexpr auto fight() -> bool;
 
 namespace player {
 
-// player::position tracks the current position of the player within the map. It
-// is stored as a size_t representing the index of the player's location within
-// the g_map array. This variable is critical for updating and rendering the
-// player's movement on the map.
 size_t g_position;
+
+/**
+ * @brief Moves the player on the map in a specified direction.
+ *
+ * This function handles the logic for moving the player on the game map. It
+ * checks if the destination tile is walkable, if there's a fight with an
+ * opponent, or if an action can be performed on the destination tile. If
+ * movement is allowed, it updates the map by moving the player to the new
+ * position and adjusting the old position to reflect the movement.
+ *
+ * The function follows these steps:
+ * 1. It calculates the player's new position based on the given direction.
+ * 2. It checks if the destination tile is walkable.
+ * 3. If the destination is not walkable, it checks if the player can fight the
+ *    opponent present on the destination tile.
+ * 4. If an action is possible (such as interacting with a chest or door), the
+ *    function tries to trigger that action.
+ * 5. If movement, fight, or action is successful, the player's position is
+ *    updated accordingly.
+ *
+ * @param _direction The direction in which the player wants to move (one of the
+ *                   defined movement directions, such as UP, DOWN, LEFT, etc.).
+ *
+ * @note The player's position is tracked globally by `player::position`. This
+ *       function ensures that the player's position on the map is updated based
+ *       on their movement or interactions.
+ */
+FORCE_INLINE constexpr void move( map::direction_t _direction ) {
+    const size_t l_oldPosition = player::g_position;
+    const size_t l_newPosition = ( player::g_position + ( size_t )_direction );
+
+    const auto l_tile = ( map::tile_t )map::g_current[ l_newPosition ];
+
+    bool l_needMove = false;
+
+    if ( isTileWalkable( l_tile ) ) [[likely]] {
+        l_needMove = true;
+
+    } else if ( tryFightTile( l_tile ) ) [[unlikely]] {
+        l_needMove = true;
+
+    } else if ( tryActionTile( l_tile ) ) [[unlikely]] {
+        l_needMove = true;
+    }
+
+    if ( l_needMove ) [[likely]] {
+        map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
+
+        map::g_current[ l_newPosition ] = ( char )map::actor_t::player;
+
+        player::g_position = l_newPosition;
+    }
+}
 
 namespace lose {
 
@@ -154,18 +375,18 @@ constexpr void add( item_t _item ) {
 
 } // namespace inventory
 
-[[nodiscard]] constexpr auto fight( actor_t _who ) -> bool {
+[[nodiscard]] constexpr auto fight( map::actor_t _who ) -> bool {
     bool l_returnValue = false;
 
     stats::health::g_playerHealthPoints -= 1;
 
-    if ( _who == actor_t::guardian ) [[unlikely]] {
+    if ( _who == map::actor_t::guardian ) [[unlikely]] {
         l_returnValue = guardian::fight();
 
     } else {
         l_returnValue = monster::fight();
 
-        if ( ( l_returnValue ) && ( _who == actor_t::keyMonster ) )
+        if ( ( l_returnValue ) && ( _who == map::actor_t::keyMonster ) )
             [[unlikely]] {
             inventory::add( inventory::item_t::key );
         }
@@ -322,68 +543,6 @@ void render$debug() {
 
 namespace map {
 
-#define MAP                                                          \
-    "+------+     +-------+   M#                  K####T         \n" \
-    "|....K.|  ###}.......|    #             +----/----+        C\n" \
-    "|.@.....###  |.......|    #             |.........|        #\n" \
-    "|......|  #  |........###### ###########}.........|     W##M\n" \
-    "|......|     |.M.....|      K           |.........|     #   \n" \
-    "+------+     |...C...|            +-----+C........|     #   \n" \
-    "|.G....|     +-------+            |.....C.M.......{#####    \n" \
-    "|......+-----+                    |..........M....|         \n" \
-    ">............}K###################}....W..........|         \n" \
-    "+------------+                    +---------------+         \n"
-
-// g_map represents the current state of the game map, with each character in
-// the array corresponding to a specific tile in the game world. Each tile can
-// be a wall, floor, decoration, player, monster, chest, or other items. This
-// map is essential for game mechanics such as movement, actions, and
-// encounters.
-//
-// The map is initialized as a constant string with a detailed arrangement of
-// characters representing different elements in the game environment. This
-// global map is used for navigating and interacting with the game world during
-// gameplay.
-char g_map[] = MAP;
-
-// g_mapEmpty is a copy of g_map that is used to represent the empty state of
-// the map, where opponents and actionable tiles are replaced with walkable
-// ones. This map is used during certain game logic operations to track the
-// initial state of the map.
-char g_mapEmpty[ sizeof( g_map ) ];
-
-constexpr ssize_t g_mapWidth = ( std::string_view{ MAP }.find( '\n' ) + 1 );
-
-using tile_t = enum class tile : uint8_t {
-    floor = '.',
-    bridge = '#',
-    wallHorizontal = '-',
-    wallVertical = '|',
-    wallCross = '+'
-};
-
-using direction_t = enum class direction : int8_t {
-    stay = 0,
-    up = -( g_mapWidth ),
-    upRight = -( g_mapWidth - 1 ),
-    right = 1,
-    downRight = ( g_mapWidth + 1 ),
-    down = g_mapWidth,
-    downLeft = ( g_mapWidth - 1 ),
-    left = -1,
-    upLeft = -( g_mapWidth + 1 )
-};
-
-using actionable_t = enum class actionable : uint8_t {
-    chest = 'C',
-    treasure = 'T',
-    doorLeft = '}',
-    doorRight = '{',
-    doorMiddle = '/',
-    ladderLeft = '>',
-    ladderRight = '<'
-};
-
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
     -> bool {
     return ( ( _tile != ( char )tile_t::wallHorizontal ) &&
@@ -430,7 +589,7 @@ using actionable_t = enum class actionable : uint8_t {
  *       - `player::osition`: The player's starting position on the map.
  */
 FORCE_INLINE void init() {
-    std::ranges::copy( g_map, g_mapEmpty );
+    std::ranges::copy( g_current, g_empty );
 
     // Define directions for potential tile replacements
     // First 4 will empty the whole map
@@ -445,12 +604,12 @@ FORCE_INLINE void init() {
         direction_t::upLeft };
 
     // Empty map is a copy of map
-    FOR( char*, g_mapEmpty ) {
+    FOR( char*, g_empty ) {
         char* l_tile = _element;
 
         // Search for player
         if ( *l_tile == ( char )actor_t::player ) [[unlikely]] {
-            player::g_position = ( _element - g_mapEmpty );
+            player::g_position = ( _element - g_empty );
         }
 
         // Generate empty map
@@ -473,35 +632,42 @@ FORCE_INLINE void init() {
     }
 
     // Generate level
-    FOR( char*, g_map ) {
+    FOR( char*, g_current ) {
         char* l_tile = _element;
 
         // If the tile represents a monster with a key, replace it with random
         // key monster
         if ( *l_tile == ( char )actor_t::monsterWithKey ) [[unlikely]] {
-            constexpr actor_t l_keyMonsters[] = { actor_t::keyMonster };
+            constexpr std::array l_keyMonsters{
+                actor_t::keyMonster,
+            };
 
-            *l_tile = ( char )randomValueFromContainer( l_keyMonsters );
+            *l_tile = ( char )random::value( l_keyMonsters );
         }
 
         // If the tile represents a monster, replace it with random monster
         if ( *l_tile == ( char )actor_t::monster ) [[unlikely]] {
-            constexpr actor_t l_monsters[] = { actor_t::followMonster,
-                                               actor_t::randomMonster };
+            constexpr std::array l_monsters{
+                actor_t::followMonster,
+                actor_t::randomMonster,
+            };
 
-            *l_tile = ( char )randomValueFromContainer( l_monsters );
+            *l_tile = ( char )random::value( l_monsters );
         }
     }
 }
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
-    constexpr actor_t l_opponents[] = {
-        actor_t::followMonster, actor_t::randomMonster, actor_t::keyMonster,
-        actor_t::guardian };
+    constexpr std::array l_opponents{
+        actor_t::followMonster,
+        actor_t::randomMonster,
+        actor_t::keyMonster,
+        actor_t::guardian,
+    };
 
-    FOR( const actor_t*, l_opponents ) {
-        if ( *_element == ( actor_t )_tile ) {
+    for ( actor_t _actor : l_opponents ) {
+        if ( _actor == ( actor_t )_tile ) {
             return ( player::fight( ( actor_t )_tile ) );
         }
     }
@@ -512,12 +678,14 @@ FORCE_INLINE void init() {
 
 FORCE_INLINE constexpr void action$chest() {
     // Define a list of possible items that can be found in the chest
-    constexpr player::inventory::item_t l_items[] = {
-        player::inventory::item_t::health, player::inventory::item_t::attack,
-        player::inventory::item_t::defense };
+    constexpr std::array l_items{
+        player::inventory::item_t::health,
+        player::inventory::item_t::attack,
+        player::inventory::item_t::defense,
+    };
 
     // Add a randomly selected item from the list to the player's inventory
-    player::inventory::add( randomValueFromContainer( l_items ) );
+    player::inventory::add( random::value( l_items ) );
 }
 
 FORCE_INLINE constexpr void action$treasure() {
@@ -529,7 +697,8 @@ FORCE_INLINE constexpr void action$treasure() {
     return ( player::inventory::use( player::inventory::item_t::key ) );
 }
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile )
+    -> bool {
     // Use tile
     {
         switch ( ( actionable_t )_tile ) {
@@ -580,87 +749,36 @@ FORCE_INLINE constexpr void action$treasure() {
     return ( false );
 }
 
-/**
- * @brief Moves the player on the map in a specified direction.
- *
- * This function handles the logic for moving the player on the game map. It
- * checks if the destination tile is walkable, if there's a fight with an
- * opponent, or if an action can be performed on the destination tile. If
- * movement is allowed, it updates the map by moving the player to the new
- * position and adjusting the old position to reflect the movement.
- *
- * The function follows these steps:
- * 1. It calculates the player's new position based on the given direction.
- * 2. It checks if the destination tile is walkable.
- * 3. If the destination is not walkable, it checks if the player can fight the
- *    opponent present on the destination tile.
- * 4. If an action is possible (such as interacting with a chest or door), the
- *    function tries to trigger that action.
- * 5. If movement, fight, or action is successful, the player's position is
- *    updated accordingly.
- *
- * @param _direction The direction in which the player wants to move (one of the
- *                   defined movement directions, such as UP, DOWN, LEFT, etc.).
- *
- * @note The player's position is tracked globally by `player::position`. This
- *       function ensures that the player's position on the map is updated based
- *       on their movement or interactions.
- */
-FORCE_INLINE constexpr void move$player( direction_t _direction ) {
-    const size_t l_oldPosition = player::g_position;
-    const size_t l_newPosition = ( player::g_position + ( size_t )_direction );
-
-    const char l_tile = g_map[ l_newPosition ];
-
-    bool l_needMove = false;
-
-    if ( isTileWalkable( ( tile_t )l_tile ) ) [[likely]] {
-        l_needMove = true;
-
-    } else if ( tryFightTile( l_tile ) ) [[unlikely]] {
-        l_needMove = true;
-
-    } else if ( tryActionTile( l_tile ) ) [[unlikely]] {
-        l_needMove = true;
-    }
-
-    if ( l_needMove ) [[likely]] {
-        g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
-
-        g_map[ l_newPosition ] = ( char )actor_t::player;
-
-        player::g_position = l_newPosition;
-    }
-}
-
 constexpr void move( actor_t _who,
                      size_t _currentPosition,
                      direction_t _direction ) {
     const size_t l_oldPosition = _currentPosition;
     const size_t l_newPosition = ( _currentPosition + ( size_t )_direction );
 
-    const char l_tile = g_map[ l_newPosition ];
+    const char l_tile = g_current[ l_newPosition ];
 
     if ( isTileWalkable( ( tile_t )l_tile ) ) [[likely]] {
-        g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
+        g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
 
-        g_map[ l_newPosition ] = ( char )_who;
+        g_current[ l_newPosition ] = ( char )_who;
 
     } else if ( l_tile == ( char )actor_t::player ) [[unlikely]] {
-        if ( tryFightTile( ( char )_who ) ) [[unlikely]] {
-            g_map[ l_oldPosition ] = g_mapEmpty[ l_oldPosition ];
+        if ( tryFightTile( ( tile_t )_who ) ) [[unlikely]] {
+            g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
         }
     }
 }
 
-constexpr void move$random( actor_t _who, size_t _currentPosition ) {
+FORCE_INLINE constexpr void move$random( actor_t _who,
+                                         size_t _currentPosition ) {
     // Define all possible movement directions, including staying in place
-    const direction_t l_allDirections[] = {
+    constexpr std::array l_allDirections{
         direction_t::down,     direction_t::left,   direction_t::right,
         direction_t::upRight,  direction_t::up,     direction_t::downRight,
-        direction_t::downLeft, direction_t::upLeft, direction_t::stay };
+        direction_t::downLeft, direction_t::upLeft, direction_t::stay,
+    };
 
-    move( _who, _currentPosition, randomValueFromContainer( l_allDirections ) );
+    move( _who, _currentPosition, random::value( l_allDirections ) );
 }
 
 // TODO: Add movement to follow the player if close
@@ -704,10 +822,10 @@ constexpr void move$follow( const actor_t _who,
  * @note This function uses the FOR macro to iterate over the entire map and
  * process each tile.
  */
-FORCE_INLINE constexpr void move$ai() {
-    FOR( const char*, g_map ) {
+FORCE_INLINE constexpr void ai() {
+    FOR( const char*, g_current ) {
         const char l_tile = *_element;
-        const size_t l_position = ( _element - g_map );
+        const size_t l_position = ( _element - g_current );
 
         switch ( ( actor_t )l_tile ) {
             case ( actor_t::randomMonster ): {
@@ -763,12 +881,9 @@ FORCE_INLINE constexpr void move$ai() {
  */
 FORCE_INLINE constexpr void render() {
     // Iterate through each tile in the map (g_map)
-    FOR( const char*, g_map ) {
-        // Create a buffer of size 1 to hold the current tile's character
-        char l_buffer[ sizeof( char ) ] = { *_element };
-
+    for ( const char _tile : g_current ) {
         // Print the current tile's character
-        io::print( l_buffer, 1 * sizeof( char ) );
+        io::print( { _tile } );
     }
 }
 

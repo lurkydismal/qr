@@ -115,7 +115,7 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
         }
     }
 
-    logic::map::move$player( l_direction );
+    logic::player::move( l_direction );
 
     if ( logic::player::lose::get() ) [[unlikely]] {
         l_returnValue = result_t::failure;
@@ -129,7 +129,7 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
 
     // Logic
     {
-        logic::map::move$ai();
+        logic::map::ai();
     }
 
     if ( logic::player::lose::get() ) {
