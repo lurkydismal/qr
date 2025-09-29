@@ -129,12 +129,6 @@ FORCE_INLINE void init();
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool;
 
-FORCE_INLINE constexpr void action$chest();
-
-FORCE_INLINE constexpr void action$treasure();
-
-[[nodiscard]] FORCE_INLINE constexpr auto action$door() -> bool;
-
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile ) -> bool;
 
 constexpr void move( actor_t _who,
@@ -159,9 +153,6 @@ constexpr void move$follow( const actor_t _who,
  * by calling the `move$random` function. The movement is based on the
  * monster's type, ensuring that each specific type of monster is moved
  * according to predefined behavior.
- *
- * @note This function uses the FOR macro to iterate over the entire map and
- * process each tile.
  */
 FORCE_INLINE constexpr void ai();
 
@@ -674,7 +665,9 @@ FORCE_INLINE void init() {
     return ( false );
 }
 
-FORCE_INLINE constexpr void action$chest() {
+namespace action {
+
+FORCE_INLINE constexpr void chest() {
     // Define a list of possible items that can be found in the chest
     constexpr std::array l_items{
         player::inventory::item_t::health,
@@ -686,28 +679,30 @@ FORCE_INLINE constexpr void action$chest() {
     player::inventory::add( random::value( l_items ) );
 }
 
-FORCE_INLINE constexpr void action$treasure() {
+FORCE_INLINE constexpr void treasure() {
     player::stats::experience::add( player::stats::experience::g_fromTreasure );
 }
 
-[[nodiscard]] FORCE_INLINE constexpr auto action$door() -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto door() -> bool {
     // Attempt to use a key from the player's inventory to open the door
     return ( player::inventory::use( player::inventory::item_t::key ) );
 }
+
+} // namespace action
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile )
     -> bool {
     // Use tile
     {
-        switch ( ( actionable_t )_tile ) {
+        switch ( static_cast< actionable_t >( _tile ) ) {
             case ( actionable_t::chest ): {
-                action$chest();
+                action::chest();
 
                 return ( true );
             }
 
             case ( actionable_t::treasure ): {
-                action$treasure();
+                action::treasure();
 
                 return ( true );
             }
@@ -715,7 +710,7 @@ FORCE_INLINE constexpr void action$treasure() {
             case ( actionable_t::doorLeft ):
             case ( actionable_t::doorRight ):
             case ( actionable_t::doorMiddle ): {
-                return ( action$door() );
+                return ( action::door() );
             }
 
             case ( actionable_t::ladderLeft ):
@@ -729,13 +724,15 @@ FORCE_INLINE constexpr void action$treasure() {
 
     // Pick-up item
     {
-        const player::inventory::item_t l_items[] = {
-            player::inventory::item_t::key, player::inventory::item_t::health,
+        constexpr std::array l_items{
+            player::inventory::item_t::key,
+            player::inventory::item_t::health,
             player::inventory::item_t::attack,
-            player::inventory::item_t::defense };
+            player::inventory::item_t::defense,
+        };
 
-        FOR( const player::inventory::item_t*, l_items ) {
-            if ( *_element == ( player::inventory::item_t )_tile ) {
+        for ( const auto _item : l_items ) {
+            if ( _item == ( player::inventory::item_t )_tile ) {
                 player::inventory::add( ( player::inventory::item_t )_tile );
 
                 return ( true );
@@ -743,7 +740,7 @@ FORCE_INLINE constexpr void action$treasure() {
         }
     }
 
-    // Return false if no action or item pickup occurred
+    // Return false if no action occurred
     return ( false );
 }
 
@@ -808,7 +805,7 @@ constexpr void move$follow( const actor_t _who,
 #endif
 
 /**
- * @brief Moves all AI-controlled monsters randomly on the map.
+ * @brief Moves all AI-controlled monsters on the map.
  *
  * This function iterates through each tile on the map, and for each tile that
  * contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
@@ -816,46 +813,42 @@ constexpr void move$follow( const actor_t _who,
  * by calling the `move$random` function. The movement is based on the
  * monster's type, ensuring that each specific type of monster is moved
  * according to predefined behavior.
- *
- * @note This function uses the FOR macro to iterate over the entire map and
- * process each tile.
  */
 FORCE_INLINE constexpr void ai() {
-    FOR( const char*, g_current ) {
-        const char l_tile = *_element;
-        const size_t l_position = ( _element - g_current );
-
-        switch ( ( actor_t )l_tile ) {
+    for ( const auto [ _index, _tile ] : g_current | std::views::enumerate ) {
+        switch ( static_cast< actor_t >( _tile ) ) {
             case ( actor_t::randomMonster ): {
-                move$random( actor_t::randomMonster, l_position );
+                move$random( actor_t::randomMonster, _index );
 
                 break;
             }
 
             case ( actor_t::followMonster ): {
                 // TODO: Add movement to follow the player if close
-                move$random( actor_t::followMonster, l_position );
+                move$random( actor_t::followMonster, _index );
 
                 break;
             }
 
             case ( actor_t::keyMonster ): {
-                move$random( actor_t::keyMonster, l_position );
+                move$random( actor_t::keyMonster, _index );
 
                 break;
             }
 
             case ( actor_t::guardian ): {
                 // TODO: Add movement to follow the player if close
-                move$random( actor_t::guardian, l_position );
+                move$random( actor_t::guardian, _index );
 
                 break;
+            }
+
+            default: {
             }
         }
     }
 }
 
-// Render
 /**
  * @brief Renders the current state of the map to the output.
  *
@@ -878,9 +871,8 @@ FORCE_INLINE constexpr void ai() {
  * @see `print()` for more information on how tiles are printed to the screen.
  */
 FORCE_INLINE constexpr void render() {
-    // Iterate through each tile in the map (g_map)
+    // Iterate through each tile in the map
     for ( const char _tile : g_current ) {
-        // Print the current tile's character
         io::print( { _tile } );
     }
 }
