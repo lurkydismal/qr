@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <ranges>
 
 #include "io.hpp"
 #include "random.hpp"

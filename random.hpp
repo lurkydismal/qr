@@ -11,7 +11,7 @@
 
 namespace random {
 
-[[nodiscard]] constexpr auto random() -> size_t {
+[[nodiscard]] constexpr auto random() -> uint32_t {
     constexpr size_t l_compilationTimeAsSeed =
         ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 2 ] + __TIME__[ 3 ] +
           __TIME__[ 4 ] + __TIME__[ 5 ] );
