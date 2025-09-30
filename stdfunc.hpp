@@ -18,6 +18,8 @@
     for ( _type _element = _array; \
           _element < ( _array + arrayLength( _array ) ); _element++ )
 
+namespace stdfunc {
+
 template < typename SymbolTypes, SymbolTypes... _symbols >
     requires( ( std::convertible_to< SymbolTypes, char > ) &&
               ( sizeof...( _symbols ) > 0 ) )
@@ -25,8 +27,6 @@ template < typename SymbolTypes, SymbolTypes... _symbols >
     return ( std::array< char, ( sizeof...( _symbols ) + 1 ) >{
         char{ _symbols }..., '\0' } );
 }
-
-namespace stdfunc {
 
 [[nodiscard]] FORCE_INLINE constexpr auto lengthOfNumber( size_t _number )
     -> size_t {

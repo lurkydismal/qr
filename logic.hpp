@@ -52,7 +52,7 @@ using tile_t = enum class tile : uint8_t {
     // Not walkable
     wallHorizontal = '-',
     wallVertical = '|',
-    wallCross = '+'
+    wallCross = '+',
 };
 
 using direction_t = enum class direction : int8_t {
@@ -64,7 +64,7 @@ using direction_t = enum class direction : int8_t {
     down = g_width,
     downLeft = ( g_width - 1 ),
     left = -1,
-    upLeft = -( g_width + 1 )
+    upLeft = -( g_width + 1 ),
 };
 
 using actionable_t = enum class actionable : uint8_t {
@@ -74,7 +74,7 @@ using actionable_t = enum class actionable : uint8_t {
     doorRight = '{',
     doorMiddle = '/',
     ladderLeft = '>',
-    ladderRight = '<'
+    ladderRight = '<',
 };
 
 using actor_t = enum class actor : uint8_t {
@@ -86,7 +86,7 @@ using actor_t = enum class actor : uint8_t {
 
     // Used during map generation
     monster = 'M',
-    monsterWithKey = 'W'
+    monsterWithKey = 'W',
 };
 
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
@@ -333,7 +333,7 @@ using item_t = enum class item : uint8_t {
     key = 'K',
     health = 'H',
     attack = 'A',
-    defense = 'D'
+    defense = 'D',
 };
 
 auto g_items = std::array{ item_t::empty, item_t::empty, item_t::empty,
@@ -637,8 +637,10 @@ FORCE_INLINE void init() {
 
         // If the tile represents a monster, replace it with random monster
         if ( *l_tile == ( char )actor_t::monster ) [[unlikely]] {
-            constexpr actor_t l_monsters[] = { actor_t::followMonster,
-                                               actor_t::randomMonster };
+            constexpr actor_t l_monsters[] = {
+                actor_t::followMonster,
+                actor_t::randomMonster,
+            };
 
             // FIX: Does add 8 bytes if changed to random::value
             *l_tile = ( char )randomValueFromContainer( l_monsters );

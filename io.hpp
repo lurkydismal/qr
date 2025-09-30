@@ -33,26 +33,12 @@ FORCE_INLINE void print( const char* _text, uint8_t _lengthOfText ) {
     write( _text, _lengthOfText );
 }
 
-FORCE_INLINE void print( const std::span< const char >& _text ) {
+FORCE_INLINE void print( std::span< const char > _text ) {
     print( _text.data(), _text.size() );
 }
 
 FORCE_INLINE void print( std::initializer_list< char > _text ) {
     print( std::span( _text ) );
-}
-
-// TODO: Maybe move to terminal
-FORCE_INLINE void clearScreen() {
-#define ANSI_TO_POINT_AT_THE_BEGINNING "\033[H"
-#define ANSI_TO_CLEAR_ENTIRE_SCREEN "\033[J"
-
-    constexpr std::string_view l_x =
-        ( ANSI_TO_POINT_AT_THE_BEGINNING ANSI_TO_CLEAR_ENTIRE_SCREEN );
-
-    print( l_x );
-
-#undef ANSI_TO_CLEAR_ENTIRE_SCREEN
-#undef ANSI_TO_POINT_AT_THE_BEGINNING
 }
 
 namespace terminal {
@@ -153,12 +139,6 @@ FORCE_INLINE void tcgetattr( termios_t& _termios ) {
     std::ranges::copy_n( l_termios.characters.data(),
                          g_controlCharactersCountKernel,
                          _termios.characters.data() );
-
-    // Zero-fill the rest
-    std::ranges::fill_n(
-        ( _termios.characters.data() + g_controlCharactersCountKernel ),
-        ( g_controlCharactersCount - g_controlCharactersCountKernel ),
-        uint8_t{} );
 }
 
 FORCE_INLINE void tcsetattr( const termios_t& _termios ) {
@@ -193,6 +173,20 @@ FORCE_INLINE void showCursor() {
     constexpr std::string_view l_ansiToShowCursor = "\033[?25h";
 
     print( l_ansiToShowCursor );
+}
+
+FORCE_INLINE void clearScreen() {
+#define ANSI_TO_POINT_AT_THE_BEGINNING "\033[H"
+#define ANSI_TO_CLEAR_THE_ENTIRE_SCREEN "\033[J"
+
+    constexpr std::string_view
+        l_ansiToPointAtTheBeginningAndClearTheEntireScreen =
+            ( ANSI_TO_POINT_AT_THE_BEGINNING ANSI_TO_CLEAR_THE_ENTIRE_SCREEN );
+
+    print( l_ansiToPointAtTheBeginningAndClearTheEntireScreen );
+
+#undef ANSI_TO_CLEAR_THE_ENTIRE_SCREEN
+#undef ANSI_TO_POINT_AT_THE_BEGINNING
 }
 
 } // namespace terminal

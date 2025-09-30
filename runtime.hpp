@@ -12,7 +12,11 @@
 
 namespace runtime {
 
-using result_t = enum class result : int8_t { remain = -1, success, failure };
+using result_t = enum class result : int8_t {
+    remain = -1,
+    success,
+    failure,
+};
 
 using move_t = enum class move : uint8_t {
     stay = 's',
@@ -23,7 +27,7 @@ using move_t = enum class move : uint8_t {
     down = 'x',
     downLeft = 'z',
     left = 'a',
-    upLeft = 'q'
+    upLeft = 'q',
 };
 
 [[nodiscard]] FORCE_INLINE auto waitMove() -> move_t {
@@ -34,7 +38,7 @@ using move_t = enum class move : uint8_t {
     return ( static_cast< move_t >( l_event[ 0 ] ) );
 }
 
-static io::terminal::termios g_terminalAttributesBeforeLaunch;
+static io::terminal::termios g_terminalAttributesBeforeLaunch{};
 
 // Called once per application run
 [[nodiscard]] FORCE_INLINE auto init() -> result_t {
@@ -130,15 +134,15 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
     // Logic
     {
         logic::map::ai();
-    }
 
-    if ( logic::player::lose::get() ) {
-        l_returnValue = result_t::failure;
+        if ( logic::player::lose::get() ) {
+            l_returnValue = result_t::failure;
+        }
     }
 
     // Render
     if !consteval {
-        io::clearScreen();
+        io::terminal::clearScreen();
 
         logic::map::render();
 
