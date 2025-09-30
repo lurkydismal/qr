@@ -12,38 +12,6 @@ namespace logic {
 
 namespace map {
 
-#define MAP                                                          \
-    "+------+     +-------+   M#                  K####T         \n" \
-    "|....K.|  ###}.......|    #             +----/----+        C\n" \
-    "|.@.....###  |.......|    #             |.........|        #\n" \
-    "|......|  #  |........###### ###########}.........|     W##M\n" \
-    "|......|     |.M.....|      K           |.........|     #   \n" \
-    "+------+     |...C...|            +-----+C........|     #   \n" \
-    "|.G....|     +-------+            |.....C.M.......{#####    \n" \
-    "|......+-----+                    |..........M....|         \n" \
-    ">............}K###################}....W..........|         \n" \
-    "+------------+                    +---------------+         \n"
-
-// g_map represents the current state of the game map, with each character in
-// the array corresponding to a specific tile in the game world. Each tile can
-// be a wall, floor, decoration, player, monster, chest, or other items. This
-// map is essential for game mechanics such as movement, actions, and
-// encounters.
-//
-// The map is initialized as a constant string with a detailed arrangement of
-// characters representing different elements in the game environment. This
-// global map is used for navigating and interacting with the game world during
-// gameplay.
-char g_current[] = MAP;
-
-// g_mapEmpty is a copy of g_map that is used to represent the empty state of
-// the map, where opponents and actionable tiles are replaced with walkable
-// ones. This map is used during certain game logic operations to track the
-// initial state of the map.
-char g_empty[ sizeof( g_current ) ];
-
-constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
-
 using tile_t = enum class tile : uint8_t {
     // Walkable
     floor = '.',
@@ -53,18 +21,6 @@ using tile_t = enum class tile : uint8_t {
     wallHorizontal = '-',
     wallVertical = '|',
     wallCross = '+',
-};
-
-using direction_t = enum class direction : int8_t {
-    stay = 0,
-    up = -( g_width ),
-    upRight = -( g_width - 1 ),
-    right = 1,
-    downRight = ( g_width + 1 ),
-    down = g_width,
-    downLeft = ( g_width - 1 ),
-    left = -1,
-    upLeft = -( g_width + 1 ),
 };
 
 using actionable_t = enum class actionable : uint8_t {
@@ -89,96 +45,64 @@ using actor_t = enum class actor : uint8_t {
     monsterWithKey = 'W',
 };
 
+#define MAP                                                          \
+    "+------+     +-------+   M#                  K####T         \n" \
+    "|....K.|  ###}.......|    #             +----/----+        C\n" \
+    "|.@.....###  |.......|    #             |.........|        #\n" \
+    "|......|  #  |........###### ###########}.........|     W##M\n" \
+    "|......|     |.M.....|      K           |.........|     #   \n" \
+    "+------+     |...C...|            +-----+C........|     #   \n" \
+    "|.G....|     +-------+            |.....C.M.......{#####    \n" \
+    "|......+-----+                    |..........M....|         \n" \
+    ">............}K###################}....W..........|         \n" \
+    "+------------+                    +---------------+         \n"
+
+// g_current represents the current state of the game map, with each character
+// in the array corresponding to a specific tile in the game world. Each tile
+// can be a wall, floor, decoration, player, monster, chest, or other items.
+// This map is essential for game mechanics such as movement, actions, and
+// encounters.
+//
+// The map is initialized as a constant string with a detailed arrangement of
+// characters representing different elements in the game environment. This
+// global map is used for navigating and interacting with the game world during
+// gameplay.
+char g_current[] = MAP;
+
+// g_empty is a copy of g_current that is used to represent the empty state
+// of the map, where opponents and actionable tiles are replaced with walkable
+// ones. This map is used during certain game logic operations to track the
+// initial state of the map.
+char g_empty[ sizeof( g_current ) ];
+
+constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
+
+using direction_t = enum class direction : int8_t {
+    stay = 0,
+    up = -( g_width ),
+    upRight = -( g_width - 1 ),
+    right = 1,
+    downRight = ( g_width + 1 ),
+    down = g_width,
+    downLeft = ( g_width - 1 ),
+    left = -1,
+    upLeft = -( g_width + 1 ),
+};
+
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
     -> bool;
 
 [[nodiscard]] constexpr auto isTileWalkable( tile_t _tile ) -> bool;
 
-// Positions
-/**
- * @brief Initializes the game map.
- *
- * This function initializes the game map by copying the original map to an
- * empty map, ensuring that all opponents and actionable tiles are replaced with
- * adjacent walkable tiles, and the player's starting position is identified. It
- * also places monsters in the game world.
- *
- * @details
- * The function performs the following steps:
- * 1. Copies the current map (`g_map`) to a new empty map (`g_mapEmpty`).
- * 2. Identifies the player's starting position by searching for the tile marked
- * as `PLAYER`.
- * 3. Ensures that all opponents and actionable tiles (e.g., door tiles) are
- *    replaced with walkable tiles from adjacent directions (e.g., floor tiles).
- * 4. Randomly generates monsters placed on the map:
- *    - If the tile contains a `MONSTER_WITH_KEY`, it is replaced with a
- * randomly chosen key monster.
- *    - If the tile contains a `MONSTER`, it is replaced with a randomly chosen
- * monster.
- *
- * The function ensures that the map is prepared and ready for gameplay by
- * setting the player’s position and ensuring that tiles are walkable.
- *
- * @note This function modifies the following global variables:
- *       - `g_map`: The original map layout.
- *       - `g_mapEmpty`: The map that has been processed for walkability and
- * content.
- *       - `player::osition`: The player's starting position on the map.
- */
-FORCE_INLINE void init();
-
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool;
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile ) -> bool;
-
-constexpr void move( actor_t _who,
-                     size_t _currentPosition,
-                     direction_t _direction );
-
-FORCE_INLINE constexpr void move$random( actor_t _who,
-                                         size_t _currentPosition );
 
 // TODO: Add movement to follow the player if close
 #if 0
 constexpr void move$follow( const actor_t _who,
                             const size_t _currentPosition );
 #endif
-
-/**
- * @brief Moves all AI-controlled monsters randomly on the map.
- *
- * This function iterates through each tile on the map, and for each tile that
- * contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
- * GUARDIAN), it moves the corresponding monster to a random adjacent position
- * by calling the `move$random` function. The movement is based on the
- * monster's type, ensuring that each specific type of monster is moved
- * according to predefined behavior.
- */
-FORCE_INLINE constexpr void ai();
-
-// Render
-/**
- * @brief Renders the current state of the map to the output.
- *
- * This function iterates through each tile of the global `g_map` array and
- * prints the character representing the tile. It essentially outputs the map as
- * it is in the game's internal state, tile by tile.
- *
- * - Each tile in `g_map` is represented by a single character that could be
- *   a floor, wall, player, monster, chest, treasure, etc.
- *
- * This function assumes that the map data (`g_map`) is structured in a way
- * where each element corresponds to a character that needs to be printed to the
- * screen.
- *
- * @note The rendering is done one character at a time. Depending on how the
- * `print` function works, it could render a single line or the entire map one
- * by one. Make sure the print function handles newlines and coordinates
- * correctly.
- *
- * @see `print()` for more information on how tiles are printed to the screen.
- */
-FORCE_INLINE constexpr void render();
 
 } // namespace map
 
@@ -336,8 +260,9 @@ using item_t = enum class item : uint8_t {
     defense = 'D',
 };
 
-auto g_items = std::array{ item_t::empty, item_t::empty, item_t::empty,
-                           item_t::empty, item_t::empty };
+std::array g_items{
+    item_t::empty, item_t::empty, item_t::empty, item_t::empty, item_t::empty,
+};
 
 constexpr void add( item_t _item ) {
     for ( item_t& _slot : g_items ) {
@@ -558,7 +483,7 @@ namespace map {
  *
  * @details
  * The function performs the following steps:
- * 1. Copies the current map (`g_map`) to a new empty map (`g_mapEmpty`).
+ * 1. Copies the current map (`g_current`) to a new empty map (`g_empty`).
  * 2. Identifies the player's starting position by searching for the tile marked
  * as `PLAYER`.
  * 3. Ensures that all opponents and actionable tiles (e.g., door tiles) are
@@ -573,8 +498,8 @@ namespace map {
  * setting the player’s position and ensuring that tiles are walkable.
  *
  * @note This function modifies the following global variables:
- *       - `g_map`: The original map layout.
- *       - `g_mapEmpty`: The map that has been processed for walkability and
+ *       - `g_current`: The original map layout.
+ *       - `g_empty`: The map that has been processed for walkability and
  * content.
  *       - `player::osition`: The player's starting position on the map.
  */
@@ -583,15 +508,18 @@ FORCE_INLINE void init() {
 
     // Define directions for potential tile replacements
     // First 4 will empty the whole map
-    constexpr direction_t l_allDirections[] = {
+    constexpr std::array l_allDirections{
         direction_t::down,
         direction_t::left,
         direction_t::right,
         direction_t::upRight,
-        /* extra, clockwise */ direction_t::up,
+
+        // Extra, clockwise
+        direction_t::up,
         direction_t::downRight,
         direction_t::downLeft,
-        direction_t::upLeft };
+        direction_t::upLeft,
+    };
 
     // Empty map is a copy of map
     FOR( char*, g_empty ) {
@@ -604,13 +532,12 @@ FORCE_INLINE void init() {
 
         // Generate empty map
         // Replace non-walkable, non-decorative tiles with walkable ones
-        if ( isTileNotDecoration( *l_tile ) &&
-             !isTileWalkable( ( tile_t )*l_tile ) ) [[unlikely]] {
+        if ( isTileNotDecoration( *l_tile ) && !isTileWalkable( *l_tile ) )
+            [[unlikely]] {
             // Try to find a walkable replacement tile by checking the adjacent
             // tiles
-            for ( direction_t _direction : l_allDirections ) {
-                const auto l_replacement =
-                    ( tile_t )( *( l_tile + ( char )_direction ) );
+            for ( const direction_t _direction : l_allDirections ) {
+                const auto l_replacement = ( *( l_tile + ( char )_direction ) );
 
                 if ( isTileWalkable( l_replacement ) ) [[likely]] {
                     *l_tile = ( char )l_replacement;
@@ -622,35 +549,34 @@ FORCE_INLINE void init() {
     }
 
     // Generate level
-    FOR( char*, g_current ) {
-        char* l_tile = _element;
+    for ( char& _tile : g_current ) {
+        auto& l_tile = reinterpret_cast< actor_t& >( _tile );
 
         // If the tile represents a monster with a key, replace it with random
         // key monster
-        if ( *l_tile == ( char )actor_t::monsterWithKey ) [[unlikely]] {
+        if ( l_tile == actor_t::monsterWithKey ) [[unlikely]] {
             constexpr std::array l_keyMonsters{
                 actor_t::keyMonster,
             };
 
-            *l_tile = ( char )random::value( l_keyMonsters );
+            l_tile = random::value( l_keyMonsters );
         }
 
         // If the tile represents a monster, replace it with random monster
-        if ( *l_tile == ( char )actor_t::monster ) [[unlikely]] {
-            constexpr actor_t l_monsters[] = {
+        if ( l_tile == actor_t::monster ) [[unlikely]] {
+            static constexpr std::array l_monsters{
                 actor_t::followMonster,
                 actor_t::randomMonster,
             };
 
-            // FIX: Does add 8 bytes if changed to random::value
-            *l_tile = ( char )randomValueFromContainer( l_monsters );
+            l_tile = random::value( l_monsters );
         }
     }
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
-    constexpr actor_t l_opponents[] = {
+    static constexpr actor_t l_opponents[] = {
         actor_t::followMonster,
         actor_t::randomMonster,
         actor_t::keyMonster,
@@ -811,8 +737,8 @@ constexpr void move$follow( const actor_t _who,
  *
  * This function iterates through each tile on the map, and for each tile that
  * contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
- * GUARDIAN), it moves the corresponding monster to a random adjacent position
- * by calling the `move$random` function. The movement is based on the
+ * GUARDIAN), it moves the corresponding monster to a corresponding adjacent
+ * position by calling the `move$...` function. The movement is based on the
  * monster's type, ensuring that each specific type of monster is moved
  * according to predefined behavior.
  */
@@ -854,14 +780,14 @@ FORCE_INLINE constexpr void ai() {
 /**
  * @brief Renders the current state of the map to the output.
  *
- * This function iterates through each tile of the global `g_map` array and
+ * This function iterates through each tile of the global `g_current` array and
  * prints the character representing the tile. It essentially outputs the map as
  * it is in the game's internal state, tile by tile.
  *
- * - Each tile in `g_map` is represented by a single character that could be
+ * - Each tile in `g_current` is represented by a single character that could be
  *   a floor, wall, player, monster, chest, treasure, etc.
  *
- * This function assumes that the map data (`g_map`) is structured in a way
+ * This function assumes that the map data (`g_current`) is structured in a way
  * where each element corresponds to a character that needs to be printed to the
  * screen.
  *
@@ -873,7 +799,7 @@ FORCE_INLINE constexpr void ai() {
  * @see `print()` for more information on how tiles are printed to the screen.
  */
 FORCE_INLINE constexpr void render() {
-    // Iterate through each tile in the map
+    // Iterate through each tile on map
     for ( const char _tile : g_current ) {
         io::print( { _tile } );
     }

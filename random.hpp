@@ -6,9 +6,6 @@
 
 #include "stdfunc.hpp"
 
-#define randomValueFromContainer( _array ) \
-    ( _array[ random::number() % arrayLength( _array ) ] )
-
 namespace random {
 
 [[nodiscard]] constexpr auto number() -> uint32_t {
