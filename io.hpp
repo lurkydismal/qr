@@ -139,6 +139,14 @@ FORCE_INLINE void tcgetattr( termios_t& _termios ) {
     std::ranges::copy_n( l_termios.characters.data(),
                          g_controlCharactersCountKernel,
                          _termios.characters.data() );
+
+#if 0
+    // Zero-fill the rest
+    std::ranges::fill_n(
+        ( _termios.characters.data() + g_controlCharactersCountKernel ),
+        ( g_controlCharactersCount - g_controlCharactersCountKernel ),
+        uint8_t{} );
+#endif
 }
 
 FORCE_INLINE void tcsetattr( const termios_t& _termios ) {

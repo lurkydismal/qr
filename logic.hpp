@@ -73,7 +73,7 @@ char g_current[] = MAP;
 // of the map, where opponents and actionable tiles are replaced with walkable
 // ones. This map is used during certain game logic operations to track the
 // initial state of the map.
-char g_empty[ sizeof( g_current ) ];
+char g_empty[ sizeof( g_current ) ] = {};
 
 constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
 
@@ -92,11 +92,11 @@ using direction_t = enum class direction : int8_t {
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
     -> bool;
 
-[[nodiscard]] constexpr auto isTileWalkable( tile_t _tile ) -> bool;
+[[nodiscard]] constexpr auto isTileWalkable( char _tile ) -> bool;
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool;
+[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool;
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile ) -> bool;
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool;
 
 // TODO: Add movement to follow the player if close
 #if 0
@@ -138,7 +138,7 @@ FORCE_INLINE constexpr auto fight() -> bool;
 
 namespace player {
 
-size_t g_position;
+size_t g_position{};
 
 /**
  * @brief Moves the player on the map in a specified direction.
@@ -170,21 +170,10 @@ FORCE_INLINE constexpr void move( map::direction_t _direction ) {
     const size_t l_oldPosition = player::g_position;
     const size_t l_newPosition = ( player::g_position + ( size_t )_direction );
 
-    const auto l_tile = ( map::tile_t )map::g_current[ l_newPosition ];
+    const char l_tile = map::g_current[ l_newPosition ];
 
-    bool l_needMove = false;
-
-    if ( isTileWalkable( l_tile ) ) [[likely]] {
-        l_needMove = true;
-
-    } else if ( tryFightTile( l_tile ) ) [[unlikely]] {
-        l_needMove = true;
-
-    } else if ( tryActionTile( l_tile ) ) [[unlikely]] {
-        l_needMove = true;
-    }
-
-    if ( l_needMove ) [[likely]] {
+    if ( map::isTileWalkable( l_tile ) || map::tryFightTile( l_tile ) ||
+         map::tryActionTile( l_tile ) ) [[likely]] {
         map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
 
         map::g_current[ l_newPosition ] = ( char )map::actor_t::player;
@@ -460,16 +449,18 @@ namespace map {
 
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
     -> bool {
-    return ( ( _tile != ( char )tile_t::wallHorizontal ) &&
-             ( _tile != ( char )tile_t::wallVertical ) &&
-             ( _tile != ( char )tile_t::wallCross ) &&
-             ( _tile != ( char )actionable_t::ladderLeft ) &&
-             ( _tile != ( char )actionable_t::ladderRight ) &&
+    return ( ( _tile != static_cast< char >( tile_t::wallHorizontal ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallVertical ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallCross ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderLeft ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderRight ) ) &&
              ( _tile != ' ' ) && ( _tile != '\n' ) && ( _tile != '0' ) );
 }
 
-[[nodiscard]] constexpr auto isTileWalkable( tile_t _tile ) -> bool {
-    return ( ( _tile == tile_t::floor ) || ( _tile == tile_t::bridge ) );
+[[nodiscard]] constexpr auto isTileWalkable( char _tile ) -> bool {
+    const auto l_tile = static_cast< tile_t >( _tile );
+
+    return ( ( l_tile == tile_t::floor ) || ( l_tile == tile_t::bridge ) );
 }
 
 // Positions
@@ -574,7 +565,7 @@ FORCE_INLINE void init() {
     }
 }
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( tile_t _tile ) -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
     static constexpr actor_t l_opponents[] = {
         actor_t::followMonster,
@@ -618,8 +609,7 @@ FORCE_INLINE constexpr void treasure() {
 
 } // namespace action
 
-[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( tile_t _tile )
-    -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
     // Use tile
     {
         switch ( static_cast< actionable_t >( _tile ) ) {
@@ -676,17 +666,18 @@ constexpr void move( actor_t _who,
                      size_t _currentPosition,
                      direction_t _direction ) {
     const size_t l_oldPosition = _currentPosition;
-    const size_t l_newPosition = ( _currentPosition + ( size_t )_direction );
+    const size_t l_newPosition =
+        ( _currentPosition + static_cast< size_t >( _direction ) );
 
     const char l_tile = g_current[ l_newPosition ];
 
-    if ( isTileWalkable( ( tile_t )l_tile ) ) [[likely]] {
+    if ( isTileWalkable( l_tile ) ) [[likely]] {
         g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
 
         g_current[ l_newPosition ] = ( char )_who;
 
     } else if ( l_tile == ( char )actor_t::player ) [[unlikely]] {
-        if ( tryFightTile( ( tile_t )_who ) ) [[unlikely]] {
+        if ( tryFightTile( ( char )_who ) ) [[unlikely]] {
             g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
         }
     }
