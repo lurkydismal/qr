@@ -464,7 +464,7 @@ FORCE_INLINE void init() {
 
     // Define directions for potential tile replacements
     // First 4 will empty the whole map
-    static constexpr std::array l_allDirections{
+    constexpr std::array l_allDirections{
         direction_t::down,
         direction_t::left,
         direction_t::right,
@@ -600,7 +600,7 @@ FORCE_INLINE constexpr void treasure() {
 
     // Pick-up item
     {
-        constexpr std::array l_items{
+        static constexpr std::array l_items{
             player::inventory::item_t::key,
             player::inventory::item_t::health,
             player::inventory::item_t::attack,
@@ -735,7 +735,7 @@ void debug() {
 #define FULL_MONSTER_TEXT MONSTER_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 #define FULL_GUARDIAN_TEXT GUARDIAN_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 
-    char l_buffer[] = FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT;
+    char l_buffer[] = ( FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT );
     char* l_cursorPosition = ( l_buffer - 1 );
 
     ::render::points( &l_cursorPosition, monster::g_monsterHealthPoints,
