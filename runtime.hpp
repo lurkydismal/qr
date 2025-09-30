@@ -144,15 +144,11 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
     if !consteval {
         io::terminal::clearScreen();
 
-        logic::map::render();
+        logic::map::render::current();
 
         // HUD
         {
-            logic::player::render$stats();
-
-#if defined( RENDER_DEBUG_INFORMATION )
-            player$render$debug();
-#endif
+            logic::player::render::stats();
         }
     }
 

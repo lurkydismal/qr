@@ -6,6 +6,7 @@
 
 #include "io.hpp"
 #include "random.hpp"
+#include "render.hpp"
 #include "stdfunc.hpp"
 
 namespace logic {
@@ -97,12 +98,6 @@ using direction_t = enum class direction : int8_t {
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool;
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool;
-
-// TODO: Add movement to follow the player if close
-#if 0
-constexpr void move$follow( const actor_t _who,
-                            const size_t _currentPosition );
-#endif
 
 } // namespace map
 
@@ -317,25 +312,13 @@ constexpr void add( item_t _item ) {
     return ( l_returnValue );
 }
 
+namespace render {
+
 // Stats
-FORCE_INLINE void render$points( char** _cursorPosition,
-                                 uint8_t _points,
-                                 size_t _textLength ) {
-    const size_t l_lengthOfPoints = stdfunc::lengthOfNumber( _points );
-
-    *_cursorPosition += ( _textLength - l_lengthOfPoints );
-
-    stdfunc::convertNumberToString( *_cursorPosition, _points,
-                                    l_lengthOfPoints );
-
-    *_cursorPosition += ( l_lengthOfPoints - 1 );
-}
-
-// Render
 // HP:100
 // EXP:100
 // ITEMS:E E E E E
-FORCE_INLINE void render$stats() {
+FORCE_INLINE void stats() {
 #define FULL_HEALTH_TEXT HEALTH_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 #define FULL_EXPERIENCE_TEXT EXPERIENCE_TEXT EXPERIENCE_POINTS_TEXT_PLACEHOLDER
 #define FULL_ITEMS_TEXT ITEMS_TEXT ITEMS_TEXT_PLACEHOLDER
@@ -345,14 +328,15 @@ FORCE_INLINE void render$stats() {
 
     // Health
     {
-        render$points( &l_cursorPosition, stats::health::g_playerHealthPoints,
-                       sizeof( FULL_HEALTH_TEXT ) );
+        ::render::points( &l_cursorPosition,
+                          stats::health::g_playerHealthPoints,
+                          sizeof( FULL_HEALTH_TEXT ) );
     }
 
     // Experience
     {
-        render$points( &l_cursorPosition, stats::experience::get(),
-                       sizeof( FULL_EXPERIENCE_TEXT ) );
+        ::render::points( &l_cursorPosition, stats::experience::get(),
+                          sizeof( FULL_EXPERIENCE_TEXT ) );
     }
 
     // Items
@@ -378,27 +362,7 @@ FORCE_INLINE void render$stats() {
 #undef FULL_HEALTH_TEXT
 }
 
-// TODO: Unused
-void render$debug() {
-#define MONSTER_TEXT "\nM:"
-#define GUARDIAN_TEXT "\nB:"
-
-#define FULL_MONSTER_TEXT MONSTER_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
-#define FULL_GUARDIAN_TEXT GUARDIAN_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
-
-    char l_buffer[] = FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT;
-    char* l_cursorPosition = ( l_buffer - 1 );
-
-    render$points( &l_cursorPosition, monster::g_monsterHealthPoints,
-                   sizeof( FULL_MONSTER_TEXT ) );
-    render$points( &l_cursorPosition, guardian::g_guardianHealthPoints,
-                   sizeof( FULL_GUARDIAN_TEXT ) );
-
-    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
-
-#undef GUARDIAN_TEXT
-#undef MONSTER_TEXT
-}
+} // namespace render
 
 } // namespace player
 
@@ -563,15 +527,15 @@ FORCE_INLINE void init() {
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool {
     // Define the list of possible opponents represented by specific actor types
-    static constexpr actor_t l_opponents[] = {
+    static constexpr std::array l_opponents{
         actor_t::followMonster,
         actor_t::randomMonster,
         actor_t::keyMonster,
         actor_t::guardian,
     };
 
-    FOR( const actor_t*, l_opponents ) {
-        if ( *_element == ( actor_t )_tile ) {
+    for ( const actor_t _opponent : l_opponents ) {
+        if ( ( char )_opponent == _tile ) {
             return ( player::fight( ( actor_t )_tile ) );
         }
     }
@@ -607,32 +571,30 @@ FORCE_INLINE constexpr void treasure() {
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
     // Use tile
-    {
-        switch ( static_cast< actionable_t >( _tile ) ) {
-            case ( actionable_t::chest ): {
-                action::chest();
+    switch ( static_cast< actionable_t >( _tile ) ) {
+        case ( actionable_t::chest ): {
+            action::chest();
 
-                return ( true );
-            }
+            return ( true );
+        }
 
-            case ( actionable_t::treasure ): {
-                action::treasure();
+        case ( actionable_t::treasure ): {
+            action::treasure();
 
-                return ( true );
-            }
+            return ( true );
+        }
 
-            case ( actionable_t::doorLeft ):
-            case ( actionable_t::doorRight ):
-            case ( actionable_t::doorMiddle ): {
-                return ( action::door() );
-            }
+        case ( actionable_t::doorLeft ):
+        case ( actionable_t::doorRight ):
+        case ( actionable_t::doorMiddle ): {
+            return ( action::door() );
+        }
 
-            case ( actionable_t::ladderLeft ):
-            case ( actionable_t::ladderRight ): {
-                player::lose::set();
+        case ( actionable_t::ladderLeft ):
+        case ( actionable_t::ladderRight ): {
+            player::lose::set();
 
-                return ( false );
-            }
+            return ( false );
         }
     }
 
@@ -646,7 +608,7 @@ FORCE_INLINE constexpr void treasure() {
         };
 
         for ( const auto _item : l_items ) {
-            if ( _item == ( player::inventory::item_t )_tile ) {
+            if ( ( char )_item == _tile ) {
                 player::inventory::add( ( player::inventory::item_t )_tile );
 
                 return ( true );
@@ -691,7 +653,7 @@ FORCE_INLINE constexpr void move$random( actor_t _who,
     move( _who, _currentPosition, random::value( l_allDirections ) );
 }
 
-// TODO: Add movement to follow the player if close
+// TODO: Implement movement to follow the player if close
 #if 0
 constexpr void move$follow( const actor_t _who,
                             const size_t _currentPosition ) {
@@ -764,6 +726,29 @@ FORCE_INLINE constexpr void ai() {
     }
 }
 
+namespace render {
+
+void debug() {
+#define MONSTER_TEXT "\nM:"
+#define GUARDIAN_TEXT "\nB:"
+
+#define FULL_MONSTER_TEXT MONSTER_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
+#define FULL_GUARDIAN_TEXT GUARDIAN_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
+
+    char l_buffer[] = FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT;
+    char* l_cursorPosition = ( l_buffer - 1 );
+
+    ::render::points( &l_cursorPosition, monster::g_monsterHealthPoints,
+                      sizeof( FULL_MONSTER_TEXT ) );
+    ::render::points( &l_cursorPosition, guardian::g_guardianHealthPoints,
+                      sizeof( FULL_GUARDIAN_TEXT ) );
+
+    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
+
+#undef GUARDIAN_TEXT
+#undef MONSTER_TEXT
+}
+
 /**
  * @brief Renders the current state of the map to the output.
  *
@@ -785,12 +770,23 @@ FORCE_INLINE constexpr void ai() {
  *
  * @see `print()` for more information on how tiles are printed to the screen.
  */
-FORCE_INLINE constexpr void render() {
+FORCE_INLINE constexpr void current() {
     // Iterate through each tile on map
     for ( const char _tile : g_current ) {
         io::print( { _tile } );
     }
+
+#if defined( RENDER_DEBUG_INFORMATION )
+
+    // Debug information
+    {
+        debug();
+    }
+
+#endif
 }
+
+} // namespace render
 
 } // namespace map
 
