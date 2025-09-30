@@ -13,8 +13,8 @@ namespace random {
 
 [[nodiscard]] constexpr auto number() -> uint32_t {
     constexpr size_t l_compilationTimeAsSeed =
-        ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 2 ] + __TIME__[ 3 ] +
-          __TIME__[ 4 ] + __TIME__[ 5 ] );
+        ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 3 ] + __TIME__[ 4 ] +
+          __TIME__[ 6 ] + __TIME__[ 7 ] );
 
     static uint32_t l_seed = l_compilationTimeAsSeed;
 
