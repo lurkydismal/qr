@@ -138,7 +138,8 @@ FORCE_INLINE constexpr auto fight() -> bool;
 
 namespace player {
 
-size_t g_position{};
+size_t g_position = ( std::string_view{ MAP }.find(
+    static_cast< char >( map::actor_t::player ) ) );
 
 /**
  * @brief Moves the player on the map in a specified direction.
@@ -499,7 +500,7 @@ FORCE_INLINE void init() {
 
     // Define directions for potential tile replacements
     // First 4 will empty the whole map
-    constexpr std::array l_allDirections{
+    static constexpr std::array l_allDirections{
         direction_t::down,
         direction_t::left,
         direction_t::right,
@@ -515,11 +516,6 @@ FORCE_INLINE void init() {
     // Empty map is a copy of map
     FOR( char*, g_empty ) {
         char* l_tile = _element;
-
-        // Search for player
-        if ( *l_tile == ( char )actor_t::player ) [[unlikely]] {
-            player::g_position = ( _element - g_empty );
-        }
 
         // Generate empty map
         // Replace non-walkable, non-decorative tiles with walkable ones
