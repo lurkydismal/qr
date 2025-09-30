@@ -8,8 +8,6 @@
 #include "stdfunc.hpp"
 #include "system.hpp"
 
-// #define RENDER_DEBUG_INFORMATION
-
 namespace runtime {
 
 using result_t = enum class result : int8_t {

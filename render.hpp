@@ -7,18 +7,18 @@
 
 namespace render {
 
-// Stats
-FORCE_INLINE void points( char** _cursorPosition,
-                          uint8_t _points,
-                          size_t _textLength ) {
+template < std::input_iterator Iterator >
+FORCE_INLINE constexpr void points( Iterator& _cursorPosition,
+                                    uint8_t _points,
+                                    size_t _textLength ) {
     const size_t l_lengthOfPoints = stdfunc::lengthOfNumber( _points );
 
-    *_cursorPosition += ( _textLength - l_lengthOfPoints );
+    std::advance( _cursorPosition, ( _textLength - l_lengthOfPoints - 1 ) );
 
-    stdfunc::convertNumberToString( *_cursorPosition, _points,
+    stdfunc::convertNumberToString( _cursorPosition, _points,
                                     l_lengthOfPoints );
 
-    *_cursorPosition += ( l_lengthOfPoints - 1 );
+    std::advance( _cursorPosition, ( l_lengthOfPoints - 1 ) );
 }
 
 } // namespace render

@@ -17,27 +17,27 @@ using descriptor_t = enum class descriptor : uint8_t {
     output = 1,
 };
 
-void read( std::span< uint8_t > _buffer ) {
+FORCE_INLINE void read( std::span< uint8_t > _buffer ) {
     syscall( system::call_t::read,
              static_cast< uint8_t >( descriptor_t::input ),
              std::bit_cast< uintptr_t >( _buffer.data() ), _buffer.size() );
 }
 
-void write( const char* _buffer, uint8_t _bufferLength ) {
+FORCE_INLINE void write( const char* _buffer, uint8_t _bufferLength ) {
     syscall( system::call_t::write,
              static_cast< uint8_t >( descriptor_t::output ),
              std::bit_cast< uintptr_t >( _buffer ), _bufferLength );
 }
 
-void print( const char* _text, uint8_t _lengthOfText ) {
+FORCE_INLINE void print( const char* _text, uint8_t _lengthOfText ) {
     write( _text, _lengthOfText );
 }
 
-void print( std::span< const char > _text ) {
+FORCE_INLINE void print( std::span< const char > _text ) {
     print( _text.data(), _text.size() );
 }
 
-void print( std::initializer_list< char > _text ) {
+FORCE_INLINE void print( std::initializer_list< char > _text ) {
     print( std::span( _text ) );
 }
 
@@ -104,14 +104,14 @@ using termios_t = struct termios {
     uint32_t outputSpeed; // Output speed (baud rate)
 };
 
-void ioctl( code_t _operationCode, termios_t& _memory ) {
+FORCE_INLINE void ioctl( code_t _operationCode, termios_t& _memory ) {
     syscall( system::call_t::ioctl,
              static_cast< uint8_t >( descriptor_t::input ),
              static_cast< uint32_t >( _operationCode ),
              std::bit_cast< uintptr_t >( &_memory ) );
 }
 
-void ioctl( code_t _operationCode, const termios_t& _memory ) {
+FORCE_INLINE void ioctl( code_t _operationCode, const termios_t& _memory ) {
     syscall( system::call_t::ioctl,
              static_cast< uint8_t >( descriptor_t::input ),
              static_cast< uint32_t >( _operationCode ),
@@ -171,19 +171,19 @@ FORCE_INLINE void tcsetattr( const termios_t& _termios ) {
     return ( l_returnValue );
 }
 
-void hideCursor() {
+FORCE_INLINE void hideCursor() {
     constexpr std::string_view l_ansiToHideCursor = "\033[?25l";
 
     print( l_ansiToHideCursor );
 }
 
-void showCursor() {
+FORCE_INLINE void showCursor() {
     constexpr std::string_view l_ansiToShowCursor = "\033[?25h";
 
     print( l_ansiToShowCursor );
 }
 
-void clearScreen() {
+FORCE_INLINE void clearScreen() {
 #define ANSI_TO_POINT_AT_THE_BEGINNING "\033[H"
 #define ANSI_TO_CLEAR_THE_ENTIRE_SCREEN "\033[J"
 

@@ -323,39 +323,39 @@ FORCE_INLINE void stats() {
 #define FULL_EXPERIENCE_TEXT EXPERIENCE_TEXT EXPERIENCE_POINTS_TEXT_PLACEHOLDER
 #define FULL_ITEMS_TEXT ITEMS_TEXT ITEMS_TEXT_PLACEHOLDER
 
-    char l_buffer[] = ( FULL_HEALTH_TEXT FULL_EXPERIENCE_TEXT FULL_ITEMS_TEXT );
-    char* l_cursorPosition = ( l_buffer - 1 );
+    // FIX: Can save 8 bytes here
+    std::array l_buffer =
+        std::to_array( FULL_HEALTH_TEXT FULL_EXPERIENCE_TEXT FULL_ITEMS_TEXT );
 
-    // Health
+    auto l_cursorPosition = l_buffer.begin();
+
+    // Render points into buffer
     {
-        ::render::points( &l_cursorPosition,
-                          stats::health::g_playerHealthPoints,
+        // Health
+        ::render::points( l_cursorPosition, stats::health::g_playerHealthPoints,
                           sizeof( FULL_HEALTH_TEXT ) );
-    }
 
-    // Experience
-    {
-        ::render::points( &l_cursorPosition, stats::experience::get(),
+        // Experience
+        ::render::points( l_cursorPosition, stats::experience::get(),
                           sizeof( FULL_EXPERIENCE_TEXT ) );
     }
 
     // Items
     {
-        l_cursorPosition += ( sizeof( FULL_ITEMS_TEXT ) -
-                              ( sizeof( ITEMS_TEXT_PLACEHOLDER ) - 1 ) );
+        // FIX: Can save 4 bytes on +2
+        std::advance( l_cursorPosition, ( sizeof( FULL_ITEMS_TEXT ) -
+                                          sizeof( ITEMS_TEXT_PLACEHOLDER ) ) );
 
         for ( inventory::item_t& _item : inventory::g_items ) {
-            *l_cursorPosition = ( char )( _item );
-
             // Move to the next character
-            l_cursorPosition++;
-
             // Skip delimiter
-            l_cursorPosition++;
+            std::advance( l_cursorPosition, 2 );
+
+            *l_cursorPosition = ( char )_item;
         }
     }
 
-    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
+    io::print( l_buffer );
 
 #undef FULL_ITEMS_TEXT
 #undef FULL_EXPERIENCE_TEXT
@@ -728,22 +728,32 @@ FORCE_INLINE constexpr void ai() {
 
 namespace render {
 
-void debug() {
+FORCE_INLINE constexpr void debug() {
 #define MONSTER_TEXT "\nM:"
 #define GUARDIAN_TEXT "\nB:"
 
 #define FULL_MONSTER_TEXT MONSTER_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 #define FULL_GUARDIAN_TEXT GUARDIAN_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
 
-    char l_buffer[] = ( FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT );
-    char* l_cursorPosition = ( l_buffer - 1 );
+    // FIX: Can save 8 bytes here
+    std::array l_buffer = std::to_array( FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT );
 
-    ::render::points( &l_cursorPosition, monster::g_monsterHealthPoints,
-                      sizeof( FULL_MONSTER_TEXT ) );
-    ::render::points( &l_cursorPosition, guardian::g_guardianHealthPoints,
-                      sizeof( FULL_GUARDIAN_TEXT ) );
+    // Render points into buffer
+    {
+        auto l_cursorPosition = l_buffer.begin();
 
-    io::print( l_buffer, ( sizeof( l_buffer ) - 1 ) );
+        // Monster HP
+        ::render::points( l_cursorPosition, monster::g_monsterHealthPoints,
+                          sizeof( FULL_MONSTER_TEXT ) );
+
+        // Guardian HP
+        ::render::points( l_cursorPosition, guardian::g_guardianHealthPoints,
+                          sizeof( FULL_GUARDIAN_TEXT ) );
+    }
+
+    if !consteval {
+        io::print( l_buffer );
+    }
 
 #undef GUARDIAN_TEXT
 #undef MONSTER_TEXT
@@ -773,7 +783,9 @@ void debug() {
 FORCE_INLINE constexpr void current() {
     // Iterate through each tile on map
     for ( const char _tile : g_current ) {
-        io::print( { _tile } );
+        if !consteval {
+            io::print( { _tile } );
+        }
     }
 
 #if defined( RENDER_DEBUG_INFORMATION )
