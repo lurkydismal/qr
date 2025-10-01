@@ -706,8 +706,33 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
+    std::array< size_t, g_current.size() > l_x;
+    auto l_y = l_x.begin();
+
     for ( const auto [ _index, _tile ] : g_current | std::views::enumerate ) {
-        switch ( static_cast< actor_t >( _tile ) ) {
+        auto l_tile = static_cast< actor_t >( _tile );
+
+        switch ( l_tile ) {
+            case ( actor_t::randomMonster ):
+            case ( actor_t::keyMonster ):
+            case ( actor_t::followMonster ):
+            case ( actor_t::guardian ): {
+                *l_y = _index;
+
+                std::advance( l_y, 1 );
+
+                break;
+            }
+
+            default: {
+            }
+        }
+    }
+
+    for ( const size_t _index : l_x ) {
+        auto l_tile = static_cast< actor_t >( g_current[ _index ] );
+
+        switch ( l_tile ) {
             case ( actor_t::randomMonster ): {
                 move$random( actor_t::randomMonster, _index );
 
