@@ -198,8 +198,8 @@ namespace stats {
 
 namespace health {
 
-constexpr size_t g_startHealthPoints = 10;
-constexpr size_t g_maxHealthPoints = 200;
+constexpr size_t g_startHealthPoints = 20;
+constexpr size_t g_maxHealthPoints = 60;
 
 uint8_t g_amount = g_startHealthPoints;
 
