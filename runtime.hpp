@@ -17,6 +17,7 @@ using result_t = enum class result : int8_t {
 };
 
 using move_t = enum class move : uint8_t {
+    stay = 0,
     up = 'w',
     upRight = 'e',
     right = 'd',

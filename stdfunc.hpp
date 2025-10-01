@@ -24,55 +24,28 @@ namespace stdfunc {
 
 [[nodiscard]] FORCE_INLINE constexpr auto lengthOfNumber( size_t _number )
     -> size_t {
-    size_t l_length = 0;
-
-    do {
-        l_length++;
-
-        _number /= 10;
-    } while ( _number );
-
-    return ( l_length );
+    return ( ( _number < 10 ) ? ( 1 ) : ( ( _number < 100 ) ? ( 2 ) : ( 3 ) ) );
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto power( size_t _base,
                                                  uint8_t _exponent ) -> size_t {
-    size_t l_returnValue = 1;
-
-    for ( ;; ) {
-        if ( _exponent & 1 ) {
-            l_returnValue *= _base;
-        }
-
-        _exponent >>= 1;
-
-        if ( !_exponent ) {
-            break;
-        }
-
-        _base *= _base;
+    if ( _exponent == 0 ) {
+        return ( 1 );
     }
 
-    return ( l_returnValue );
+    return ( _base * power( _base, _exponent - 1 ) );
 }
 
 constexpr void convertNumberToString( char* _buffer,
                                       size_t _number,
                                       size_t _lengthOfNumber ) {
-#if 0
     for ( auto _characterIndex :
           std::views::iota( ssize_t{},
-                            static_cast< ssize_t >( _lengthOfNumber - 1 ) ) |
+                            static_cast< ssize_t >( _lengthOfNumber ) ) |
               std::views::reverse ) {
-#endif
-#if 1
-    for ( ssize_t _characterIndex = ( _lengthOfNumber - 1 );
-          _characterIndex >= 0; _characterIndex-- ) {
-#endif
         _buffer[ _characterIndex ] = static_cast< char >(
             ( ( ( _number /
-                  static_cast< size_t >( power(
-                      10, ( _lengthOfNumber - _characterIndex - 1 ) ) ) ) %
+                  power( 10, ( _lengthOfNumber - _characterIndex - 1 ) ) ) %
                 10 ) +
               '0' ) );
     }

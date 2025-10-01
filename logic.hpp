@@ -198,7 +198,7 @@ namespace stats {
 
 namespace health {
 
-constexpr size_t g_startHealthPoints = 100;
+constexpr size_t g_startHealthPoints = 10;
 constexpr size_t g_maxHealthPoints = 200;
 
 uint8_t g_amount = g_startHealthPoints;
@@ -260,6 +260,7 @@ size_t g_position = ( std::string_view{ MAP }.find(
          ( stats::health::g_amount > stats::health::g_maxHealthPoints ) )
         [[unlikely]] {
         if ( inventory::use( inventory::item_t::health ) ) [[unlikely]] {
+            // Full health points restoration
             stats::health::g_amount = stats::health::g_maxHealthPoints;
 
             l_returnValue = true;
@@ -361,9 +362,14 @@ FORCE_INLINE void stats() {
         ::render::points( l_cursorPosition, stats::health::g_amount,
                           sizeof( FULL_HEALTH_TEXT ) );
 
+        // FIX: Convertion to int
+        std::advance( l_cursorPosition, 1 );
+
         // Experience
         ::render::points( l_cursorPosition, stats::experience::get(),
                           sizeof( FULL_EXPERIENCE_TEXT ) );
+
+        std::advance( l_cursorPosition, -1 );
     }
 
     // Items
@@ -771,9 +777,14 @@ FORCE_INLINE void debug() {
         ::render::points( l_cursorPosition, monster::stats::health::g_amount,
                           sizeof( FULL_MONSTER_TEXT ) );
 
+        // FIX: Convertion to int
+        std::advance( l_cursorPosition, 1 );
+
         // Guardian HP
         ::render::points( l_cursorPosition, guardian::stats::health::g_amount,
                           sizeof( FULL_GUARDIAN_TEXT ) );
+
+        std::advance( l_cursorPosition, -1 );
     }
 
     io::print( l_buffer );
