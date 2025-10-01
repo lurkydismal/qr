@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 
 #include "io.hpp"
 #include "random.hpp"
@@ -493,11 +494,11 @@ namespace map {
  *       - `player::osition`: The player's starting position on the map.
  */
 FORCE_INLINE void init() {
-    g_empty = g_current;
+    map::g_empty = map::g_current;
 
     // Define directions for potential tile replacements
     // First 4 will empty the whole map
-    constexpr std::array l_allDirections{
+    static constexpr std::array l_allDirections{
         direction_t::down,
         direction_t::left,
         direction_t::right,
@@ -510,24 +511,19 @@ FORCE_INLINE void init() {
         direction_t::upLeft,
     };
 
-    // Empty map is a copy of map
-    for ( char* _element = g_empty.data();
-          _element < ( g_empty.data() + g_empty.size() );
-          std::advance( _element, 1 ) ) {
-        char* l_tile = _element;
-
-        // Generate empty map
+    // Generate empty map
+    for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
         // Replace non-walkable, non-decorative tiles with walkable ones
-        if ( isTileNotDecoration( *l_tile ) && !isTileWalkable( *l_tile ) )
+        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) )
             [[unlikely]] {
             // Try to find a walkable replacement tile by checking the
             // adjacent tiles
             for ( const direction_t _direction : l_allDirections ) {
                 const auto l_replacement =
-                    ( *( l_tile + static_cast< char >( _direction ) ) );
+                    g_empty[ _index + static_cast< char >( _direction ) ];
 
                 if ( isTileWalkable( l_replacement ) ) [[likely]] {
-                    *l_tile = static_cast< char >( l_replacement );
+                    _tile = static_cast< char >( l_replacement );
 
                     break;
                 }
@@ -536,27 +532,26 @@ FORCE_INLINE void init() {
     }
 
     // Generate level
-    for ( char& _tile : g_current ) {
-        auto& l_tile = reinterpret_cast< actor_t& >( _tile );
-
+    for ( char& _tile : map::g_current ) {
         // If the tile represents a monster with a key, replace it with
         // random key monster
-        if ( l_tile == actor_t::monsterWithKey ) [[unlikely]] {
+        if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
+            [[unlikely]] {
             constexpr std::array l_keyMonsters{
                 actor_t::keyMonster,
             };
 
-            l_tile = random::value( l_keyMonsters );
+            _tile = static_cast< char >( random::value( l_keyMonsters ) );
         }
 
         // If the tile represents a monster, replace it with random monster
-        if ( l_tile == actor_t::monster ) [[unlikely]] {
+        if ( _tile == static_cast< char >( actor_t::monster ) ) [[unlikely]] {
             static constexpr std::array l_monsters{
                 actor_t::followMonster,
                 actor_t::randomMonster,
             };
 
-            l_tile = random::value( l_monsters );
+            _tile = static_cast< char >( random::value( l_monsters ) );
         }
     }
 }
@@ -644,7 +639,7 @@ constexpr void move( actor_t _who,
     const size_t l_newPosition =
         ( _currentPosition + static_cast< size_t >( _direction ) );
 
-    char& l_tile = g_current[ l_newPosition ];
+    char& l_tile = map::g_current[ l_newPosition ];
 
     if ( ( map::isTileWalkable( l_tile ) ) ||
          ( ( l_tile == static_cast< char >( actor_t::player ) ) &&
@@ -706,14 +701,14 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
-    std::array< size_t, g_current.size() > l_entitiesWithAi;
+    std::array< size_t, map::g_current.size() > l_entitiesWithAi;
 
     // Collect entities with AI
     {
         auto l_iterator = l_entitiesWithAi.begin();
 
         for ( const auto [ _index, _tile ] :
-              g_current | std::views::enumerate ) {
+              map::g_current | std::views::enumerate ) {
             auto l_tile = static_cast< actor_t >( _tile );
 
             switch ( l_tile ) {
@@ -736,29 +731,19 @@ FORCE_INLINE constexpr void ai() {
 
     // Process AI
     for ( const size_t _index : l_entitiesWithAi ) {
-        const auto l_tile = static_cast< actor_t >( g_current[ _index ] );
+        const auto l_tile = static_cast< actor_t >( map::g_current[ _index ] );
 
         switch ( l_tile ) {
-            case ( actor_t::randomMonster ): {
-                move$random( actor_t::randomMonster, _index );
-
-                break;
-            }
-
-            case ( actor_t::followMonster ): {
-                move$follow( actor_t::followMonster, _index );
-
-                break;
-            }
-
+            case ( actor_t::randomMonster ):
             case ( actor_t::keyMonster ): {
-                move$random( actor_t::keyMonster, _index );
+                move$random( l_tile, _index );
 
                 break;
             }
 
+            case ( actor_t::followMonster ):
             case ( actor_t::guardian ): {
-                move$follow( actor_t::guardian, _index );
+                move$follow( actor_t::followMonster, _index );
 
                 break;
             }
@@ -829,7 +814,7 @@ FORCE_INLINE void debug() {
  */
 FORCE_INLINE void current() {
     // Iterate through each tile on map
-    for ( const char _tile : g_current ) {
+    for ( const char _tile : map::g_current ) {
         io::print( { _tile } );
     }
 
