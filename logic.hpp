@@ -199,8 +199,8 @@ namespace stats {
 
 namespace health {
 
-constexpr size_t g_startHealthPoints = 20;
-constexpr size_t g_maxHealthPoints = 60;
+constexpr size_t g_startHealthPoints = 10;
+constexpr size_t g_maxHealthPoints = 40;
 
 uint8_t g_amount = g_startHealthPoints;
 
@@ -748,6 +748,11 @@ FORCE_INLINE constexpr void ai() {
 
     // Process AI
     for ( const size_t _index : l_entitiesWithAi ) {
+        // FIX: Reduntant
+        if ( _index >= map::g_current.size() ) {
+            continue;
+        }
+
         const auto l_tile = static_cast< actor_t >( map::g_current[ _index ] );
 
         auto l_move = [ & ]( auto _moveFunction ) -> void {

@@ -17,7 +17,7 @@ EXPORT void _start() {
                 // Wait-block
                 runtime::move_t l_move = runtime::waitMove();
 
-                l_callbackResult = event( l_move );
+                l_callbackResult = runtime::event( l_move );
 
                 if ( l_callbackResult != runtime::result_t::remain )
                     [[unlikely]] {
