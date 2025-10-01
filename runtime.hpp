@@ -17,7 +17,6 @@ using result_t = enum class result : int8_t {
 };
 
 using move_t = enum class move : uint8_t {
-    stay = 's',
     up = 'w',
     upRight = 'e',
     right = 'd',
@@ -26,6 +25,7 @@ using move_t = enum class move : uint8_t {
     downLeft = 'z',
     left = 'a',
     upLeft = 'q',
+    quit = ']',
 };
 
 [[nodiscard]] FORCE_INLINE auto waitMove() -> move_t {
@@ -61,7 +61,7 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
 [[nodiscard]] FORCE_INLINE constexpr auto event( move_t _event ) -> result_t {
     result_t l_returnValue = result_t::remain;
 
-    logic::map::direction_t l_direction;
+    logic::map::direction_t l_direction{};
 
     switch ( _event ) {
         case ( move_t::up ): {
@@ -111,6 +111,11 @@ NO_RETURN FORCE_INLINE void quit( result_t _exitCode ) {
 
             break;
         }
+
+        case ( move_t::quit ):
+            [[unlikely]] {
+                return ( result_t::failure );
+            }
 
         default: {
             l_direction = logic::map::direction_t::stay;

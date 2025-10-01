@@ -12,12 +12,6 @@
 #define NO_RETURN [[gnu::noreturn]]
 #define EXPORT extern "C"
 
-#define arrayLength( _array ) ( sizeof( _array ) / sizeof( _array[ 0 ] ) )
-
-#define FOR( _type, _array )       \
-    for ( _type _element = _array; \
-          _element < ( _array + arrayLength( _array ) ); _element++ )
-
 template < typename SymbolTypes, SymbolTypes... _symbols >
     requires( ( std::convertible_to< SymbolTypes, char > ) &&
               ( sizeof...( _symbols ) > 0 ) )
@@ -71,8 +65,10 @@ constexpr void convertNumberToString( char* _buffer,
                             static_cast< ssize_t >( _lengthOfNumber - 1 ) ) |
               std::views::reverse ) {
 #endif
+#if 1
     for ( ssize_t _characterIndex = ( _lengthOfNumber - 1 );
           _characterIndex >= 0; _characterIndex-- ) {
+#endif
         _buffer[ _characterIndex ] = static_cast< char >(
             ( ( ( _number /
                   static_cast< size_t >( power(
