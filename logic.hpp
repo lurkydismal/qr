@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <ranges>
 
 #include "io.hpp"
 #include "random.hpp"
@@ -707,11 +706,37 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
-    const auto l_range = std::views::iota( size_t{}, g_current.size() / 2 );
+    std::array< size_t, g_current.size() > l_entitiesWithAi;
 
-    for ( const auto [ _index, _indexReverse ] :
-          std::views::zip( l_range, l_range | std::views::reverse ) ) {
-        auto l_tile = static_cast< actor_t >( g_current[ _index ] );
+    // Collect entities with AI
+    {
+        auto l_iterator = l_entitiesWithAi.begin();
+
+        for ( const auto [ _index, _tile ] :
+              g_current | std::views::enumerate ) {
+            auto l_tile = static_cast< actor_t >( _tile );
+
+            switch ( l_tile ) {
+                case ( actor_t::randomMonster ):
+                case ( actor_t::keyMonster ):
+                case ( actor_t::followMonster ):
+                case ( actor_t::guardian ): {
+                    *l_iterator = _index;
+
+                    std::advance( l_iterator, 1 );
+
+                    break;
+                }
+
+                default: {
+                }
+            }
+        }
+    }
+
+    // Process AI
+    for ( const size_t _index : l_entitiesWithAi ) {
+        const auto l_tile = static_cast< actor_t >( g_current[ _index ] );
 
         switch ( l_tile ) {
             case ( actor_t::randomMonster ): {
