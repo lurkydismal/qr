@@ -117,7 +117,7 @@ uint8_t g_amount = g_startHealth;
 
 }
 
-FORCE_INLINE constexpr auto fight() -> bool;
+[[nodiscard]] FORCE_INLINE constexpr auto fight() -> bool;
 
 } // namespace monster
 
@@ -132,7 +132,7 @@ uint8_t g_amount = g_startHealth;
 
 }
 
-FORCE_INLINE constexpr auto fight() -> bool;
+[[nodiscard]] FORCE_INLINE constexpr auto fight() -> bool;
 
 } // namespace guardian
 
@@ -219,7 +219,7 @@ constexpr size_t g_fromTreasure = 20;
 constexpr size_t g_forDamage = 10;
 constexpr size_t g_forDamangeGuardian = 20;
 
-constexpr auto get() -> uint8_t {
+[[nodiscard]] constexpr auto get() -> uint8_t {
     return ( g_amount );
 }
 
@@ -326,14 +326,13 @@ FORCE_INLINE constexpr void move( map::direction_t _direction ) {
     const size_t l_newPosition =
         ( player::g_position + static_cast< size_t >( _direction ) );
 
-    const char l_tile = map::g_current[ l_newPosition ];
+    char& l_tile = map::g_current[ l_newPosition ];
 
     if ( map::isTileWalkable( l_tile ) || tryFightTile( l_tile ) ||
          map::tryActionTile( l_tile ) ) [[likely]] {
         map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
 
-        map::g_current[ l_newPosition ] =
-            static_cast< char >( map::actor_t::player );
+        l_tile = static_cast< char >( map::actor_t::player );
 
         player::g_position = l_newPosition;
     }
@@ -641,42 +640,26 @@ FORCE_INLINE constexpr void treasure() {
 constexpr void move( actor_t _who,
                      size_t _currentPosition,
                      direction_t _direction ) {
-#if 0
-    if ( map::isTileWalkable( l_tile ) || map::tryFightTile( l_tile ) ||
-         map::tryActionTile( l_tile ) ) [[likely]] {
-        map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
-
-        map::g_current[ l_newPosition ] =
-            static_cast< char >( map::actor_t::player );
-
-        player::g_position = l_newPosition;
-    }
-#endif
-
     const size_t l_oldPosition = _currentPosition;
     const size_t l_newPosition =
         ( _currentPosition + static_cast< size_t >( _direction ) );
 
-    const char l_tile = g_current[ l_newPosition ];
+    char& l_tile = g_current[ l_newPosition ];
 
-    if ( map::isTileWalkable( l_tile ) ) [[likely]] {
-        g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
+    if ( ( map::isTileWalkable( l_tile ) ) ||
+         ( ( l_tile == static_cast< char >( actor_t::player ) ) &&
+           ( player::tryFightTile( static_cast< char >( _who ) ) ) ) )
+        [[likely]] {
+        map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
 
-        g_current[ l_newPosition ] = static_cast< char >( _who );
-
-    } else if ( l_tile == static_cast< char >( actor_t::player ) )
-        [[unlikely]] {
-        if ( player::tryFightTile( static_cast< char >( _who ) ) )
-            [[unlikely]] {
-            g_current[ l_oldPosition ] = g_empty[ l_oldPosition ];
-        }
+        l_tile = static_cast< char >( _who );
     }
 }
 
 FORCE_INLINE constexpr void move$random( actor_t _who,
                                          size_t _currentPosition ) {
     // Define all possible movement directions, including staying in place
-    constexpr std::array l_allDirections{
+    static std::array l_allDirections{
         direction_t::down,     direction_t::left,   direction_t::right,
         direction_t::upRight,  direction_t::up,     direction_t::downRight,
         direction_t::downLeft, direction_t::upLeft, direction_t::stay,
@@ -686,31 +669,29 @@ FORCE_INLINE constexpr void move$random( actor_t _who,
 }
 
 // TODO: Implement movement to follow the player if close
-FORCE_INLINE constexpr void move$follow( const actor_t _who,
-                                         const size_t _currentPosition ) {
+FORCE_INLINE constexpr void move$follow( actor_t _who,
+                                         size_t _currentPosition ) {
     move$random( _who, _currentPosition );
+
 #if 0
-    const size_t l_playerPositionX = ( player::position % MAP_WIDTH );
-    const size_t l_playerPositionY = ( player::position / MAP_WIDTH );
-    const size_t l_whoPositionX = ( _currentPosition % MAP_WIDTH );
-    const size_t l_whoPositionY = ( _currentPosition / MAP_WIDTH );
-    size_t l_whoNewPosition = _currentPosition;
+    const size_t l_playerPositionX = ( player::g_position % g_width );
+    const size_t l_playerPositionY = ( player::g_position / g_width );
+    const size_t l_whoPositionX = ( _currentPosition % g_width );
+    const size_t l_whoPositionY = ( _currentPosition / g_width );
 
     if ( l_playerPositionX > l_whoPositionX ) {
-        l_whoNewPosition += ( direction_t )RIGHT;
+        move( _who, _currentPosition, direction_t::right );
 
     } else if ( l_playerPositionX < l_whoPositionX ) {
-        l_whoNewPosition += ( direction_t )LEFT;
+        move( _who, _currentPosition, direction_t::left );
     }
 
     if ( l_playerPositionY > l_whoPositionY ) {
-        l_whoNewPosition += ( direction_t )DOWN;
+        move( _who, _currentPosition, direction_t::down );
 
     } else if ( l_playerPositionY < l_whoPositionY ) {
-        l_whoNewPosition += ( direction_t )UP;
+        move( _who, _currentPosition, direction_t::up );
     }
-
-    move( _who, _currentPosition, l_whoNewPosition );
 #endif
 }
 
