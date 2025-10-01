@@ -701,7 +701,24 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
-    std::array< size_t, map::g_current.size() > l_entitiesWithAi;
+    constexpr size_t l_opponentsAmount = [ & ] -> size_t {
+        const std::string_view l_map = MAP;
+
+        size_t l_retunValue = 0;
+
+        for ( const actor_t _actor : {
+                  actor_t::monster,
+                  actor_t::monsterWithKey,
+                  actor_t::guardian,
+              } ) {
+            l_retunValue +=
+                std::ranges::count( l_map, static_cast< char >( _actor ) );
+        }
+
+        return ( l_retunValue );
+    }();
+
+    std::array< size_t, l_opponentsAmount > l_entitiesWithAi;
 
     // Collect entities with AI
     {
