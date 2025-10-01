@@ -38,10 +38,9 @@ namespace stdfunc {
 
 constexpr void convertNumberToString( char* _buffer,
                                       size_t _number,
-                                      size_t _lengthOfNumber ) {
-    for ( auto _characterIndex :
-          std::views::iota( ssize_t{},
-                            static_cast< ssize_t >( _lengthOfNumber ) ) |
+                                      ssize_t _lengthOfNumber ) {
+    for ( const auto _characterIndex :
+          std::views::iota( ssize_t{}, _lengthOfNumber ) |
               std::views::reverse ) {
         _buffer[ _characterIndex ] = static_cast< char >(
             ( ( ( _number /

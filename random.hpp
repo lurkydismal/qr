@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <span>
 
 #include "stdfunc.hpp"
 
@@ -22,21 +21,10 @@ namespace random {
     return ( l_seed );
 }
 
-[[nodiscard]] FORCE_INLINE constexpr auto value( auto* _container,
-                                                 size_t _length ) -> auto& {
-    return ( _container[ number() % _length ] );
-}
-
 template < typename T, size_t N >
 [[nodiscard]] FORCE_INLINE constexpr auto value(
     const std::array< T, N >& _container ) -> auto& {
-    return ( value( _container.data(), _container.size() ) );
-}
-
-template < typename T >
-[[nodiscard]] FORCE_INLINE constexpr auto value(
-    std::span< const T > _container ) -> auto& {
-    return ( _value( _container.data(), _container.size() ) );
+    return ( _container[ number() % _container.size() ] );
 }
 
 } // namespace random

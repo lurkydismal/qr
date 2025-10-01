@@ -743,7 +743,7 @@ FORCE_INLINE constexpr void ai() {
 
             case ( actor_t::followMonster ):
             case ( actor_t::guardian ): {
-                move$follow( actor_t::followMonster, _index );
+                move$follow( l_tile, _index );
 
                 break;
             }
