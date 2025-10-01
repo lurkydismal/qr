@@ -36,6 +36,7 @@ namespace stdfunc {
     return ( _base * power( _base, _exponent - 1 ) );
 }
 
+// TODO: Improve
 constexpr void convertNumberToString( char* _buffer,
                                       size_t _number,
                                       ssize_t _lengthOfNumber ) {

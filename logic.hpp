@@ -733,17 +733,21 @@ FORCE_INLINE constexpr void ai() {
     for ( const size_t _index : l_entitiesWithAi ) {
         const auto l_tile = static_cast< actor_t >( map::g_current[ _index ] );
 
+        auto l_move = [ & ]( auto _moveFunction ) -> void {
+            _moveFunction( l_tile, _index );
+        };
+
         switch ( l_tile ) {
             case ( actor_t::randomMonster ):
             case ( actor_t::keyMonster ): {
-                move$random( l_tile, _index );
+                l_move( move$random );
 
                 break;
             }
 
             case ( actor_t::followMonster ):
             case ( actor_t::guardian ): {
-                move$follow( l_tile, _index );
+                l_move( move$follow );
 
                 break;
             }
