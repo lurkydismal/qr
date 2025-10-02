@@ -244,7 +244,7 @@ size_t g_position = ( std::string_view{ MAP }.find(
 
     stats::health::g_amount -= 1;
 
-    if ( _who == map::actor_t::guardian ) [[unlikely]] {
+    if ( _who == map::actor_t::guardian ) {
         l_returnValue = guardian::fight();
 
     } else {
@@ -258,8 +258,7 @@ size_t g_position = ( std::string_view{ MAP }.find(
 
     // Has player died
     if ( ( !stats::health::g_amount ) ||
-         ( stats::health::g_amount > stats::health::g_maxHealthPoints ) )
-        [[unlikely]] {
+         ( stats::health::g_amount > stats::health::g_maxHealthPoints ) ) {
         if ( inventory::use( inventory::item_t::health ) ) [[unlikely]] {
             // Full health points restoration
             stats::health::g_amount = stats::health::g_maxHealthPoints;
@@ -404,7 +403,7 @@ FORCE_INLINE void stats() {
     stats::health::g_amount -= l_damageAmount;
 
     if ( ( !stats::health::g_amount ) ||
-         ( stats::health::g_amount > g_maxHealth ) ) [[unlikely]] {
+         ( stats::health::g_amount > g_maxHealth ) ) {
         stats::health::g_amount = g_maxHealth;
 
         player::stats::experience::add(
@@ -515,8 +514,7 @@ FORCE_INLINE void init() {
     // Generate empty map
     for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
         // Replace non-walkable, non-decorative tiles with walkable ones
-        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) )
-            [[unlikely]] {
+        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
             // Try to find a walkable replacement tile by checking the
             // adjacent tiles
             for ( const direction_t _direction : l_allDirections ) {
@@ -536,23 +534,34 @@ FORCE_INLINE void init() {
     for ( char& _tile : map::g_current ) {
         // If the tile represents a monster with a key, replace it with
         // random key monster
-        if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
-            [[unlikely]] {
-            constexpr std::array l_keyMonsters{
-                actor_t::keyMonster,
-            };
+        switch ( _tile ) {
+            case ( static_cast< char >( actor_t::monsterWithKey ) ):
+                [[unlikely]] {
+                    constexpr std::array l_keyMonsters{
+                        actor_t::keyMonster,
+                    };
 
-            _tile = static_cast< char >( random::value( l_keyMonsters ) );
-        }
+                    _tile =
+                        static_cast< char >( random::value( l_keyMonsters ) );
 
-        // If the tile represents a monster, replace it with random monster
-        if ( _tile == static_cast< char >( actor_t::monster ) ) [[unlikely]] {
-            static constexpr std::array l_monsters{
-                actor_t::followMonster,
-                actor_t::randomMonster,
-            };
+                    break;
+                }
 
-            _tile = static_cast< char >( random::value( l_monsters ) );
+            // If the tile represents a monster, replace it with random monster
+            case ( static_cast< char >( actor_t::monster ) ):
+                [[unlikely]] {
+                    static constexpr std::array l_monsters{
+                        actor_t::followMonster,
+                        actor_t::randomMonster,
+                    };
+
+                    _tile = static_cast< char >( random::value( l_monsters ) );
+
+                    break;
+                }
+
+            default:
+                [[unlikely]] {}
         }
     }
 }
@@ -584,30 +593,33 @@ FORCE_INLINE constexpr void treasure() {
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
     // Use tile
-    switch ( static_cast< actionable_t >( _tile ) ) {
-        case ( actionable_t::chest ): {
+    switch ( _tile ) {
+        case ( static_cast< char >( actionable_t::chest ) ): {
             action::chest();
 
             return ( true );
         }
 
-        case ( actionable_t::treasure ): {
+        case ( static_cast< char >( actionable_t::treasure ) ): {
             action::treasure();
 
             return ( true );
         }
 
-        case ( actionable_t::doorLeft ):
-        case ( actionable_t::doorRight ):
-        case ( actionable_t::doorMiddle ): {
+        case ( static_cast< char >( actionable_t::doorLeft ) ):
+        case ( static_cast< char >( actionable_t::doorRight ) ):
+        case ( static_cast< char >( actionable_t::doorMiddle ) ): {
             return ( action::door() );
         }
 
-        case ( actionable_t::ladderLeft ):
-        case ( actionable_t::ladderRight ): {
+        case ( static_cast< char >( actionable_t::ladderLeft ) ):
+        case ( static_cast< char >( actionable_t::ladderRight ) ): {
             player::lose::set();
 
             return ( false );
+        }
+
+        default: {
         }
     }
 
@@ -848,11 +860,13 @@ FORCE_INLINE constexpr void ai() {
 
         size_t l_retunValue = 0;
 
-        for ( const actor_t _actor : {
-                  actor_t::monster,
-                  actor_t::monsterWithKey,
-                  actor_t::guardian,
-              } ) {
+        constexpr std::array l_entitiesWithAi{
+            actor_t::monster,
+            actor_t::monsterWithKey,
+            actor_t::guardian,
+        };
+
+        for ( const actor_t _actor : l_entitiesWithAi ) {
             l_retunValue +=
                 std::ranges::count( l_map, static_cast< char >( _actor ) );
         }
@@ -886,8 +900,8 @@ FORCE_INLINE constexpr void ai() {
                     break;
                 }
 
-                default: {
-                }
+                default:
+                    [[likely]] {}
             }
         }
     }
@@ -919,8 +933,8 @@ FORCE_INLINE constexpr void ai() {
                 break;
             }
 
-            default: {
-            }
+            default:
+                [[unlikely]] {}
         }
     }
 }
