@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <iterator>
 #include <ranges>
+#include <type_traits>
 
 #include "io.hpp"
 #include "random.hpp"
@@ -74,7 +75,7 @@ std::array g_current = std::to_array( MAP );
 constexpr size_t g_opponentsAmountTotal = [] consteval -> size_t {
     constexpr std::string_view l_map = MAP;
 
-    size_t l_retunValue = 0;
+    size_t l_returnValue = 0;
 
     constexpr std::array l_entitiesWithAi{
         actor_t::monster,
@@ -83,18 +84,12 @@ constexpr size_t g_opponentsAmountTotal = [] consteval -> size_t {
     };
 
     for ( const actor_t _actor : l_entitiesWithAi ) {
-        l_retunValue +=
+        l_returnValue +=
             std::ranges::count( l_map, static_cast< char >( _actor ) );
     }
 
-    return ( l_retunValue );
+    return ( l_returnValue );
 }();
-
-// g_empty is a copy of g_current that is used to represent the empty state
-// of the map, where opponents and actionable tiles are replaced with walkable
-// ones. This map is used during certain game logic operations to track the
-// initial state of the map.
-decltype( g_current ) g_empty{};
 
 constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
 
@@ -111,11 +106,71 @@ using direction_t = enum class direction : int8_t {
 };
 
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
-    -> bool;
+    -> bool {
+    return ( ( _tile != static_cast< char >( tile_t::wallHorizontal ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallVertical ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallCross ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderLeft ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderRight ) ) &&
+             ( _tile != ' ' ) && ( _tile != '\n' ) && ( _tile != '0' ) );
+}
 
-[[nodiscard]] constexpr auto isTileWalkable( char _tile ) -> bool;
+[[nodiscard]] FORCE_INLINE constexpr auto isTileWalkable( char _tile ) -> bool {
+    const auto l_tile = static_cast< tile_t >( _tile );
+
+    return ( ( l_tile == tile_t::floor ) || ( l_tile == tile_t::bridge ) );
+}
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool;
+
+// g_empty is a copy of g_current that is used to represent the empty state
+// of the map, where opponents and actionable tiles are replaced with walkable
+// ones. This map is used during certain game logic operations to track the
+// initial state of the map.
+constexpr auto g_empty = [] consteval -> auto {
+    std::remove_cvref_t< decltype( g_current ) > l_returnValue =
+        std::to_array( MAP );
+
+    // Define directions for potential tile replacements
+    // First 4 will empty the whole map
+    constexpr std::array l_allDirections{
+        direction_t::down,
+        direction_t::left,
+        direction_t::right,
+        direction_t::upRight,
+
+        // Extra, clockwise
+        direction_t::up,
+        direction_t::downRight,
+        direction_t::downLeft,
+        direction_t::upLeft,
+    };
+
+    // Generate empty map
+    for ( auto [ _index, _tile ] : l_returnValue | std::views::enumerate ) {
+        // Replace non-walkable, non-decorative tiles with walkable ones
+        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
+            // Try to find a walkable replacement tile by checking the
+            // adjacent tiles
+            for ( const direction_t _direction : l_allDirections ) {
+                if ( ( _index + static_cast< char >( _direction ) ) <
+                     l_returnValue.size() ) {
+                    const auto l_replacement =
+                        l_returnValue[ _index +
+                                       static_cast< char >( _direction ) ];
+
+                    if ( isTileWalkable( l_replacement ) ) [[likely]] {
+                        _tile = static_cast< char >( l_replacement );
+
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return ( l_returnValue );
+}();
 
 } // namespace map
 
@@ -465,22 +520,6 @@ FORCE_INLINE void stats() {
 
 namespace map {
 
-[[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
-    -> bool {
-    return ( ( _tile != static_cast< char >( tile_t::wallHorizontal ) ) &&
-             ( _tile != static_cast< char >( tile_t::wallVertical ) ) &&
-             ( _tile != static_cast< char >( tile_t::wallCross ) ) &&
-             ( _tile != static_cast< char >( actionable_t::ladderLeft ) ) &&
-             ( _tile != static_cast< char >( actionable_t::ladderRight ) ) &&
-             ( _tile != ' ' ) && ( _tile != '\n' ) && ( _tile != '0' ) );
-}
-
-[[nodiscard]] FORCE_INLINE constexpr auto isTileWalkable( char _tile ) -> bool {
-    const auto l_tile = static_cast< tile_t >( _tile );
-
-    return ( ( l_tile == tile_t::floor ) || ( l_tile == tile_t::bridge ) );
-}
-
 // Positions
 /**
  * @brief Initializes the game map.
@@ -514,6 +553,7 @@ namespace map {
  */
 // TODO: Improve
 FORCE_INLINE void init() {
+#if 0
     map::g_empty = map::g_current;
 
     // Define directions for potential tile replacements
@@ -549,6 +589,7 @@ FORCE_INLINE void init() {
             }
         }
     }
+#endif
 
     // TODO :Improve by 8 bytes
     constexpr std::array< std::pair< size_t, actor_t >, g_opponentsAmountTotal >
@@ -557,7 +598,7 @@ FORCE_INLINE void init() {
 
         auto l_iterator = l_returnValue.begin();
 
-        const std::string_view l_map = MAP;
+        constexpr std::string_view l_map = MAP;
 
         for ( const auto [ _index, _tile ] :
               l_map | std::views::enumerate |
@@ -569,7 +610,7 @@ FORCE_INLINE void init() {
                                ( _tile ==
                                  static_cast< char >( actor_t::monster ) ) );
                   } ) ) {
-            auto&& [ l_index, l_opponent ] = *l_iterator;
+            auto& [ l_index, l_opponent ] = *l_iterator;
 
             l_index = _index;
 
