@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <iterator>
 #include <ranges>
-#include <type_traits>
 
 #include "io.hpp"
 #include "random.hpp"
@@ -91,6 +90,12 @@ constexpr size_t g_opponentsAmountTotal = [] consteval -> size_t {
     return ( l_returnValue );
 }();
 
+// g_empty is a copy of g_current that is used to represent the empty state
+// of the map, where opponents and actionable tiles are replaced with walkable
+// ones. This map is used during certain game logic operations to track the
+// initial state of the map.
+decltype( g_current ) g_empty{};
+
 constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
 
 using direction_t = enum class direction : int8_t {
@@ -122,55 +127,6 @@ using direction_t = enum class direction : int8_t {
 }
 
 [[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool;
-
-// g_empty is a copy of g_current that is used to represent the empty state
-// of the map, where opponents and actionable tiles are replaced with walkable
-// ones. This map is used during certain game logic operations to track the
-// initial state of the map.
-constexpr auto g_empty = [] consteval -> auto {
-    std::remove_cvref_t< decltype( g_current ) > l_returnValue =
-        std::to_array( MAP );
-
-    // Define directions for potential tile replacements
-    // First 4 will empty the whole map
-    constexpr std::array l_allDirections{
-        direction_t::down,
-        direction_t::left,
-        direction_t::right,
-        direction_t::upRight,
-
-        // Extra, clockwise
-        direction_t::up,
-        direction_t::downRight,
-        direction_t::downLeft,
-        direction_t::upLeft,
-    };
-
-    // Generate empty map
-    for ( auto [ _index, _tile ] : l_returnValue | std::views::enumerate ) {
-        // Replace non-walkable, non-decorative tiles with walkable ones
-        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
-            // Try to find a walkable replacement tile by checking the
-            // adjacent tiles
-            for ( const direction_t _direction : l_allDirections ) {
-                if ( ( _index + static_cast< char >( _direction ) ) <
-                     l_returnValue.size() ) {
-                    const auto l_replacement =
-                        l_returnValue[ _index +
-                                       static_cast< char >( _direction ) ];
-
-                    if ( isTileWalkable( l_replacement ) ) [[likely]] {
-                        _tile = static_cast< char >( l_replacement );
-
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return ( l_returnValue );
-}();
 
 } // namespace map
 
@@ -553,7 +509,6 @@ namespace map {
  */
 // TODO: Improve
 FORCE_INLINE void init() {
-#if 0
     map::g_empty = map::g_current;
 
     // Define directions for potential tile replacements
@@ -589,7 +544,6 @@ FORCE_INLINE void init() {
             }
         }
     }
-#endif
 
     // TODO :Improve by 8 bytes
     constexpr std::array< std::pair< size_t, actor_t >, g_opponentsAmountTotal >
