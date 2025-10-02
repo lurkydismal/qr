@@ -493,6 +493,7 @@ namespace map {
  * content.
  *       - `player::osition`: The player's starting position on the map.
  */
+// TODO: Improve
 FORCE_INLINE void init() {
     map::g_empty = map::g_current;
 
@@ -725,13 +726,13 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
 
 FORCE_INLINE constexpr void move$follow( actor_t _who,
                                          size_t _currentPosition ) {
-    const auto l_playerPos = static_cast< ssize_t >( player::g_position );
-    const auto l_whoPos = static_cast< ssize_t >( _currentPosition );
+    const auto l_playerPosition = static_cast< ssize_t >( player::g_position );
+    const auto l_currentPosition = static_cast< ssize_t >( _currentPosition );
 
-    const ssize_t l_playerX = ( l_playerPos % g_width );
-    const ssize_t l_playerY = ( l_playerPos / g_width );
-    const ssize_t l_whoX = ( l_whoPos % g_width );
-    const ssize_t l_whoY = ( l_whoPos / g_width );
+    const ssize_t l_playerX = ( l_playerPosition % map::g_width );
+    const ssize_t l_playerY = ( l_playerPosition / map::g_width );
+    const ssize_t l_whoX = ( l_currentPosition % map::g_width );
+    const ssize_t l_whoY = ( l_currentPosition / map::g_width );
 
     const ssize_t l_dx = ( l_playerX - l_whoX );
     const ssize_t l_dy = ( l_playerY - l_whoY );
@@ -755,7 +756,7 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
     }
 
     // Build candidate directions: preferred then horiz then vert
-    direction_t l_candidates[ 3 ];
+    std::array< direction_t, 3 > l_candidates;
     size_t l_count = 0;
 
     if ( ( l_sx == 1 ) && ( l_sy == 1 ) ) {
@@ -811,7 +812,7 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
 
     for ( size_t l_i = 0; l_i < l_count; ++l_i ) {
         const direction_t l_dir = l_candidates[ l_i ];
-        const ssize_t l_newPos = ( static_cast< ssize_t >( l_whoPos ) +
+        const ssize_t l_newPos = ( static_cast< ssize_t >( l_currentPosition ) +
                                    static_cast< ssize_t >( l_dir ) );
 
         if ( ( l_newPos < 0 ) ||
