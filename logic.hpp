@@ -632,6 +632,33 @@ FORCE_INLINE constexpr void treasure() {
     return ( false );
 }
 
+/**
+ * @brief Moves the opponent on the map in a specified direction.
+ *
+ * This function handles the logic for moving the opponent on the game map. It
+ * checks if the destination tile is walkable, if there's a fight with player,
+ * or if an action can be performed on the destination tile. If movement is
+ * allowed, it updates the map by moving the opponent to the new position and
+ * adjusting the old position to reflect the movement.
+ *
+ * The function follows these steps:
+ * 1. It calculates the opponent's new position based on the given direction.
+ * 2. It checks if the destination tile is walkable.
+ * 3. If the destination is not walkable, it checks if the opponent can fight
+ *    the player present on the destination tile.
+ * 4. If an action is possible (none for now), the function tries to trigger
+ *    that action.
+ * 5. If movement, fight, or action is successful, the opponent's position is
+ *    updated accordingly.
+ *
+ * @param _direction The direction in which the opponent wants to move (one of
+ *                   the defined movement directions, such as UP, DOWN, LEFT,
+ *                   etc.).
+ *
+ * @note The opponent's position is not tracked and detected at each iteration
+ *       by `map::ai()`. This function ensures that the opponent's position
+ *       on the map is updated based on their movement or interactions.
+ */
 constexpr void move( actor_t _who,
                      size_t _currentPosition,
                      direction_t _direction ) {
@@ -641,13 +668,17 @@ constexpr void move( actor_t _who,
 
     char& l_tile = map::g_current[ l_newPosition ];
 
-    if ( ( map::isTileWalkable( l_tile ) ) ||
+    const bool l_isWalkable = map::isTileWalkable( l_tile );
+
+    if ( ( l_isWalkable ) ||
          ( ( l_tile == static_cast< char >( actor_t::player ) ) &&
            ( player::tryFightTile( static_cast< char >( _who ) ) ) ) )
         [[likely]] {
         map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
 
-        l_tile = static_cast< char >( _who );
+        if ( l_isWalkable ) [[likely]] {
+            l_tile = static_cast< char >( _who );
+        }
     }
 }
 
@@ -692,140 +723,10 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
 }
 #endif
 
-#if 0
 FORCE_INLINE constexpr void move$follow( actor_t _who,
                                          size_t _currentPosition ) {
-    // Player / who coordinates (use signed to avoid wrap on subtraction)
-    const ssize_t l_playerPosition = ( ( ssize_t )player::g_position );
-    const ssize_t l_whoPosition = ( ( ssize_t )_currentPosition );
-
-    const ssize_t l_playerX = ( ( l_playerPosition % g_width ) );
-    const ssize_t l_playerY = ( ( l_playerPosition / g_width ) );
-    const ssize_t l_whoX = ( ( l_whoPosition % g_width ) );
-    const ssize_t l_whoY = ( ( l_whoPosition / g_width ) );
-
-    const ssize_t l_dx = ( ( l_playerX - l_whoX ) );
-    const ssize_t l_dy = ( ( l_playerY - l_whoY ) );
-
-    // Only chase when player is within 3 tiles in both axes
-    if ( ( l_dx > 2 ) || ( l_dx < -2 ) || ( l_dy > 2 ) || ( l_dy < -2 ) )
-        [[unlikely]] {
-        return;
-    }
-
-    // Decide preferred direction toward player
-    direction_t l_preferred = direction_t::stay;
-
-    if ( l_dx > 0 ) {
-        if ( l_dy > 0 ) {
-            l_preferred = direction_t::downRight;
-        } else if ( l_dy < 0 ) {
-            l_preferred = direction_t::upRight;
-        } else {
-            l_preferred = direction_t::right;
-        }
-    } else if ( l_dx < 0 ) {
-        if ( l_dy > 0 ) {
-            l_preferred = direction_t::downLeft;
-        } else if ( l_dy < 0 ) {
-            l_preferred = direction_t::upLeft;
-        } else {
-            l_preferred = direction_t::left;
-        }
-    } else { // l_dx == 0
-        if ( l_dy > 0 ) {
-            l_preferred = direction_t::down;
-        } else if ( l_dy < 0 ) {
-            l_preferred = direction_t::up;
-        } else {
-            l_preferred = direction_t::stay;
-        }
-    }
-
-    // Small helper to test whether a candidate step is allowed
-    auto can_step = [ & ]( direction_t _dir ) -> bool {
-        const ssize_t l_newPos = ( ( ssize_t )l_whoPosition +
-                                   ( ssize_t ) static_cast< ssize_t >( _dir ) );
-
-        if ( ( l_newPos < 0 ) ||
-             ( ( size_t )l_newPos >= map::g_current.size() ) ) [[unlikely]] {
-            return ( false );
-        }
-
-        const char l_tile = map::g_current[ ( size_t )l_newPos ];
-
-        // Allowed if walkable or it's the player and fighting will be handled
-        // by existing move() semantics.
-        if ( map::isTileWalkable( l_tile ) ) [[likely]] {
-            return ( true );
-        }
-
-        // allow stepping onto player (so fight can occur)
-        if ( l_tile == static_cast< char >( actor_t::player ) ) {
-            return ( player::tryFightTile( static_cast< char >( _who ) ) );
-        }
-
-        return ( false );
-    };
-
-    // Try preferred move first
-    if ( l_preferred != direction_t::stay ) {
-        if ( can_step( l_preferred ) ) [[likely]] {
-            move( _who, _currentPosition, l_preferred );
-            return;
-        }
-
-        // If diagonal blocked, try horizontal then vertical (or vice versa)
-        // Decide components
-        direction_t l_h = direction_t::stay;
-        direction_t l_v = direction_t::stay;
-
-        // horizontal component
-        if ( ( l_preferred == direction_t::downRight ) ||
-             ( l_preferred == direction_t::upRight ) ||
-             ( l_preferred == direction_t::right ) ) {
-            l_h = direction_t::right;
-        } else if ( ( l_preferred == direction_t::downLeft ) ||
-                    ( l_preferred == direction_t::upLeft ) ||
-                    ( l_preferred == direction_t::left ) ) {
-            l_h = direction_t::left;
-        }
-
-        // vertical component
-        if ( ( l_preferred == direction_t::downRight ) ||
-             ( l_preferred == direction_t::downLeft ) ||
-             ( l_preferred == direction_t::down ) ) {
-            l_v = direction_t::down;
-        } else if ( ( l_preferred == direction_t::upRight ) ||
-                    ( l_preferred == direction_t::upLeft ) ||
-                    ( l_preferred == direction_t::up ) ) {
-            l_v = direction_t::up;
-        }
-
-        // Try horizontal first (prefer closing X), then vertical
-        if ( ( l_h != direction_t::stay ) && ( can_step( l_h ) ) ) {
-            move( _who, _currentPosition, l_h );
-            return;
-        }
-
-        if ( ( l_v != direction_t::stay ) && ( can_step( l_v ) ) ) {
-            move( _who, _currentPosition, l_v );
-            return;
-        }
-
-        // blocked — don't move (stays in place)
-        return;
-    }
-
-    // If preferred was stay (same tile), do nothing
-    move$random( _who, _currentPosition );
-}
-#endif
-
-FORCE_INLINE constexpr void move$follow( actor_t _who,
-                                         size_t _currentPosition ) {
-    const ssize_t l_playerPos = ( ssize_t )player::g_position;
-    const ssize_t l_whoPos = ( ssize_t )_currentPosition;
+    const auto l_playerPos = static_cast< ssize_t >( player::g_position );
+    const auto l_whoPos = static_cast< ssize_t >( _currentPosition );
 
     const ssize_t l_playerX = ( l_playerPos % g_width );
     const ssize_t l_playerY = ( l_playerPos / g_width );
@@ -835,78 +736,99 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
     const ssize_t l_dx = ( l_playerX - l_whoX );
     const ssize_t l_dy = ( l_playerY - l_whoY );
 
-    /* Chase only if player is within 3 tiles in both axes */
-    if ( ( l_dx > 3 ) || ( l_dx < -3 ) || ( l_dy > 3 ) || ( l_dy < -3 ) )
+    // Chase only if player is within 2 tiles in both axes
+    if ( ( l_dx > 2 ) || ( l_dx < -2 ) || ( l_dy > 2 ) || ( l_dy < -2 ) ) {
+        move$random( _who, _currentPosition );
+
         return;
+    }
 
-    /* compute sign components (-1,0,1) */
-    const int l_sx = ( l_dx > 0 ) ? 1 : ( ( l_dx < 0 ) ? -1 : 0 );
-    const int l_sy = ( l_dy > 0 ) ? 1 : ( ( l_dy < 0 ) ? -1 : 0 );
+    // Compute sign components ( -1, 0, 1 )
+    const int l_sx =
+        ( ( l_dx > 0 ) ? ( 1 ) : ( ( ( l_dx < 0 ) ? ( -1 ) : ( 0 ) ) ) );
+    const int l_sy =
+        ( ( l_dy > 0 ) ? ( 1 ) : ( ( l_dy < 0 ) ? ( -1 ) : ( 0 ) ) );
 
-    if ( ( l_sx == 0 ) && ( l_sy == 0 ) )
-        return; /* already at player */
+    // Already at player
+    if ( ( l_sx == 0 ) && ( l_sy == 0 ) ) {
+        return;
+    }
 
-    /* build candidate directions: preferred then horiz then vert */
+    // Build candidate directions: preferred then horiz then vert
     direction_t l_candidates[ 3 ];
     size_t l_count = 0;
 
-    if ( ( l_sx == 1 ) && ( l_sy == 1 ) )
+    if ( ( l_sx == 1 ) && ( l_sy == 1 ) ) {
         l_candidates[ l_count++ ] = direction_t::downRight;
-    else if ( ( l_sx == 1 ) && ( l_sy == -1 ) )
-        l_candidates[ l_count++ ] = direction_t::upRight;
-    else if ( ( l_sx == -1 ) && ( l_sy == 1 ) )
-        l_candidates[ l_count++ ] = direction_t::downLeft;
-    else if ( ( l_sx == -1 ) && ( l_sy == -1 ) )
-        l_candidates[ l_count++ ] = direction_t::upLeft;
-    else if ( l_sx == 1 )
-        l_candidates[ l_count++ ] = direction_t::right;
-    else if ( l_sx == -1 )
-        l_candidates[ l_count++ ] = direction_t::left;
-    else if ( l_sy == 1 )
-        l_candidates[ l_count++ ] = direction_t::down;
-    else if ( l_sy == -1 )
-        l_candidates[ l_count++ ] = direction_t::up;
 
-    /* if diagonal was preferred, also try its horizontal and vertical
-     * components */
+    } else if ( ( l_sx == 1 ) && ( l_sy == -1 ) ) {
+        l_candidates[ l_count++ ] = direction_t::upRight;
+
+    } else if ( ( l_sx == -1 ) && ( l_sy == 1 ) ) {
+        l_candidates[ l_count++ ] = direction_t::downLeft;
+
+    } else if ( ( l_sx == -1 ) && ( l_sy == -1 ) ) {
+        l_candidates[ l_count++ ] = direction_t::upLeft;
+
+    } else if ( l_sx == 1 ) {
+        l_candidates[ l_count++ ] = direction_t::right;
+
+    } else if ( l_sx == -1 ) {
+        l_candidates[ l_count++ ] = direction_t::left;
+
+    } else if ( l_sy == 1 ) {
+        l_candidates[ l_count++ ] = direction_t::down;
+
+    } else if ( l_sy == -1 ) {
+        l_candidates[ l_count++ ] = direction_t::up;
+    }
+
+    // If diagonal was preferred, also try its horizontal and vertical
+    // components
     if ( ( l_count > 0 ) && ( ( l_candidates[ 0 ] == direction_t::downRight ) ||
                               ( l_candidates[ 0 ] == direction_t::upRight ) ||
                               ( l_candidates[ 0 ] == direction_t::downLeft ) ||
                               ( l_candidates[ 0 ] == direction_t::upLeft ) ) ) {
-        /* horizontal component */
-        if ( l_sx == 1 )
+        // Horizontal component
+        if ( l_sx == 1 ) {
             l_candidates[ l_count++ ] = direction_t::right;
-        else if ( l_sx == -1 )
-            l_candidates[ l_count++ ] = direction_t::left;
 
-        /* vertical component */
-        if ( l_sy == 1 )
+        } else if ( l_sx == -1 ) {
+            l_candidates[ l_count++ ] = direction_t::left;
+        }
+
+        // Vertical component
+        if ( l_sy == 1 ) {
             l_candidates[ l_count++ ] = direction_t::down;
-        else if ( l_sy == -1 )
+
+        } else if ( l_sy == -1 ) {
             l_candidates[ l_count++ ] = direction_t::up;
+        }
     }
 
     const size_t l_mapSize = map::g_current.size();
     const char l_playerChar = static_cast< char >( actor_t::player );
 
-    for ( size_t i = 0; i < l_count; ++i ) {
-        const direction_t l_dir = l_candidates[ i ];
-        const ssize_t l_newPos =
-            ( ( ssize_t )l_whoPos +
-              ( ssize_t ) static_cast< ssize_t >( l_dir ) );
+    for ( size_t l_i = 0; l_i < l_count; ++l_i ) {
+        const direction_t l_dir = l_candidates[ l_i ];
+        const ssize_t l_newPos = ( static_cast< ssize_t >( l_whoPos ) +
+                                   static_cast< ssize_t >( l_dir ) );
 
-        if ( ( l_newPos < 0 ) || ( ( size_t )l_newPos >= l_mapSize ) )
+        if ( ( l_newPos < 0 ) ||
+             ( static_cast< size_t >( l_newPos ) >= l_mapSize ) ) {
             continue;
+        }
 
-        const char l_tile = map::g_current[ ( size_t )l_newPos ];
+        const char l_tile = map::g_current[ static_cast< size_t >( l_newPos ) ];
 
         if ( map::isTileWalkable( l_tile ) || ( l_tile == l_playerChar ) ) {
             move( _who, _currentPosition, l_dir );
+
             return;
         }
     }
 
-    /* blocked => do nothing */
+    // Blocked - do nothing
 }
 
 /**
@@ -920,7 +842,7 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
-    constexpr size_t l_opponentsAmount = [ & ] -> size_t {
+    constexpr size_t l_opponentsAmountTotal = [ & ] consteval -> size_t {
         const std::string_view l_map = MAP;
 
         size_t l_retunValue = 0;
@@ -937,11 +859,13 @@ FORCE_INLINE constexpr void ai() {
         return ( l_retunValue );
     }();
 
-    std::array< size_t, l_opponentsAmount > l_entitiesWithAi;
+    std::array< size_t, l_opponentsAmountTotal > l_entitiesWithAiIndexesTotal;
+
+    size_t l_entitiesWithAiAmountCurrent = 0;
 
     // Collect entities with AI
     {
-        auto l_iterator = l_entitiesWithAi.begin();
+        auto l_iterator = std::ranges::begin( l_entitiesWithAiIndexesTotal );
 
         for ( const auto [ _index, _tile ] :
               map::g_current | std::views::enumerate ) {
@@ -956,6 +880,8 @@ FORCE_INLINE constexpr void ai() {
 
                     std::advance( l_iterator, 1 );
 
+                    l_entitiesWithAiAmountCurrent++;
+
                     break;
                 }
 
@@ -965,16 +891,15 @@ FORCE_INLINE constexpr void ai() {
         }
     }
 
-    // Process AI
-    for ( const size_t _index : l_entitiesWithAi ) {
-        // FIX: Reduntant
-        if ( _index >= map::g_current.size() ) {
-            continue;
-        }
+    const auto l_entitiesWithAiIndexesCurrent =
+        std::span( std::ranges::begin( l_entitiesWithAiIndexesTotal ),
+                   l_entitiesWithAiAmountCurrent );
 
+    // Process AI
+    for ( const size_t _index : l_entitiesWithAiIndexesCurrent ) {
         const auto l_tile = static_cast< actor_t >( map::g_current[ _index ] );
 
-        auto l_move = [ & ]( auto _moveFunction ) -> void {
+        auto l_move = [ & ]( auto _moveFunction ) constexpr -> void {
             _moveFunction( l_tile, _index );
         };
 
