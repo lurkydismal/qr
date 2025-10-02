@@ -12,14 +12,6 @@
 #define NO_RETURN [[gnu::noreturn]]
 #define EXPORT extern "C"
 
-template < typename SymbolTypes, SymbolTypes... _symbols >
-    requires( ( std::convertible_to< SymbolTypes, char > ) &&
-              ( sizeof...( _symbols ) > 0 ) )
-[[nodiscard]] consteval auto operator""_array() {
-    return (
-        std::array< char, ( sizeof...( _symbols ) ) >{ char{ _symbols }... } );
-}
-
 namespace stdfunc {
 
 [[nodiscard]] FORCE_INLINE constexpr auto lengthOfNumber( size_t _number )
