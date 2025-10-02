@@ -28,12 +28,7 @@ constexpr size_t g_lCompilationTimeAsSeed =
 }
 
 [[nodiscard]] consteval auto number( uint32_t _seed ) -> uint32_t {
-    // TODO: Improve
-    const std::array< uint8_t, ( sizeof( uint32_t ) / sizeof( uint8_t ) ) >
-        l_data{ static_cast< uint8_t >( ( _seed >> 0 ) & 0xFF ),
-                static_cast< uint8_t >( ( _seed >> 8 ) & 0xFF ),
-                static_cast< uint8_t >( ( _seed >> 16 ) & 0xFF ),
-                static_cast< uint8_t >( ( _seed >> 24 ) & 0xFF ) };
+    const auto l_data = std::bit_cast< std::array< uint8_t, 4 > >( _seed );
 
     _seed = generateHash( l_data );
 
