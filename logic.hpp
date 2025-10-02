@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <ranges>
 
 #include "io.hpp"
 #include "random.hpp"
@@ -69,6 +70,25 @@ using actor_t = enum class actor : uint8_t {
 // global map is used for navigating and interacting with the game world during
 // gameplay.
 std::array g_current = std::to_array( MAP );
+
+constexpr size_t g_opponentsAmountTotal = [] consteval -> size_t {
+    constexpr std::string_view l_map = MAP;
+
+    size_t l_retunValue = 0;
+
+    constexpr std::array l_entitiesWithAi{
+        actor_t::monster,
+        actor_t::monsterWithKey,
+        actor_t::guardian,
+    };
+
+    for ( const actor_t _actor : l_entitiesWithAi ) {
+        l_retunValue +=
+            std::ranges::count( l_map, static_cast< char >( _actor ) );
+    }
+
+    return ( l_retunValue );
+}();
 
 // g_empty is a copy of g_current that is used to represent the empty state
 // of the map, where opponents and actionable tiles are replaced with walkable
@@ -511,62 +531,6 @@ FORCE_INLINE void init() {
         direction_t::upLeft,
     };
 
-    constexpr size_t l_opponentsAmountTotal = [ & ] consteval -> size_t {
-        constexpr std::string_view l_map = MAP;
-
-        size_t l_retunValue = 0;
-
-        constexpr std::array l_tilesToReplace{
-            actor_t::monster,
-            actor_t::monsterWithKey,
-            actor_t::guardian,
-        };
-
-        for ( const actor_t _actor : l_tilesToReplace ) {
-            l_retunValue +=
-                std::ranges::count( l_map, static_cast< char >( _actor ) );
-        }
-
-        return ( l_retunValue );
-    }();
-
-    static constexpr auto l_replacement = [ & ] consteval -> auto {
-        decltype( g_empty ) l_returnValue{};
-
-        const std::string_view l_emptyMap = MAP;
-
-        for ( const auto [ _index, _tile ] :
-              l_emptyMap | std::views::enumerate ) {
-            l_returnValue[ _index ] = _tile;
-
-            // Replace non-walkable, non-decorative tiles with walkable ones
-            if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
-                // Try to find a walkable replacement tile by checking the
-                // adjacent tiles
-                for ( const direction_t _direction : l_allDirections ) {
-                    const auto l_replacement =
-                        l_emptyMap[ _index +
-                                    static_cast< char >( _direction ) ];
-
-                    if ( isTileWalkable( l_replacement ) ) [[likely]] {
-#if 0
-                        _tile = static_cast< char >( l_replacement );
-#endif
-                        l_returnValue[ _index ] =
-                            static_cast< char >( l_replacement );
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        return ( l_returnValue );
-    }();
-
-    g_empty = l_replacement;
-
-#if 0
     // Generate empty map
     for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
         // Replace non-walkable, non-decorative tiles with walkable ones
@@ -585,41 +549,61 @@ FORCE_INLINE void init() {
             }
         }
     }
-#endif
+
+    // TODO :Improve by 8 bytes
+    constexpr std::array< std::pair< size_t, actor_t >, g_opponentsAmountTotal >
+        l_opponents = [ & ] consteval -> auto {
+        std::remove_cvref_t< decltype( l_opponents ) > l_returnValue{};
+
+        auto l_iterator = l_returnValue.begin();
+
+        const std::string_view l_map = MAP;
+
+        for ( const auto [ _index, _tile ] :
+              l_map | std::views::enumerate |
+                  std::views::filter( []( const auto& _opponent ) -> bool {
+                      auto [ _, _tile ] = _opponent;
+
+                      return ( ( _tile == static_cast< char >(
+                                              actor_t::monsterWithKey ) ) ||
+                               ( _tile ==
+                                 static_cast< char >( actor_t::monster ) ) );
+                  } ) ) {
+            auto&& [ l_index, l_opponent ] = *l_iterator;
+
+            l_index = _index;
+
+            // If the tile represents a monster with a key, replace it with
+            // random key monster
+            if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
+                [[unlikely]] {
+                constexpr std::array l_keyMonsters{
+                    actor_t::keyMonster,
+                };
+
+                l_opponent = l_keyMonsters[ 0 ];
+            }
+
+            // If the tile represents a monster, replace it with random
+            // monster
+            if ( static_cast< char >( actor_t::monster ) ) [[unlikely]] {
+                constexpr std::array l_monsters{
+                    actor_t::followMonster,
+                    actor_t::randomMonster,
+                };
+
+                l_opponent = l_monsters[ 0 ];
+            }
+
+            std::advance( l_iterator, 1 );
+        }
+
+        return ( l_returnValue );
+    }();
 
     // Generate level
-    for ( char& _tile : map::g_current ) {
-        // If the tile represents a monster with a key, replace it with
-        // random key monster
-        switch ( _tile ) {
-            case ( static_cast< char >( actor_t::monsterWithKey ) ):
-                [[unlikely]] {
-                    constexpr std::array l_keyMonsters{
-                        actor_t::keyMonster,
-                    };
-
-                    _tile =
-                        static_cast< char >( random::value( l_keyMonsters ) );
-
-                    break;
-                }
-
-            // If the tile represents a monster, replace it with random monster
-            case ( static_cast< char >( actor_t::monster ) ):
-                [[unlikely]] {
-                    static constexpr std::array l_monsters{
-                        actor_t::followMonster,
-                        actor_t::randomMonster,
-                    };
-
-                    _tile = static_cast< char >( random::value( l_monsters ) );
-
-                    break;
-                }
-
-            default:
-                [[unlikely]] {}
-        }
+    for ( const auto [ _index, _opponent ] : l_opponents ) {
+        g_current[ _index ] = static_cast< char >( _opponent );
     }
 }
 
@@ -912,32 +896,13 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  * according to predefined behavior.
  */
 FORCE_INLINE constexpr void ai() {
-    constexpr size_t l_opponentsAmountTotal = [ & ] consteval -> size_t {
-        constexpr std::string_view l_map = MAP;
-
-        size_t l_retunValue = 0;
-
-        constexpr std::array l_entitiesWithAi{
-            actor_t::monster,
-            actor_t::monsterWithKey,
-            actor_t::guardian,
-        };
-
-        for ( const actor_t _actor : l_entitiesWithAi ) {
-            l_retunValue +=
-                std::ranges::count( l_map, static_cast< char >( _actor ) );
-        }
-
-        return ( l_retunValue );
-    }();
-
-    std::array< size_t, l_opponentsAmountTotal > l_entitiesWithAiIndexesTotal;
+    std::array< size_t, g_opponentsAmountTotal > l_entitiesWithAiIndexesTotal;
 
     size_t l_entitiesWithAiAmountCurrent = 0;
 
     // Collect entities with AI
     {
-        auto l_iterator = std::ranges::begin( l_entitiesWithAiIndexesTotal );
+        auto l_iterator = l_entitiesWithAiIndexesTotal.begin();
 
         for ( const auto [ _index, _tile ] :
               map::g_current | std::views::enumerate ) {
@@ -963,9 +928,8 @@ FORCE_INLINE constexpr void ai() {
         }
     }
 
-    const auto l_entitiesWithAiIndexesCurrent =
-        std::span( std::ranges::begin( l_entitiesWithAiIndexesTotal ),
-                   l_entitiesWithAiAmountCurrent );
+    const auto l_entitiesWithAiIndexesCurrent = std::span(
+        l_entitiesWithAiIndexesTotal.begin(), l_entitiesWithAiAmountCurrent );
 
     // Process AI
     for ( const size_t _index : l_entitiesWithAiIndexesCurrent ) {
