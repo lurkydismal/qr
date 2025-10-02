@@ -571,7 +571,7 @@ FORCE_INLINE void init() {
                     actor_t::keyMonster,
                 };
 
-                *l_iterator = l_keyMonsters[ 0 ];
+                *l_iterator = random::value( l_keyMonsters, _index );
             }
 
             // If the tile represents a monster, replace it with random
@@ -582,7 +582,7 @@ FORCE_INLINE void init() {
                     actor_t::randomMonster,
                 };
 
-                *l_iterator = l_monsters[ 0 ];
+                *l_iterator = random::value( l_monsters, _index );
             }
 
             std::advance( l_iterator, 1 );
@@ -736,7 +736,7 @@ constexpr void move( actor_t _who,
 FORCE_INLINE constexpr void move$random( actor_t _who,
                                          size_t _currentPosition ) {
     // Define all possible movement directions, including staying in place
-    static std::array l_allDirections{
+    static constexpr std::array l_allDirections{
         direction_t::down,     direction_t::left,   direction_t::right,
         direction_t::upRight,  direction_t::up,     direction_t::downRight,
         direction_t::downLeft, direction_t::upLeft, direction_t::stay,
