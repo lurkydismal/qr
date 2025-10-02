@@ -110,27 +110,6 @@ using direction_t = enum class direction : int8_t {
     upLeft = -( g_width + 1 ),
 };
 
-// map::init():
-// Define directions for potential tile replacements
-// First 4 will empty the whole map
-// map::move$random():
-// Define all possible movement directions, including staying in place
-static constexpr std::array g_allDirections{
-    direction_t::down,
-    direction_t::left,
-    direction_t::right,
-    direction_t::upRight,
-
-    // Extra, clockwise
-    direction_t::up,
-    direction_t::downRight,
-    direction_t::downLeft,
-    direction_t::upLeft,
-
-    // Used in move$random
-    direction_t::stay,
-};
-
 [[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
     -> bool {
     return ( ( _tile != static_cast< char >( tile_t::wallHorizontal ) ) &&
@@ -531,13 +510,28 @@ namespace map {
 FORCE_INLINE void init() {
     map::g_empty = map::g_current;
 
+    // Define directions for potential tile replacements
+    // First 4 will empty the whole map
+    static constexpr std::array l_allDirections{
+        direction_t::down,
+        direction_t::left,
+        direction_t::right,
+        direction_t::upRight,
+
+        // Extra, clockwise
+        direction_t::up,
+        direction_t::downRight,
+        direction_t::downLeft,
+        direction_t::upLeft,
+    };
+
     // Generate empty map
     for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
         // Replace non-walkable, non-decorative tiles with walkable ones
         if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
             // Try to find a walkable replacement tile by checking the
             // adjacent tiles
-            for ( const direction_t _direction : g_allDirections ) {
+            for ( const direction_t _direction : l_allDirections ) {
                 const auto l_replacement =
                     g_empty[ _index + static_cast< char >( _direction ) ];
 
@@ -741,7 +735,14 @@ constexpr void move( actor_t _who,
 
 FORCE_INLINE constexpr void move$random( actor_t _who,
                                          size_t _currentPosition ) {
-    move( _who, _currentPosition, random::value( g_allDirections ) );
+    // Define all possible movement directions, including staying in place
+    static constexpr std::array l_allDirections{
+        direction_t::down,     direction_t::left,   direction_t::right,
+        direction_t::upRight,  direction_t::up,     direction_t::downRight,
+        direction_t::downLeft, direction_t::upLeft, direction_t::stay,
+    };
+
+    move( _who, _currentPosition, random::value( l_allDirections ) );
 }
 
 // TODO: Implement movement to follow the player if close
