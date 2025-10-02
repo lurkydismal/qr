@@ -74,7 +74,7 @@ std::array g_current = std::to_array( MAP );
 // of the map, where opponents and actionable tiles are replaced with walkable
 // ones. This map is used during certain game logic operations to track the
 // initial state of the map.
-std::array< char, g_current.size() > g_empty{};
+decltype( g_current ) g_empty{};
 
 constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
 
@@ -455,7 +455,7 @@ namespace map {
              ( _tile != ' ' ) && ( _tile != '\n' ) && ( _tile != '0' ) );
 }
 
-[[nodiscard]] constexpr auto isTileWalkable( char _tile ) -> bool {
+[[nodiscard]] FORCE_INLINE constexpr auto isTileWalkable( char _tile ) -> bool {
     const auto l_tile = static_cast< tile_t >( _tile );
 
     return ( ( l_tile == tile_t::floor ) || ( l_tile == tile_t::bridge ) );
@@ -511,6 +511,62 @@ FORCE_INLINE void init() {
         direction_t::upLeft,
     };
 
+    constexpr size_t l_opponentsAmountTotal = [ & ] consteval -> size_t {
+        constexpr std::string_view l_map = MAP;
+
+        size_t l_retunValue = 0;
+
+        constexpr std::array l_tilesToReplace{
+            actor_t::monster,
+            actor_t::monsterWithKey,
+            actor_t::guardian,
+        };
+
+        for ( const actor_t _actor : l_tilesToReplace ) {
+            l_retunValue +=
+                std::ranges::count( l_map, static_cast< char >( _actor ) );
+        }
+
+        return ( l_retunValue );
+    }();
+
+    static constexpr auto l_replacement = [ & ] consteval -> auto {
+        decltype( g_empty ) l_returnValue{};
+
+        const std::string_view l_emptyMap = MAP;
+
+        for ( const auto [ _index, _tile ] :
+              l_emptyMap | std::views::enumerate ) {
+            l_returnValue[ _index ] = _tile;
+
+            // Replace non-walkable, non-decorative tiles with walkable ones
+            if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
+                // Try to find a walkable replacement tile by checking the
+                // adjacent tiles
+                for ( const direction_t _direction : l_allDirections ) {
+                    const auto l_replacement =
+                        l_emptyMap[ _index +
+                                    static_cast< char >( _direction ) ];
+
+                    if ( isTileWalkable( l_replacement ) ) [[likely]] {
+#if 0
+                        _tile = static_cast< char >( l_replacement );
+#endif
+                        l_returnValue[ _index ] =
+                            static_cast< char >( l_replacement );
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return ( l_returnValue );
+    }();
+
+    g_empty = l_replacement;
+
+#if 0
     // Generate empty map
     for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
         // Replace non-walkable, non-decorative tiles with walkable ones
@@ -529,6 +585,7 @@ FORCE_INLINE void init() {
             }
         }
     }
+#endif
 
     // Generate level
     for ( char& _tile : map::g_current ) {
@@ -856,7 +913,7 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
  */
 FORCE_INLINE constexpr void ai() {
     constexpr size_t l_opponentsAmountTotal = [ & ] consteval -> size_t {
-        const std::string_view l_map = MAP;
+        constexpr std::string_view l_map = MAP;
 
         size_t l_retunValue = 0;
 
