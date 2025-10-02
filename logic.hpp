@@ -507,7 +507,6 @@ namespace map {
  * content.
  *       - `player::osition`: The player's starting position on the map.
  */
-// TODO: Improve
 FORCE_INLINE void init() {
     map::g_empty = map::g_current;
 
@@ -545,9 +544,8 @@ FORCE_INLINE void init() {
         }
     }
 
-    // TODO :Improve by 8 bytes
-    constexpr std::array< std::pair< size_t, actor_t >, g_opponentsAmountTotal >
-        l_opponents = [ & ] consteval -> auto {
+    constexpr std::array< actor_t, g_opponentsAmountTotal > l_opponents =
+        [ & ] consteval -> auto {
         std::remove_cvref_t< decltype( l_opponents ) > l_returnValue{};
 
         auto l_iterator = l_returnValue.begin();
@@ -556,18 +554,15 @@ FORCE_INLINE void init() {
 
         for ( const auto [ _index, _tile ] :
               l_map | std::views::enumerate |
-                  std::views::filter( []( const auto& _opponent ) -> bool {
-                      auto [ _, _tile ] = _opponent;
+                  std::views::filter( []( const auto& _cell ) -> bool {
+                      auto [ _index, _tile ] = _cell;
 
                       return ( ( _tile == static_cast< char >(
                                               actor_t::monsterWithKey ) ) ||
                                ( _tile ==
                                  static_cast< char >( actor_t::monster ) ) );
-                  } ) ) {
-            auto& [ l_index, l_opponent ] = *l_iterator;
-
-            l_index = _index;
-
+                  } ) |
+                  std::views::common ) {
             // If the tile represents a monster with a key, replace it with
             // random key monster
             if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
@@ -576,7 +571,7 @@ FORCE_INLINE void init() {
                     actor_t::keyMonster,
                 };
 
-                l_opponent = l_keyMonsters[ 0 ];
+                *l_iterator = l_keyMonsters[ 0 ];
             }
 
             // If the tile represents a monster, replace it with random
@@ -587,7 +582,7 @@ FORCE_INLINE void init() {
                     actor_t::randomMonster,
                 };
 
-                l_opponent = l_monsters[ 0 ];
+                *l_iterator = l_monsters[ 0 ];
             }
 
             std::advance( l_iterator, 1 );
@@ -597,8 +592,15 @@ FORCE_INLINE void init() {
     }();
 
     // Generate level
-    for ( const auto [ _index, _opponent ] : l_opponents ) {
-        g_current[ _index ] = static_cast< char >( _opponent );
+    auto l_iterator = l_opponents.begin();
+
+    for ( char& _tile : g_current ) {
+        if ( ( _tile == static_cast< char >( actor_t::monsterWithKey ) ) ||
+             ( _tile == static_cast< char >( actor_t::monster ) ) ) {
+            _tile = static_cast< char >( *l_iterator );
+
+            std::advance( l_iterator, 1 );
+        }
     }
 }
 
