@@ -70,7 +70,7 @@ See https://llvm.org/LICENSE.txt for license information.
 * ~~2 players co-operative.~~
 * Character leveling.
 * Different type items.
-* ~~Different type opponents.~~
+* Different type opponents.
 * Map recognizing on start-up.
 
 ## Screenshots
@@ -87,13 +87,9 @@ Project is: _in progress_.
 
 ## Room for Improvement
 
-Room for improvement:
-
-* Reduce size.
-
 To do:
 
-* More opponent types.
+* 2 players cooperative.
 * Random map generation.
 
 ## Acknowledgements
