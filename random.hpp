@@ -7,7 +7,7 @@
 
 namespace random {
 
-constexpr size_t g_lCompilationTimeAsSeed =
+constexpr size_t g_compilationTimeAsSeed =
     ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 3 ] + __TIME__[ 4 ] +
       __TIME__[ 6 ] + __TIME__[ 7 ] );
 
@@ -40,7 +40,7 @@ constexpr size_t g_lCompilationTimeAsSeed =
 }
 
 [[nodiscard]] auto number() -> uint32_t {
-    static uint32_t l_seed = g_lCompilationTimeAsSeed;
+    static uint32_t l_seed = g_compilationTimeAsSeed;
 
     l_seed ^= ( l_seed << 13 );
     l_seed ^= ( l_seed >> 17 );

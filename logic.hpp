@@ -567,22 +567,21 @@ FORCE_INLINE void init() {
             // random key monster
             if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
                 [[unlikely]] {
-                constexpr std::array l_keyMonsters{
-                    actor_t::keyMonster,
-                };
+                *l_iterator = actor_t::keyMonster;
 
-                *l_iterator = random::value( l_keyMonsters, _index );
-            }
+            } else {
+                // If the tile represents a monster, replace it with random
+                // monster
+                if ( _tile == static_cast< char >( actor_t::monster ) )
+                    [[unlikely]] {
+                    constexpr std::array l_monsters{
+                        actor_t::followMonster,
+                        actor_t::randomMonster,
+                    };
 
-            // If the tile represents a monster, replace it with random
-            // monster
-            if ( static_cast< char >( actor_t::monster ) ) [[unlikely]] {
-                constexpr std::array l_monsters{
-                    actor_t::followMonster,
-                    actor_t::randomMonster,
-                };
-
-                *l_iterator = random::value( l_monsters, _index );
+                    *l_iterator = random::value(
+                        l_monsters, _index + random::g_compilationTimeAsSeed );
+                }
             }
 
             std::advance( l_iterator, 1 );
