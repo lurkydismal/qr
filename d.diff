@@ -1,0 +1,11 @@
+-74 23                	je     0x200278
++75 09                	jne    0x200260
++45                   	inc    ebp
++eb ca                	jmp    0x200224
++89 2d 98 0c 20 00    	mov    DWORD PTR ds:0x200c98,ebp
+ 00
+-eb e1                	jmp    0x200257
+-88 18                	mov    BYTE PTR [eax],bl
+-40                   	inc    eax
+-45                   	inc    ebp
+-8d 7c 24 18          	lea    edi,[esp+0x18]

@@ -1,0 +1,1020 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <ranges>
+
+#include "io.hpp"
+#include "random.hpp"
+#include "render.hpp"
+#include "stdfunc.hpp"
+
+namespace logic {
+
+namespace map {
+
+using tile_t = enum class tile : uint8_t {
+    // Walkable
+    floor = '.',
+    bridge = '#',
+
+    // Not walkable
+    wallHorizontal = '-',
+    wallVertical = '|',
+    wallCross = '+',
+};
+
+using actionable_t = enum class actionable : uint8_t {
+    chest = 'C',
+    treasure = 'T',
+    doorLeft = '}',
+    doorRight = '{',
+    doorMiddle = '/',
+    ladderLeft = '>',
+    ladderRight = '<',
+};
+
+using actor_t = enum class actor : uint8_t {
+    player = '@',
+    guardian = 'G',
+    followMonster = 'F',
+    randomMonster = 'R',
+    keyMonster = 'O',
+
+    // Used during map generation
+    monster = 'M',
+    monsterWithKey = 'W',
+};
+
+#define MAP                                                          \
+    "+------+     +-------+   M#                  K####T         \n" \
+    "|....K.|  ###}.......|    #             +----/----+        C\n" \
+    "|.@.....###  |.......|    #             |.........|        #\n" \
+    "|......|  #  |........###### ###########}.........|     W##M\n" \
+    "|......|     |.M.....|      K           |.........|     #   \n" \
+    "+------+     |...C...|            +-----+C........|     #   \n" \
+    "|.G....|     +-------+            |.....C.M.......{#####    \n" \
+    "|......+-----+                    |..........M....|         \n" \
+    ">............}K###################}....W..........|         \n" \
+    "+------------+                    +---------------+         \n"
+
+// g_current represents the current state of the game map, with each character
+// in the array corresponding to a specific tile in the game world. Each tile
+// can be a wall, floor, decoration, player, monster, chest, or other items.
+// This map is essential for game mechanics such as movement, actions, and
+// encounters.
+//
+// The map is initialized as a constant string with a detailed arrangement of
+// characters representing different elements in the game environment. This
+// global map is used for navigating and interacting with the game world during
+// gameplay.
+std::array g_current = std::to_array( MAP );
+
+constexpr size_t g_opponentsAmountTotal = [] consteval -> size_t {
+    constexpr std::string_view l_map = MAP;
+
+    size_t l_returnValue = 0;
+
+    constexpr std::array l_entitiesWithAi{
+        actor_t::monster,
+        actor_t::monsterWithKey,
+        actor_t::guardian,
+    };
+
+    for ( const actor_t _actor : l_entitiesWithAi ) {
+        l_returnValue +=
+            std::ranges::count( l_map, static_cast< char >( _actor ) );
+    }
+
+    return ( l_returnValue );
+}();
+
+// g_empty is a copy of g_current that is used to represent the empty state
+// of the map, where opponents and actionable tiles are replaced with walkable
+// ones. This map is used during certain game logic operations to track the
+// initial state of the map.
+decltype( g_current ) g_empty{};
+
+constexpr ssize_t g_width = ( std::string_view{ MAP }.find( '\n' ) + 1 );
+
+using direction_t = enum class direction : int8_t {
+    stay = 0,
+    up = -( g_width ),
+    upRight = -( g_width - 1 ),
+    right = 1,
+    downRight = ( g_width + 1 ),
+    down = g_width,
+    downLeft = ( g_width - 1 ),
+    left = -1,
+    upLeft = -( g_width + 1 ),
+};
+
+[[nodiscard]] FORCE_INLINE constexpr auto isTileNotDecoration( char _tile )
+    -> bool {
+    return ( ( _tile != static_cast< char >( tile_t::wallHorizontal ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallVertical ) ) &&
+             ( _tile != static_cast< char >( tile_t::wallCross ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderLeft ) ) &&
+             ( _tile != static_cast< char >( actionable_t::ladderRight ) ) &&
+             ( _tile != ' ' ) && ( _tile != '\n' ) && ( _tile != '0' ) );
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto isTileWalkable( char _tile ) -> bool {
+    const auto l_tile = static_cast< tile_t >( _tile );
+
+    return ( ( l_tile == tile_t::floor ) || ( l_tile == tile_t::bridge ) );
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool;
+
+} // namespace map
+
+#define HEALTH_TEXT "\nHP:"
+#define EXPERIENCE_TEXT "\nEXP:"
+#define ITEMS_TEXT "\nITEMS:"
+
+#define HEALTH_POINTS_TEXT_PLACEHOLDER "000"
+#define EXPERIENCE_POINTS_TEXT_PLACEHOLDER "000"
+#define ITEMS_TEXT_PLACEHOLDER "E E E E E"
+
+namespace monster {
+
+constexpr size_t g_maxHealth = 5;
+constexpr size_t g_startHealth = g_maxHealth;
+
+namespace stats::health {
+
+uint8_t g_amount = g_startHealth;
+
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto fight() -> bool;
+
+} // namespace monster
+
+namespace guardian {
+
+constexpr size_t g_maxHealth = 20;
+constexpr size_t g_startHealth = g_maxHealth;
+
+namespace stats::health {
+
+uint8_t g_amount = g_startHealth;
+
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto fight() -> bool;
+
+} // namespace guardian
+
+namespace player {
+
+namespace lose {
+
+bool g_didLose = false;
+
+FORCE_INLINE constexpr void set() {
+    g_didLose = true;
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto get() -> bool {
+    return ( g_didLose );
+}
+
+} // namespace lose
+
+namespace inventory {
+
+constexpr size_t g_maxCapacity = 5;
+
+using item_t = enum class item : uint8_t {
+    empty = 'E',
+    key = 'K',
+    health = 'H',
+    attack = 'A',
+    defense = 'D',
+};
+
+std::array g_items{
+    item_t::empty, item_t::empty, item_t::empty, item_t::empty, item_t::empty,
+};
+
+constexpr void add( item_t _item ) {
+    for ( auto& _slot : g_items ) {
+        if ( _slot == item_t::empty ) {
+            _slot = _item;
+
+            return;
+        }
+    }
+
+    g_items[ 0 ] = _item;
+}
+
+[[nodiscard]] constexpr auto use( item_t _item ) -> bool {
+    for ( auto& _slot : g_items ) {
+        if ( _slot == _item ) {
+            _slot = item_t::empty;
+
+            return ( true );
+        }
+    }
+
+    return ( false );
+}
+
+} // namespace inventory
+
+namespace stats {
+
+namespace health {
+
+constexpr size_t g_startHealthPoints = 10;
+constexpr size_t g_maxHealthPoints = 40;
+
+uint8_t g_amount = g_startHealthPoints;
+
+} // namespace health
+
+namespace experience {
+
+constexpr size_t g_startExperiencePoints = 0;
+constexpr size_t g_maxExperiencePoints = 100;
+
+uint8_t g_amount = g_startExperiencePoints;
+
+constexpr size_t g_fromMonster = 5;
+constexpr size_t g_fromGuardian = 10;
+constexpr size_t g_fromTreasure = 20;
+
+constexpr size_t g_forDamage = 10;
+constexpr size_t g_forDamangeGuardian = 20;
+
+[[nodiscard]] constexpr auto get() -> uint8_t {
+    return ( g_amount );
+}
+
+NOINLINE constexpr void add( size_t _amount ) {
+    g_amount += _amount;
+
+    if ( g_amount > g_maxExperiencePoints ) {
+        g_amount = g_maxExperiencePoints;
+    }
+}
+
+} // namespace experience
+
+} // namespace stats
+
+size_t g_position = ( std::string_view{ MAP }.find(
+    static_cast< char >( map::actor_t::player ) ) );
+
+[[nodiscard]] constexpr auto fight( map::actor_t _who ) -> bool {
+    bool l_returnValue = false;
+
+    stats::health::g_amount -= 1;
+
+    if ( _who == map::actor_t::guardian ) {
+        l_returnValue = guardian::fight();
+
+    } else {
+        l_returnValue = monster::fight();
+
+        if ( ( l_returnValue ) && ( _who == map::actor_t::keyMonster ) )
+            [[unlikely]] {
+            inventory::add( inventory::item_t::key );
+        }
+    }
+
+    // Has player died
+    if ( ( !stats::health::g_amount ) ||
+         ( stats::health::g_amount > stats::health::g_maxHealthPoints ) ) {
+        if ( inventory::use( inventory::item_t::health ) ) [[unlikely]] {
+            // Full health points restoration
+            stats::health::g_amount = stats::health::g_maxHealthPoints;
+
+            l_returnValue = true;
+
+        } else {
+            lose::set();
+
+            l_returnValue = false;
+        }
+    }
+
+    return ( l_returnValue );
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto tryFightTile( char _tile ) -> bool {
+    // Define the list of possible opponents represented by specific actor
+    // types
+    static constexpr std::array l_opponents{
+        map::actor_t::followMonster,
+        map::actor_t::randomMonster,
+        map::actor_t::keyMonster,
+        map::actor_t::guardian,
+    };
+
+    for ( const auto _opponent : l_opponents ) {
+        if ( static_cast< char >( _opponent ) == _tile ) {
+            return ( player::fight( ( map::actor_t )_tile ) );
+        }
+    }
+
+    // If no opponent is found, return false (no fight occurs)
+    return ( false );
+}
+
+/**
+ * @brief Moves the player on the map in a specified direction.
+ *
+ * This function handles the logic for moving the player on the game map. It
+ * checks if the destination tile is walkable, if there's a fight with an
+ * opponent, or if an action can be performed on the destination tile. If
+ * movement is allowed, it updates the map by moving the player to the new
+ * position and adjusting the old position to reflect the movement.
+ *
+ * The function follows these steps:
+ * 1. It calculates the player's new position based on the given direction.
+ * 2. It checks if the destination tile is walkable.
+ * 3. If the destination is not walkable, it checks if the player can fight the
+ *    opponent present on the destination tile.
+ * 4. If an action is possible (such as interacting with a chest or door), the
+ *    function tries to trigger that action.
+ * 5. If movement, fight, or action is successful, the player's position is
+ *    updated accordingly.
+ *
+ * @param _direction The direction in which the player wants to move (one of the
+ *                   defined movement directions, such as UP, DOWN, LEFT, etc.).
+ *
+ * @note The player's position is tracked globally by `player::position`. This
+ *       function ensures that the player's position on the map is updated based
+ *       on their movement or interactions.
+ */
+FORCE_INLINE constexpr void move( map::direction_t _direction ) {
+    const size_t l_oldPosition = player::g_position;
+    const size_t l_newPosition =
+        ( player::g_position + static_cast< size_t >( _direction ) );
+
+    char& l_tile = map::g_current[ l_newPosition ];
+
+    if ( map::isTileWalkable( l_tile ) || tryFightTile( l_tile ) ||
+         map::tryActionTile( l_tile ) ) [[likely]] {
+        map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
+
+        l_tile = static_cast< char >( map::actor_t::player );
+
+        player::g_position = l_newPosition;
+    }
+}
+
+namespace render {
+
+// Stats
+// HP:100
+// EXP:100
+// ITEMS:E E E E E
+FORCE_INLINE void stats() {
+#define FULL_HEALTH_TEXT HEALTH_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
+#define FULL_EXPERIENCE_TEXT EXPERIENCE_TEXT EXPERIENCE_POINTS_TEXT_PLACEHOLDER
+#define FULL_ITEMS_TEXT ITEMS_TEXT ITEMS_TEXT_PLACEHOLDER
+
+    // FIX: Can save 8 bytes here
+    std::array l_buffer =
+        std::to_array( FULL_HEALTH_TEXT FULL_EXPERIENCE_TEXT FULL_ITEMS_TEXT );
+
+    auto l_cursorPosition = l_buffer.begin();
+
+    // Render points into buffer
+    {
+        // Health
+        ::render::points( l_cursorPosition, stats::health::g_amount,
+                          sizeof( FULL_HEALTH_TEXT ) );
+
+        // FIX: Convertion to int
+        std::advance( l_cursorPosition, 1 );
+
+        // Experience
+        ::render::points( l_cursorPosition, stats::experience::get(),
+                          sizeof( FULL_EXPERIENCE_TEXT ) );
+
+        std::advance( l_cursorPosition, -1 );
+    }
+
+    // Items
+    {
+        std::advance( l_cursorPosition, ( sizeof( FULL_ITEMS_TEXT ) -
+                                          sizeof( ITEMS_TEXT_PLACEHOLDER ) ) );
+
+        for ( auto& _item : inventory::g_items ) {
+            // Move to the next character
+            // Skip delimiter
+            std::advance( l_cursorPosition, 2 );
+
+            *l_cursorPosition = static_cast< char >( _item );
+        }
+    }
+
+    io::print( l_buffer );
+
+#undef FULL_ITEMS_TEXT
+#undef FULL_EXPERIENCE_TEXT
+#undef FULL_HEALTH_TEXT
+}
+
+} // namespace render
+
+} // namespace player
+
+[[nodiscard]] constexpr auto monster::fight() -> bool {
+    const size_t l_damageAmount =
+        ( 1 + ( player::stats::experience::get() /
+                player::stats::experience::g_forDamage ) );
+    stats::health::g_amount -= l_damageAmount;
+
+    if ( ( !stats::health::g_amount ) ||
+         ( stats::health::g_amount > g_maxHealth ) ) {
+        stats::health::g_amount = g_maxHealth;
+
+        player::stats::experience::add(
+            player::stats::experience::g_fromMonster );
+
+        return ( true );
+    }
+
+    return ( false );
+}
+
+[[nodiscard]] constexpr auto guardian::fight() -> bool {
+    size_t l_damageAmount =
+        ( 1 + ( player::stats::experience::get() /
+                player::stats::experience::g_forDamangeGuardian ) );
+
+    if ( player::inventory::use( player::inventory::item_t::attack ) ) {
+        l_damageAmount += 5;
+    }
+
+    if ( !player::inventory::use( player::inventory::item_t::defense ) ) {
+        player::stats::health::g_amount -= 4;
+    }
+
+    stats::health::g_amount -= l_damageAmount;
+
+    if ( ( !stats::health::g_amount ) ||
+         ( stats::health::g_amount > g_maxHealth ) ) [[unlikely]] {
+        stats::health::g_amount = g_maxHealth;
+
+        player::stats::experience::add(
+            player::stats::experience::g_fromGuardian );
+
+        return ( true );
+    }
+
+    return ( false );
+}
+
+namespace map {
+
+// Positions
+/**
+ * @brief Initializes the game map.
+ *
+ * This function initializes the game map by copying the original map to an
+ * empty map, ensuring that all opponents and actionable tiles are replaced with
+ * adjacent walkable tiles, and the player's starting position is identified. It
+ * also places monsters in the game world.
+ *
+ * @details
+ * The function performs the following steps:
+ * 1. Copies the current map (`g_current`) to a new empty map (`g_empty`).
+ * 2. Identifies the player's starting position by searching for the tile marked
+ * as `PLAYER`.
+ * 3. Ensures that all opponents and actionable tiles (e.g., door tiles) are
+ *    replaced with walkable tiles from adjacent directions (e.g., floor tiles).
+ * 4. Randomly generates monsters placed on the map:
+ *    - If the tile contains a `MONSTER_WITH_KEY`, it is replaced with a
+ * randomly chosen key monster.
+ *    - If the tile contains a `MONSTER`, it is replaced with a randomly chosen
+ * monster.
+ *
+ * The function ensures that the map is prepared and ready for gameplay by
+ * setting the player’s position and ensuring that tiles are walkable.
+ *
+ * @note This function modifies the following global variables:
+ *       - `g_current`: The original map layout.
+ *       - `g_empty`: The map that has been processed for walkability and
+ * content.
+ *       - `player::osition`: The player's starting position on the map.
+ */
+FORCE_INLINE void init() {
+    map::g_empty = map::g_current;
+
+    // Define directions for potential tile replacements
+    // First 4 will empty the whole map
+    static constexpr std::array l_allDirections{
+        direction_t::down,
+        direction_t::left,
+        direction_t::right,
+        direction_t::upRight,
+
+        // Extra, clockwise
+        direction_t::up,
+        direction_t::downRight,
+        direction_t::downLeft,
+        direction_t::upLeft,
+    };
+
+    // Generate empty map
+    for ( auto [ _index, _tile ] : g_empty | std::views::enumerate ) {
+        // Replace non-walkable, non-decorative tiles with walkable ones
+        if ( isTileNotDecoration( _tile ) && !isTileWalkable( _tile ) ) {
+            // Try to find a walkable replacement tile by checking the
+            // adjacent tiles
+            for ( const direction_t _direction : l_allDirections ) {
+                const auto l_replacement =
+                    g_empty[ _index + static_cast< char >( _direction ) ];
+
+                if ( isTileWalkable( l_replacement ) ) [[likely]] {
+                    _tile = static_cast< char >( l_replacement );
+
+                    break;
+                }
+            }
+        }
+    }
+
+    constexpr std::array< actor_t, g_opponentsAmountTotal > l_opponents =
+        [ & ] consteval -> auto {
+        std::remove_cvref_t< decltype( l_opponents ) > l_returnValue{};
+
+        auto l_iterator = l_returnValue.begin();
+
+        constexpr std::string_view l_map = MAP;
+
+        for ( const auto [ _index, _tile ] :
+              l_map | std::views::enumerate |
+                  std::views::filter( []( const auto& _cell ) -> bool {
+                      auto [ _index, _tile ] = _cell;
+
+                      return ( ( _tile == static_cast< char >(
+                                              actor_t::monsterWithKey ) ) ||
+                               ( _tile ==
+                                 static_cast< char >( actor_t::monster ) ) );
+                  } ) |
+                  std::views::common ) {
+            // If the tile represents a monster with a key, replace it with
+            // random key monster
+            if ( _tile == static_cast< char >( actor_t::monsterWithKey ) )
+                [[unlikely]] {
+                *l_iterator = actor_t::keyMonster;
+
+            } else {
+                // If the tile represents a monster, replace it with random
+                // monster
+                if ( _tile == static_cast< char >( actor_t::monster ) )
+                    [[unlikely]] {
+                    constexpr std::array l_monsters{
+                        actor_t::followMonster,
+                        actor_t::randomMonster,
+                    };
+
+                    *l_iterator = random::value(
+                        l_monsters, _index + random::g_compilationTimeAsSeed );
+                }
+            }
+
+            std::advance( l_iterator, 1 );
+        }
+
+        return ( l_returnValue );
+    }();
+
+    // Generate level
+    auto l_iterator = l_opponents.begin();
+
+    for ( char& _tile : g_current ) {
+        if ( ( _tile == static_cast< char >( actor_t::monsterWithKey ) ) ||
+             ( _tile == static_cast< char >( actor_t::monster ) ) ) {
+            _tile = static_cast< char >( *l_iterator );
+
+            std::advance( l_iterator, 1 );
+        }
+    }
+}
+
+namespace action {
+
+FORCE_INLINE constexpr void chest() {
+    // Define a list of possible items that can be found in the chest
+    constexpr std::array l_items{
+        player::inventory::item_t::health,
+        player::inventory::item_t::attack,
+        player::inventory::item_t::defense,
+    };
+
+    // Add a randomly selected item from the list to the player's inventory
+    player::inventory::add( random::value( l_items ) );
+}
+
+FORCE_INLINE constexpr void treasure() {
+    player::stats::experience::add( player::stats::experience::g_fromTreasure );
+}
+
+[[nodiscard]] FORCE_INLINE constexpr auto door() -> bool {
+    // Attempt to use a key from the player's inventory to open the door
+    return ( player::inventory::use( player::inventory::item_t::key ) );
+}
+
+} // namespace action
+
+[[nodiscard]] FORCE_INLINE constexpr auto tryActionTile( char _tile ) -> bool {
+    // Use tile
+    switch ( _tile ) {
+        case ( static_cast< char >( actionable_t::chest ) ): {
+            action::chest();
+
+            return ( true );
+        }
+
+        case ( static_cast< char >( actionable_t::treasure ) ): {
+            action::treasure();
+
+            return ( true );
+        }
+
+        case ( static_cast< char >( actionable_t::doorLeft ) ):
+        case ( static_cast< char >( actionable_t::doorRight ) ):
+        case ( static_cast< char >( actionable_t::doorMiddle ) ): {
+            return ( action::door() );
+        }
+
+        case ( static_cast< char >( actionable_t::ladderLeft ) ):
+        case ( static_cast< char >( actionable_t::ladderRight ) ): {
+            player::lose::set();
+
+            return ( false );
+        }
+
+        default: {
+        }
+    }
+
+    // Pick-up item
+    {
+        static constexpr std::array l_items{
+            player::inventory::item_t::key,
+            player::inventory::item_t::health,
+            player::inventory::item_t::attack,
+            player::inventory::item_t::defense,
+        };
+
+        for ( const auto _item : l_items ) {
+            if ( static_cast< char >( _item ) == _tile ) {
+                player::inventory::add( ( player::inventory::item_t )_tile );
+
+                return ( true );
+            }
+        }
+    }
+
+    // Return false if no action occurred
+    return ( false );
+}
+
+/**
+ * @brief Moves the opponent on the map in a specified direction.
+ *
+ * This function handles the logic for moving the opponent on the game map. It
+ * checks if the destination tile is walkable, if there's a fight with player,
+ * or if an action can be performed on the destination tile. If movement is
+ * allowed, it updates the map by moving the opponent to the new position and
+ * adjusting the old position to reflect the movement.
+ *
+ * The function follows these steps:
+ * 1. It calculates the opponent's new position based on the given direction.
+ * 2. It checks if the destination tile is walkable.
+ * 3. If the destination is not walkable, it checks if the opponent can fight
+ *    the player present on the destination tile.
+ * 4. If an action is possible (none for now), the function tries to trigger
+ *    that action.
+ * 5. If movement, fight, or action is successful, the opponent's position is
+ *    updated accordingly.
+ *
+ * @param _direction The direction in which the opponent wants to move (one of
+ *                   the defined movement directions, such as UP, DOWN, LEFT,
+ *                   etc.).
+ *
+ * @note The opponent's position is not tracked and detected at each iteration
+ *       by `map::ai()`. This function ensures that the opponent's position
+ *       on the map is updated based on their movement or interactions.
+ */
+constexpr void move( actor_t _who,
+                     size_t _currentPosition,
+                     direction_t _direction ) {
+    const size_t l_oldPosition = _currentPosition;
+    const size_t l_newPosition =
+        ( _currentPosition + static_cast< size_t >( _direction ) );
+
+    char& l_tile = map::g_current[ l_newPosition ];
+
+    const bool l_isWalkable = map::isTileWalkable( l_tile );
+
+    if ( ( l_isWalkable ) ||
+         ( ( l_tile == static_cast< char >( actor_t::player ) ) &&
+           ( player::tryFightTile( static_cast< char >( _who ) ) ) ) )
+        [[likely]] {
+        map::g_current[ l_oldPosition ] = map::g_empty[ l_oldPosition ];
+
+        if ( l_isWalkable ) [[likely]] {
+            l_tile = static_cast< char >( _who );
+        }
+    }
+}
+
+FORCE_INLINE constexpr void move$random( actor_t _who,
+                                         size_t _currentPosition ) {
+    // Define all possible movement directions, including staying in place
+    static constexpr std::array l_allDirections{
+        direction_t::down,     direction_t::left,   direction_t::right,
+        direction_t::upRight,  direction_t::up,     direction_t::downRight,
+        direction_t::downLeft, direction_t::upLeft, direction_t::stay,
+    };
+
+    move( _who, _currentPosition, random::value( l_allDirections ) );
+}
+
+FORCE_INLINE constexpr void move$follow( actor_t _who,
+                                         size_t _currentPosition ) {
+    const auto l_playerPosition = static_cast< ssize_t >( player::g_position );
+    const auto l_currentPosition = static_cast< ssize_t >( _currentPosition );
+
+    const ssize_t l_playerX = ( l_playerPosition % map::g_width );
+    const ssize_t l_playerY = ( l_playerPosition / map::g_width );
+    const ssize_t l_whoX = ( l_currentPosition % map::g_width );
+    const ssize_t l_whoY = ( l_currentPosition / map::g_width );
+
+    const ssize_t l_deltaX = ( l_playerX - l_whoX );
+    const ssize_t l_deltaY = ( l_playerY - l_whoY );
+
+    do {
+        // Chase only if player is within N tiles in both axes
+        constexpr ssize_t l_chaseRadius = 2;
+
+        if ( ( l_deltaX > l_chaseRadius ) || ( l_deltaX < -l_chaseRadius ) ||
+             ( l_deltaY > l_chaseRadius ) || ( l_deltaY < -l_chaseRadius ) )
+            [[unlikely]] {
+            move$random( _who, _currentPosition );
+
+            break;
+        }
+
+        // Compute sign components ( -1, 0, 1 )
+        const int l_signX =
+            ( ( l_deltaX > 0 ) ? ( 1 )
+                               : ( ( ( l_deltaX < 0 ) ? ( -1 ) : ( 0 ) ) ) );
+        const int l_signY =
+            ( ( l_deltaY > 0 ) ? ( 1 )
+                               : ( ( l_deltaY < 0 ) ? ( -1 ) : ( 0 ) ) );
+
+        // Preferred direction lookup.
+        // Index = ( signX + 1 ) * 3 + ( signY + 1 ) where signX, signY ∈ { -1,
+        // 0, 1 } Layout ( sx rows, sy columns ): sx= -1:  upLeft,   left,
+        // downLeft sx=  0:  up,       stay,    down sx=  1:  upRight,  right,
+        // downRight
+        static constexpr std::array< direction_t, 9 > l_directionLUT = {
+            // sx=-1: sy= -1, 0, 1
+            direction_t::upLeft,
+            direction_t::left,
+            direction_t::downLeft,
+
+            // sx= 0: sy= -1, 0, 1
+            direction_t::up,
+
+            // Middle unused because of early return
+            direction_t::stay,
+
+            direction_t::down,
+
+            // sx= 1: sy= -1, 0, 1
+            direction_t::upRight,
+            direction_t::right,
+            direction_t::downRight,
+        };
+
+        static std::array< direction_t, 3 > l_candidateDirections{};
+        size_t l_candidateCount = 0;
+
+        const auto l_index =
+            static_cast< size_t >( ( l_signX + 1 ) * 3 + ( l_signY + 1 ) );
+        const direction_t l_preferredDirection = l_directionLUT[ l_index ];
+
+        // Preferred ( diagonal or straight )
+        l_candidateDirections[ l_candidateCount++ ] = l_preferredDirection;
+
+        // Helper to test if we still have space in candidate buffer.
+        const bool l_hasSpace =
+            ( l_candidateCount < l_candidateDirections.size() );
+
+        // Then horizontal, then vertical ( avoid duplicates )
+        if ( l_signX != 0 ) {
+            const direction_t l_horizontal =
+                ( ( l_signX == 1 ) ? ( direction_t::right )
+                                   : ( direction_t::left ) );
+
+            if ( l_hasSpace && ( l_horizontal != l_preferredDirection ) ) {
+                l_candidateDirections[ l_candidateCount++ ] = l_horizontal;
+            }
+        }
+
+        // Vertical
+        if ( l_signY != 0 ) {
+            const direction_t l_vertical =
+                ( ( l_signY == 1 ) ? ( direction_t::down )
+                                   : ( direction_t::up ) );
+
+            if ( l_hasSpace && ( l_vertical != l_preferredDirection ) ) {
+                l_candidateDirections[ l_candidateCount++ ] = l_vertical;
+            }
+        }
+
+        for ( const direction_t _direction :
+              l_candidateDirections | std::views::take( l_candidateCount ) ) {
+            const ssize_t l_newPosition =
+                ( l_currentPosition + static_cast< ssize_t >( _direction ) );
+
+            if ( ( l_newPosition < 0 ) ||
+                 ( static_cast< size_t >( l_newPosition ) >=
+                   map::g_current.size() ) ) {
+                continue;
+            }
+
+            const char l_tile =
+                map::g_current[ static_cast< size_t >( l_newPosition ) ];
+
+            if ( map::isTileWalkable( l_tile ) ||
+                 ( l_tile == static_cast< char >( actor_t::player ) ) ) {
+                move( _who, _currentPosition, _direction );
+
+                break;
+            }
+        }
+    } while ( false );
+
+    // Blocked - do nothing
+}
+
+/**
+ * @brief Moves all AI-controlled monsters on the map.
+ *
+ * This function iterates through each tile on the map, and for each tile
+ * that contains a monster (RANDOM_MONSTER, FOLLOW_MONSTER, KEY_MONSTER, or
+ * GUARDIAN), it moves the corresponding monster to a corresponding adjacent
+ * position by calling the `move$...` function. The movement is based on the
+ * monster's type, ensuring that each specific type of monster is moved
+ * according to predefined behavior.
+ */
+FORCE_INLINE constexpr void ai() {
+    std::array< size_t, g_opponentsAmountTotal > l_entitiesWithAiIndexesTotal;
+
+    size_t l_entitiesWithAiAmountCurrent = 0;
+
+    // Collect entities with AI
+    {
+        auto l_iterator = l_entitiesWithAiIndexesTotal.begin();
+
+        for ( const auto [ _index, _tile ] :
+              map::g_current | std::views::enumerate ) {
+            auto l_tile = static_cast< actor_t >( _tile );
+
+            switch ( l_tile ) {
+                case ( actor_t::randomMonster ):
+                case ( actor_t::keyMonster ):
+                case ( actor_t::followMonster ):
+                case ( actor_t::guardian ): {
+                    *l_iterator = _index;
+
+                    std::advance( l_iterator, 1 );
+
+                    l_entitiesWithAiAmountCurrent++;
+
+                    break;
+                }
+
+                default:
+                    [[likely]] {}
+            }
+        }
+    }
+
+    const auto l_entitiesWithAiIndexesCurrent = std::span(
+        l_entitiesWithAiIndexesTotal.begin(), l_entitiesWithAiAmountCurrent );
+
+    // Process AI
+    for ( const size_t _index : l_entitiesWithAiIndexesCurrent ) {
+        const auto l_tile = static_cast< actor_t >( map::g_current[ _index ] );
+
+        auto l_move = [ & ]( auto _moveFunction ) constexpr -> void {
+            _moveFunction( l_tile, _index );
+        };
+
+        switch ( l_tile ) {
+            case ( actor_t::randomMonster ):
+            case ( actor_t::keyMonster ): {
+                l_move( move$random );
+
+                break;
+            }
+
+            case ( actor_t::followMonster ):
+            case ( actor_t::guardian ): {
+                l_move( move$follow );
+
+                break;
+            }
+
+            default:
+                [[unlikely]] {}
+        }
+    }
+}
+
+namespace render {
+
+FORCE_INLINE void debug() {
+#define MONSTER_TEXT "\nM:"
+#define GUARDIAN_TEXT "\nB:"
+
+#define FULL_MONSTER_TEXT MONSTER_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
+#define FULL_GUARDIAN_TEXT GUARDIAN_TEXT HEALTH_POINTS_TEXT_PLACEHOLDER
+
+    // FIX: Can save 8 bytes here
+    std::array l_buffer = std::to_array( FULL_MONSTER_TEXT FULL_GUARDIAN_TEXT );
+
+    // Render points into buffer
+    {
+        auto l_cursorPosition = l_buffer.begin();
+
+        // Monster HP
+        ::render::points( l_cursorPosition, monster::stats::health::g_amount,
+                          sizeof( FULL_MONSTER_TEXT ) );
+
+        // FIX: Convertion to int
+        std::advance( l_cursorPosition, 1 );
+
+        // Guardian HP
+        ::render::points( l_cursorPosition, guardian::stats::health::g_amount,
+                          sizeof( FULL_GUARDIAN_TEXT ) );
+
+        std::advance( l_cursorPosition, -1 );
+    }
+
+    io::print( l_buffer );
+
+#undef GUARDIAN_TEXT
+#undef MONSTER_TEXT
+}
+
+/**
+ * @brief Renders the current state of the map to the output.
+ *
+ * This function iterates through each tile of the global `g_current` array
+ * and prints the character representing the tile. It essentially outputs
+ * the map as it is in the game's internal state, tile by tile.
+ *
+ * - Each tile in `g_current` is represented by a single character that
+ * could be a floor, wall, player, monster, chest, treasure, etc.
+ *
+ * This function assumes that the map data (`g_current`) is structured in a
+ * way where each element corresponds to a character that needs to be
+ * printed to the screen.
+ *
+ * @note The rendering is done one character at a time. Depending on how the
+ * `print` function works, it could render a single line or the entire map
+ * one by one. Make sure the print function handles newlines and coordinates
+ * correctly.
+ *
+ * @see `print()` for more information on how tiles are printed to the
+ * screen.
+ */
+FORCE_INLINE void current() {
+    // Iterate through each tile on map
+    for ( const char _tile : map::g_current ) {
+        io::print( { _tile } );
+    }
+
+#if defined( RENDER_DEBUG_INFORMATION )
+
+    // Debug information
+    {
+        debug();
+    }
+
+#endif
+}
+
+} // namespace render
+
+} // namespace map
+
+} // namespace logic

@@ -5,9 +5,9 @@
 **/.*.swp
 
 # Binary
+.cache
+*.out
 **/*.o
-**/out
 **/*vgcore*
 
-# In-progress
-Style_Guide.md
+compile_commands.json
