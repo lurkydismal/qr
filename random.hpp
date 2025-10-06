@@ -7,9 +7,12 @@
 
 namespace random {
 
+// Seconds from midnight
 constexpr size_t g_compilationTimeAsSeed =
-    ( __TIME__[ 0 ] + __TIME__[ 1 ] + __TIME__[ 3 ] + __TIME__[ 4 ] +
-      __TIME__[ 6 ] + __TIME__[ 7 ] );
+    ( ( ( ( ( __TIME__[ 0 ] - '0' ) * 10 ) + ( __TIME__[ 1 ] - '0' ) ) *
+        3600 ) +
+      ( ( ( ( __TIME__[ 3 ] - '0' ) * 10 ) + ( __TIME__[ 4 ] - '0' ) ) * 60 ) +
+      ( ( ( __TIME__[ 6 ] - '0' ) * 10 ) + ( __TIME__[ 7 ] - '0' ) ) );
 
 // FNV-1A
 [[nodiscard]] consteval auto generateHash(
