@@ -777,11 +777,17 @@ FORCE_INLINE constexpr void move$follow( actor_t _who,
             ( ( l_deltaY > 0 ) ? ( 1 )
                                : ( ( l_deltaY < 0 ) ? ( -1 ) : ( 0 ) ) );
 
+        // clang-format off
         // Preferred direction lookup.
-        // Index = ( signX + 1 ) * 3 + ( signY + 1 ) where signX, signY ∈ { -1,
-        // 0, 1 } Layout ( sx rows, sy columns ): sx= -1:  upLeft,   left,
-        // downLeft sx=  0:  up,       stay,    down sx=  1:  upRight,  right,
-        // downRight
+        // Index = (signX + 1) * 3 + (signY + 1), where signX, signY ∈ {-1, 0, 1}.
+        //
+        // Layout (sx rows, sy columns):
+        //
+        //            sy = -1       sy = 0       sy = 1
+        // sx = -1    upLeft        left         downLeft
+        // sx =  0    up            stay         down
+        // sx =  1    upRight       right        downRight
+        // clang-format on
         static constexpr std::array< direction_t, 9 > l_directionLUT = {
             // sx=-1: sy= -1, 0, 1
             direction_t::upLeft,
